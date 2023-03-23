@@ -1,0 +1,390 @@
+// class NeuralNetwork():
+    
+//     def __init__(self):
+//         # Seed the random number generator
+//         np.random.seed(1)
+
+//         # Set synaptic weights to a 3x1 matrix,
+//         # with values from -1 to 1 and mean 0
+//         self.synaptic_weights = 2 * np.random.random((3, 1)) - 1
+
+//     def sigmoid(self, x):
+//         """
+//         Takes in weighted sum of the inputs and normalizes
+//         them through between 0 and 1 through a sigmoid function
+//         """
+//         return 1 / (1 + np.exp(-x))
+
+//     def sigmoid_derivative(self, x):
+//         """
+//         The derivative of the sigmoid function used to
+//         calculate necessary weight adjustments
+//         """
+//         return x * (1 - x)
+
+//     def train(self, training_inputs, training_outputs, training_iterations):
+//         """
+//         We train the model through trial and error, adjusting the
+//         synaptic weights each time to get a better result
+//         """
+//         for iteration in range(training_iterations):
+//             # Pass training set through the neural network
+//             output = self.think(training_inputs)
+
+//             # Calculate the error rate
+//             error = training_outputs - output
+
+//             # Multiply error by input and gradient of the sigmoid function
+//             # Less confident weights are adjusted more through the nature of the function
+//             adjustments = np.dot(training_inputs.T, error * self.sigmoid_derivative(output))
+
+//             # Adjust synaptic weights
+//             self.synaptic_weights += adjustments
+
+//     def think(self, inputs):
+//         """
+//         Pass inputs through the neural network to get output
+//         """
+        
+//         inputs = inputs.astype(float)
+//         output = self.sigmoid(np.dot(inputs, self.synaptic_weights))
+//         return output
+
+
+// if __name__ == "__main__":
+
+//     # Initialize the single neuron neural network
+//     neural_network = NeuralNetwork()
+
+//     print("Random starting synaptic weights: ")
+//     print(neural_network.synaptic_weights)
+
+//     # The training set, with 4 examples consisting of 3
+//     # input values and 1 output value
+//     training_inputs = np.array([[0,0,1],
+//                                 [1,1,1],
+//                                 [1,0,1],
+//                                 [0,1,1]])
+
+//     training_outputs = np.array([[0,1,1,0]]).T
+
+//     # Train the neural network
+//     neural_network.train(training_inputs, training_outputs, 10000)
+
+//     print("Synaptic weights after training: ")
+//     print(neural_network.synaptic_weights)
+
+//     A = str(input("Input 1: "))
+//     B = str(input("Input 2: "))
+//     C = str(input("Input 3: "))
+    
+//     print("New situation: input data = ", A, B, C)
+//     print("Output data: ")
+//     print(neural_network.think(np.array([A, B, C])))
+
+playervar define sigmoid_value;
+playervar define synaptic_weights = EmptyArray();
+playervar define synaptic_weights2 = EmptyArray();
+playervar define output = EmptyArray();
+playervar define output2 = EmptyArray();
+playervar define error = EmptyArray();
+playervar define layer1_error= EmptyArray();
+playervar define layer2_error= EmptyArray();
+playervar define layer1_delta= EmptyArray();
+playervar define layer2_delta= EmptyArray();
+playervar define layer1_adjustments= EmptyArray();
+playervar define layer2_adjustments= EmptyArray();
+playervar define adjustments = EmptyArray();
+playervar define training_inputs = EmptyArray();
+playervar define training_outputs = EmptyArray();
+playervar define first_layer= EmptyArray();
+playervar define second_layer= EmptyArray();
+playervar define finistraining= false;
+playervar define myinput;
+
+
+define sigmoid(define x)
+{
+return 1 / (1 + RaiseToPower((2718281/1000000),-x));
+}
+
+define sigmoid_derivative(define x)
+{
+return x * (1 - x);
+}
+
+define think(define inputs, define weight)
+{
+    //output = DotProduct(inputs, synaptic_weights);
+    return sigmoid(DotProduct(inputs, weight));
+}
+
+// method passes(define inputs)
+// {
+//     //output = DotProduct(inputs, synaptic_weights);
+
+//     first_layer[0] = think(inputs,Vector(synaptic_weights[0][0],synaptic_weights[1][0],synaptic_weights[2][0]));
+//     first_layer[1] = think(inputs,Vector(synaptic_weights[0][1],synaptic_weights[1][1],synaptic_weights[2][1]));
+//     first_layer[2] = think(inputs,Vector(synaptic_weights[0][2],synaptic_weights[1][2],synaptic_weights[2][2]));
+//     first_layer[3] = think(inputs,Vector(synaptic_weights[0][3],synaptic_weights[1][3],synaptic_weights[2][3]));
+
+//     second_layer = (synaptic_weights2[0]*first_layer[0]) + (synaptic_weights2[1]*first_layer[1]) + (synaptic_weights2[2]*first_layer[2]) + (synaptic_weights2[3]*first_layer[3]);
+//     return second_layer;
+// }
+
+
+
+
+
+void train(define training_inputss, define training_iterations)
+{
+    define count;
+     CreateHudText(EventPlayer(),count);
+    //   CreateHudText(EventPlayer(),<"output0: <0>", synaptic_weights[0]>);
+    //    CreateHudText(EventPlayer(),<"output1: <0>", synaptic_weights[1]>);
+    //     CreateHudText(EventPlayer(),<"output2: <0>", synaptic_weights[2]>);
+    //      CreateHudText(EventPlayer(),<"output3: <0>", synaptic_weights[3]>);
+
+    //     CreateHudText(EventPlayer(),<"first_layer0: <0>", first_layer[0]>);
+    //    CreateHudText(EventPlayer(),<"first_layer1: <0>", first_layer[1]>);
+    //     CreateHudText(EventPlayer(),<"first_layer2: <0>", first_layer[2]>);
+    //      CreateHudText(EventPlayer(),<"first_layer3: <0>", first_layer[3]>);
+
+    //      CreateHudText(EventPlayer(),<"sigmoidvalue: <0>", sigmoid_value>);
+
+
+        for (define i = 0; i < training_iterations; i++)
+        {   
+            // Pass training set through the neural network
+            for (define x = -1; x < CountOf(training_inputs)-1; x++)
+            {
+                //Wait(2);
+                output[0] = 1 / (1 + RaiseToPower((2718281/1000000),-DotProduct(training_inputs[x][0],synaptic_weights[0])));
+                output[1] = 1 / (1 + RaiseToPower((2718281/1000000),-DotProduct(training_inputs[x][0],synaptic_weights[1])));
+                output[2] = 1 / (1 + RaiseToPower((2718281/1000000),-DotProduct(training_inputs[x][0],synaptic_weights[2])));
+                output[3] = 1 / (1 + RaiseToPower((2718281/1000000),-DotProduct(training_inputs[x][0],synaptic_weights[3])));
+
+                // output[0] = think(training_inputs[x][0],synaptic_weights[0]);
+                // output[1] = think(training_inputs[x][0],synaptic_weights[1]);
+                // output[2] = think(training_inputs[x][0],synaptic_weights[2]);
+                // output[3] = think(training_inputs[x][0],synaptic_weights[3]);
+
+                // output[0] = think(training_inputs[x][0],Vector(synaptic_weights[0][0],synaptic_weights[1][0],synaptic_weights[2][0]));
+                // output[1] = think(training_inputs[x][0],Vector(synaptic_weights[0][1],synaptic_weights[1][1],synaptic_weights[2][1]));
+                // output[2] = think(training_inputs[x][0],Vector(synaptic_weights[0][2],synaptic_weights[1][2],synaptic_weights[2][2]));
+                // output[3] = think(training_inputs[x][0],Vector(synaptic_weights[0][3],synaptic_weights[1][3],synaptic_weights[2][3]));
+                
+                // output2= (synaptic_weights2[0]*output[0]) + (synaptic_weights2[1]*output[1]) + (synaptic_weights2[2]*output[2]) + (synaptic_weights2[3]*output[3]);
+                output2 = sigmoid((synaptic_weights2[0]*output[0]) + (synaptic_weights2[1]*output[1]) + (synaptic_weights2[2]*output[2]) + (synaptic_weights2[3]*output[3]));
+                //output2 = 1 / (1 + RaiseToPower(2.7182818,output2));
+
+                layer2_error = training_inputs[x][1] - output2;
+                layer2_delta = layer2_error * output2 * (1 - output2);
+
+                layer2_adjustments[0] = DotProduct(output[0],layer2_delta);
+                layer2_adjustments[1] = DotProduct(output[1],layer2_delta);
+                layer2_adjustments[2] = DotProduct(output[2],layer2_delta);
+                layer2_adjustments[3] = DotProduct(output[3],layer2_delta);
+               
+
+                layer1_error[0] = DotProduct(layer2_delta,synaptic_weights2[0]);
+                layer1_error[1] = DotProduct(layer2_delta,synaptic_weights2[1]);
+                layer1_error[2] = DotProduct(layer2_delta,synaptic_weights2[2]);
+                layer1_error[3] = DotProduct(layer2_delta,synaptic_weights2[3]);
+
+                //SmallMessage(EventPlayer(),layer1_error[0]);
+
+                layer1_delta[0] = layer1_error[0] *  output[0] * (1 - output[0]);
+                layer1_delta[1] = layer1_error[1] *  output[1] * (1 - output[1]);
+                layer1_delta[2] = layer1_error[2] *  output[2] * (1 - output[2]);
+                layer1_delta[3] = layer1_error[3] *  output[3] * (1 - output[3]);
+
+
+                layer1_adjustments[0] = DotProduct(XOf(training_inputs[x][0]), layer1_delta[0]);
+                layer1_adjustments[1] = DotProduct(XOf(training_inputs[x][0]), layer1_delta[1]);
+                layer1_adjustments[2] = DotProduct(XOf(training_inputs[x][0]), layer1_delta[2]);
+                layer1_adjustments[3] = DotProduct(XOf(training_inputs[x][0]), layer1_delta[3]);
+
+                layer1_adjustments[4] = DotProduct(YOf(training_inputs[x][0]), layer1_delta[0]);
+                layer1_adjustments[5] = DotProduct(YOf(training_inputs[x][0]), layer1_delta[1]);
+                layer1_adjustments[6] = DotProduct(YOf(training_inputs[x][0]), layer1_delta[2]);
+                layer1_adjustments[7] = DotProduct(YOf(training_inputs[x][0]), layer1_delta[3]);
+
+                layer1_adjustments[8] = DotProduct(ZOf(training_inputs[x][0]), layer1_delta[0]);
+                layer1_adjustments[9] = DotProduct(ZOf(training_inputs[x][0]), layer1_delta[1]);
+                layer1_adjustments[10] = DotProduct(ZOf(training_inputs[x][0]), layer1_delta[2]);
+                layer1_adjustments[11] = DotProduct(ZOf(training_inputs[x][0]), layer1_delta[3]);
+
+
+                
+
+                synaptic_weights[0] = synaptic_weights[0] + Vector(layer1_adjustments[0],layer1_adjustments[4],layer1_adjustments[8]);
+                synaptic_weights[1] = synaptic_weights[1] + Vector(layer1_adjustments[1],layer1_adjustments[5],layer1_adjustments[9]);
+                synaptic_weights[2] = synaptic_weights[2] + Vector(layer1_adjustments[2],layer1_adjustments[6],layer1_adjustments[10]);
+                synaptic_weights[3] = synaptic_weights[3] + Vector(layer1_adjustments[3],layer1_adjustments[7],layer1_adjustments[11]);
+
+                // synaptic_weights[0][0] += layer1_adjustments[0];
+                // synaptic_weights[0][1] += layer1_adjustments[1];
+                // synaptic_weights[0][2] += layer1_adjustments[2];
+                // synaptic_weights[0][3] += layer1_adjustments[3];
+
+                // synaptic_weights[1][0] += layer1_adjustments[4];
+                // synaptic_weights[1][1] += layer1_adjustments[5];
+                // synaptic_weights[1][2] += layer1_adjustments[6];
+                // synaptic_weights[1][3] += layer1_adjustments[7];
+
+                // synaptic_weights[2][0] += layer1_adjustments[8];
+                // synaptic_weights[2][1] += layer1_adjustments[9];
+                // synaptic_weights[2][2] += layer1_adjustments[10];
+                // synaptic_weights[2][3] += layer1_adjustments[11];
+
+
+                synaptic_weights2[0] = synaptic_weights2[0] + layer2_adjustments[0];
+                synaptic_weights2[1] = synaptic_weights2[1] + layer2_adjustments[1];
+                synaptic_weights2[2] = synaptic_weights2[2] + layer2_adjustments[2];
+                synaptic_weights2[3] = synaptic_weights2[3] + layer2_adjustments[3];
+                
+            // output[0] = think(XOf(training_inputss[x][0]),XOf(synaptic_weights));
+            // output[1] = think(YOf(training_inputss[x][0]),YOf(synaptic_weights));
+            // output[2] = think(ZOf(training_inputss[x][0]),ZOf(synaptic_weights));
+             //CreateHudText(EventPlayer(),<"output <0>", x>);
+            // CreateHudText(EventPlayer(),<"output <0>", output[1]>);
+            // CreateHudText(EventPlayer(),<"output <0>", output[2]>);
+            // Calculate the error rate
+            // error =training_inputs[x][1]-output;
+            // error[0] =training_inputss[x][1]-output[0];
+            // error[1] = training_inputss[x][1]-output[1];
+            // error[2] =training_inputss[x][1]-output[2];
+            //error = training_inputss[x][2] - output;
+            // CreateHudText(EventPlayer(),<"error <0>", error[0]>);
+            // CreateHudText(EventPlayer(),<"error <0>", error[1]>);
+            // CreateHudText(EventPlayer(),<"error <0>", error[2]>);
+            // Multiply error by input and gradient of the sigmoid function
+            // Less confident weights are adjusted more through the nature of the function
+            //adjustments = DotProduct(training_inputss[x][2], error * sigmoid_derivative(output));
+
+            // adjustments[0] = DotProduct(XOf(training_inputs[x][0]), error * sigmoid_derivative(output));
+            // adjustments[1] = DotProduct(YOf(training_inputs[x][0]), error * sigmoid_derivative(output));
+            // adjustments[2] = DotProduct(ZOf(training_inputs[x][0]), error * sigmoid_derivative(output));
+            // CreateHudText(EventPlayer(),<"adjust <0>", adjustments[0]>);
+            // CreateHudText(EventPlayer(),<"adjust <0>", adjustments[1]>);
+            // CreateHudText(EventPlayer(),<"adjust <0>", adjustments[2]>);
+            //adjustments = np.dot(training_inputs.T, error * self.sigmoid_derivative(output));
+
+            // Adjust synaptic weights
+            // synaptic_weights = synaptic_weights + Vector(adjustments[0],adjustments[1],adjustments[2]);
+           // CreateHudText(EventPlayer(),<"weight <0>", synaptic_weights>);
+            //training_inputs [x][1] = training_inputs [x][1] + Vector(adjustments[0], adjustments[1], adjustments[2]);
+            
+            //synaptic_weights[x] += adjustments[x];
+            //Wait(2);
+            //count++;
+            }
+            count++;
+            //Wait(2);
+        }
+         CreateHudText(EventPlayer(),<"Finished Output: <0>", second_layer>);
+         CreateHudText(EventPlayer(),<"Input: <0>", myinput>);
+}
+
+
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (finistraining)
+// {   
+
+//    // define think_number = think(Vector(1,0,1),synaptic_weights);
+//     define inputs = Vector(0,0,1);
+//                 first_layer[0] = think(inputs,synaptic_weights[0]);
+//                 first_layer[1] = think(inputs,synaptic_weights[1]);
+//                 first_layer[2] = think(inputs,synaptic_weights[2]);
+//                 first_layer[3] = think(inputs,synaptic_weights[3]);
+//     // first_layer[0] = think(inputs,Vector(synaptic_weights[0][0],synaptic_weights[1][0],synaptic_weights[2][0]));
+//     // first_layer[1] = think(inputs,Vector(synaptic_weights[0][1],synaptic_weights[1][1],synaptic_weights[2][1]));
+//     // first_layer[2] = think(inputs,Vector(synaptic_weights[0][2],synaptic_weights[1][2],synaptic_weights[2][2]));
+//     // first_layer[3] = think(inputs,Vector(synaptic_weights[0][3],synaptic_weights[1][3],synaptic_weights[2][3]));
+    
+//     //second_layer = (synaptic_weights2[0]*first_layer[0]) + (synaptic_weights2[1]*first_layer[1]) + (synaptic_weights2[2]*first_layer[2]) + (synaptic_weights2[3]*first_layer[3]);
+//     second_layer = 1 / (1 + RaiseToPower(2.7182818,(synaptic_weights2[0]*first_layer[0]) + (synaptic_weights2[1]*first_layer[1]) + (synaptic_weights2[2]*first_layer[2]) + (synaptic_weights2[3]*first_layer[3])));
+//     CreateHudText(EventPlayer(),<"Synaptic weights after training0: <0>", second_layer>);
+//     // CreateHudText(EventPlayer(),<"Synaptic weights after training1: <0>", passes(training_inputs[1][0])>);
+//     // CreateHudText(EventPlayer(),<"Synaptic weights after training2: <0>", passes(training_inputs[2][0])>);
+//     // CreateHudText(EventPlayer(),<"Synaptic weights after training3: <0>", passes(training_inputs[3][0])>);
+//     // define think_array = Vector(1,0,1);
+//     // CreateHudText(EventPlayer(),<"Output data: <0>", think(think_array)>);
+
+
+//     //CreateHudText(EventPlayer(),<"Synaptic weights after training: <0>", test[0][0]*tester[0][0]>);
+// }
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (finistraining&&IsButtonHeld(EventPlayer(),Button.Interact))
+{
+
+      myinput = Vector(RandomInteger(0,1),RandomInteger(0,1),RandomInteger(0,1));
+     
+                first_layer[0] = think(myinput,synaptic_weights[0]);
+                first_layer[1] = think(myinput,synaptic_weights[1]);
+                first_layer[2] = think(myinput,synaptic_weights[2]);
+                first_layer[3] = think(myinput,synaptic_weights[3]);
+    // first_layer[0] = think(inputs,Vector(synaptic_weights[0][0],synaptic_weights[1][0],synaptic_weights[2][0]));
+    // first_layer[1] = think(inputs,Vector(synaptic_weights[0][1],synaptic_weights[1][1],synaptic_weights[2][1]));
+    // first_layer[2] = think(inputs,Vector(synaptic_weights[0][2],synaptic_weights[1][2],synaptic_weights[2][2]));
+    // first_layer[3] = think(inputs,Vector(synaptic_weights[0][3],synaptic_weights[1][3],synaptic_weights[2][3]));
+    
+    //second_layer = (synaptic_weights2[0]*first_layer[0]) + (synaptic_weights2[1]*first_layer[1]) + (synaptic_weights2[2]*first_layer[2]) + (synaptic_weights2[3]*first_layer[3]);
+    sigmoid_value = (synaptic_weights2[0]*first_layer[0]) + (synaptic_weights2[1]*first_layer[1]) + (synaptic_weights2[2]*first_layer[2]) + (synaptic_weights2[3]*first_layer[3]);
+    second_layer = 1 / (1 + RaiseToPower((2718281/1000000),-sigmoid_value));
+
+}
+
+
+
+rule: "1" //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot()&&HostPlayer()==EventPlayer())
+{
+    
+        // synaptic_weights[0] = [0.135,0.55,0.5,0.01];
+        // synaptic_weights[1] = [0.054,0.155,0.34,0.455];
+        // synaptic_weights[2] = [0.2355,0.463,0.345,0.77];
+
+        // synaptic_weights = [Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)),
+        // Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)),
+        // Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)),
+        // Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1))
+        // ];
+
+        synaptic_weights = [Vector(0.3122465,0.19676933,-0.03327074),
+        Vector(4.57704063,-8.74975548,-0.58272995),
+        Vector(-6.15329916,-6.1638187,0.08319184),
+        Vector(-8.75834924,4.40720501,-0.39787635)
+        ];
+
+
+        //synaptic_weights2 = Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1));
+        //synaptic_weights2 = [RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)];
+        synaptic_weights2 = [-8.18850925,10.13210706,-21.33532796,9.90935111];
+
+        // CreateHudText(EventPlayer(),synaptic_weights2[0]);
+        // CreateHudText(EventPlayer(),synaptic_weights2[1]);
+        // CreateHudText(EventPlayer(),synaptic_weights2[2]);
+        // CreateHudText(EventPlayer(),synaptic_weights2[3]);
+
+        CreateHudText(EventPlayer(),ServerLoad());
+        CreateHudText(EventPlayer(),ServerLoadPeak());
+
+        training_inputs [0] = [Vector(0,0,1),0];
+        training_inputs [1] = [Vector(0,1,1),1];
+        training_inputs [2] = [Vector(1,0,1),1];
+        training_inputs [3] = [Vector(0,1,0),1];
+        training_inputs [4] = [Vector(1,0,0),1];
+        training_inputs [5] = [Vector(1,1,1),0];
+        training_inputs [6] = [Vector(0,0,0),0];
+
+        train(training_inputs, 0);
+        finistraining = true;
+        
+}

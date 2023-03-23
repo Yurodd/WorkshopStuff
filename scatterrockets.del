@@ -1,0 +1,141 @@
+define playervar pointingdir; //a
+define playervar facingdir; //b
+define playervar facingdirx100; //c
+define playervar hitpos; //d
+define playervar isshot; //e
+define playervar normal; //f
+define playervar bounces; //f
+define playervar slotcount = 0; //f
+define playervar savedchar; //f
+define playervar angle = -45; //f
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&NumberOfPlayers()<12&&!IsDummyBot())
+{
+    Teleport(EventPlayer(),Vector(-1.284,5.349,-61.246));
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    //CreateEffect(EventPlayer(),Effect.Sphere,Color.White,pointingdir,0.1);
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&IsDummyBot())
+{
+ SetInvisible(EventPlayer(),InvisibleTo.All);
+ SetStatus(EventPlayer(),null,Status.PhasedOut,9999);
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StartCamera(EventPlayer(),Add(pointingdir,Vector(0,1,0)),pointingdir);
+}
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (!IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StopCamera();
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.PrimaryFire)&&!IsDummyBot())
+{
+    StopChasingPlayerVariable(EventPlayer(),pointingdir);
+    bounces =0;
+    angle = -45;
+    slotcount =0;
+    pointingdir = Add(EyePosition(),Multiply(FacingDirectionOf(),3));
+    facingdir = FacingDirectionOf();
+    facingdirx100 = Add(pointingdir,Multiply(facingdir,100));
+    hitpos = RayCastHitPosition(pointingdir,facingdirx100);
+    ChasePlayerVariableAtRate(EventPlayer(),pointingdir,hitpos,35);
+    //isshot = true;
+    
+}
+
+
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (!IsDummyBot()&&DistanceBetween(pointingdir,hitpos) == 0)
+{
+    bounces++;
+    normal = RayCastHitNormal(Add(pointingdir,Multiply(facingdir,-0.001)),Add(pointingdir,Multiply(facingdir,0.001)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    //PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Red,pointingdir,1);
+    Teleport(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Add(Subtract(pointingdir,Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)),Multiply(facingdir,0.1)));
+    //Teleport(PlayersInSlot(slotcount,Team.All),pointingdir);
+    //Wait(0.05);
+    hitpos = RayCastHitPosition(hitpos,Add(hitpos,Multiply(facingdir,100)));
+    StopChasingPlayerVariable(EventPlayer(),pointingdir);
+    foreach(define dir in FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())))
+    {
+        
+     SetFacing(dir,DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(dir),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(dir),hitpos))));
+     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+     PressButton(dir,Button.PrimaryFire);
+    }
+    Teleport(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),ObjectivePosition());
+    // angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+    // slotcount++;
+    // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    
+    //PressButton(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Button.PrimaryFire);
+    // MinWait();
+    // LoopIfConditionIsTrue();
+}
+
+// rule: "Pathfind to cursor." //Release Bow
+// Event.OngoingPlayer
+// if (IsFiringPrimary()&&IsDummyBot())
+// {
+//     Respawn(EventPlayer());
+// }
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsDead()&&IsDummyBot())
+{
+    Respawn(EventPlayer());
+}

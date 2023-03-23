@@ -1,0 +1,19 @@
+playervar define firstpos;
+playervar define secondpos;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&!IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    firstpos = PreProjectile();
+    CreateEffect(AllPlayers(),Effect.GoodAura,Color.Green,firstpos,1);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    secondpos = PreProjectile();
+    CreateEffect(AllPlayers(),Effect.GoodAura,Color.Red,secondpos,1);
+}
+
+define PreProjectile(): RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),100)));

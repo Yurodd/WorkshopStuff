@@ -1,0 +1,125 @@
+globalvar define standingpos;
+globalvar define landingpos;
+playervar define centerpoint;
+playervar define eyePos;
+playervar define pointPos;
+playervar define hitNormal;
+playervar define radius;
+playervar define initNormal;
+
+rule: "Reset"
+Event.OngoingGlobal
+{
+    Wait(3);
+    standingpos = [Vector(82.340, 12.734, -99.586), Vector(86.032, 12.683, -79.937), Vector(83.243, 12.674, -72.996)];
+    landingpos = [Vector(65.127, 19.405, -74.949), Vector(92.600, 14.703, -51.104), Vector(76.210, 14.074, -58.467)];
+    for (define i=0;CountOf(standingpos);1)
+    {
+        CreateEffect(AllPlayers(),Effect.Ring,Color.Yellow,standingpos[i],3,EffectRev.None)
+         CreateEffect(AllPlayers(),Effect.Ring,Color.Green,landingpos[i],3,EffectRev.None)
+         CreateInWorldText(AllPlayers(),AbilityIconString(Hero.Dva,ButtonValue(Button.Ultimate)),landingpos[i],3,Clipping.DoNotClip,InworldTextRev.None);
+    }
+
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Interact) && HostPlayer() == eventPlayer)
+{
+    standingpos[CountOf(standingpos)] = PositionOf();
+    SmallMessage(AllPlayers(),"StandingPos Recorded");
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Crouch) && HostPlayer() == eventPlayer)
+{
+    landingpos[CountOf(landingpos)] = centerpoint;
+    SmallMessage(AllPlayers(),"LandingPos Recorded");
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(IsCommunicatingAny())
+{
+    standingpos = standingpos;
+    landingpos = landingpos;
+    SmallMessage(AllPlayers(),"Compiled");
+}
+
+
+rule: "Reset"
+Event.OnPlayerJoin
+{
+    SetStatus(eventPlayer,null,Status.PhasedOut,9999);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,centerpoint,1);
+    CreateIcon(AllPlayers(),centerpoint,Icon.ArrowDown);
+    centerpoint = Vector();
+    radius = true;
+}
+
+
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Ultimate) && IsUsingUltimate())
+{
+    DisallowButton(eventPlayer,Button.Ultimate);
+    eyePos = EyePosition() + WorldVectorOf(Backward(),eventPlayer,LocalVector.Rotation);
+    pointPos = RayCastHitPosition(eyePos, eyePos + WorldVectorOf(Vector(0,0,3),eventPlayer,LocalVector.Rotation), eventPlayer, null, true);
+    hitNormal = RayCastHitNormal(eyePos, eyePos + WorldVectorOf(Vector(0,0,3),eventPlayer,LocalVector.Rotation), eventPlayer, null, true);
+    centerpoint = pointPos + hitNormal * radius * -1;
+    StartCamera(eventPlayer,pointPos + hitNormal * 4 + Up()+ Up(),centerpoint,50);
+    if(YOf(FacingDirectionOf())< -0.2)
+    {
+        initNormal = Up();
+        downwardsTracking();
+
+    }
+    else
+    {
+        initNormal = hitNormal * Vector(1,0,1);
+        normalTracking();
+
+    }
+    if(DistanceBetween(centerpoint,FirstOf(SortedArray(landingpos,DistanceBetween(centerpoint,ArrayElement())))) < 3 )
+    SmallMessage(AllPlayers(),"Landed");
+    //landingpos[CountOf(landingpos)] = centerpoint;
+    Wait(1.5);
+    StopCamera();
+    AllowButton(eventPlayer,Button.Ultimate);
+    
+}
+
+void downwardsTracking()
+{
+    for(define ultDuration =0; 188; 1)
+    {
+        pointPos = RayCastHitPosition(centerpoint+initNormal*radius,centerpoint+initNormal*-1*0.5, eventPlayer, null, true);
+        initNormal = RayCastHitNormal(pointPos + initNormal * 0.3, pointPos + initNormal * -1 * 1,eventPlayer,null, true);
+        centerpoint = pointPos + hitNormal * radius * -1;
+        Wait(0.016)
+    }
+    
+}
+
+void normalTracking()
+{
+    for(define ultDuration =0; 188; 1)
+    {
+        if(ultDuration > 160)
+        {
+            pointPos = RayCastHitPosition(centerpoint + initNormal * 2, centerpoint + initNormal * -1 * 2, eventPlayer, null, true);
+            hitNormal = RayCastHitNormal(pointPos + initNormal * 0.3, pointPos + initNormal * -1 * 1,, eventPlayer, null, true);
+            centerpoint = pointPos + hitNormal * radius *-1;
+        }
+        else
+        {
+            pointPos = RayCastHitPosition(centerpoint + initNormal * 1, centerpoint + initNormal * -1 * 1, eventPlayer, null, true);
+            hitNormal = RayCastHitNormal(pointPos + initNormal * 0.3, pointPos + initNormal * -1 * 1,, eventPlayer, null, true);
+            centerpoint = pointPos + hitNormal * radius *-1;
+        }
+        Wait(0.016);
+    }
+}
+
+define eventPlayer: EventPlayer();

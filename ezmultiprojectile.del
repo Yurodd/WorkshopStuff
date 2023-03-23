@@ -1,0 +1,72 @@
+playervar define pos = EmptyArray();
+playervar define prev_pos = EmptyArray();
+playervar define dir = EmptyArray();
+playervar define rate = 0.016 * 20;
+playervar define radius = 0.5;
+playervar define lastsphere;
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+
+        pos[CountOf(pos)] = EyePosition()+FacingDirectionOf()*1;
+        prev_pos[CountOf(prev_pos)] = EyePosition()+FacingDirectionOf()*1;
+        dir[CountOf(dir)] = FacingDirectionOf();
+
+    //allDir[CountOf(allDir)] = AngleBetweenVectors(centerPos,allPos[CountOf(allPos)-1]);
+
+    Damage(EventPlayer(),EventPlayer(),CountOf(pos));
+    
+}
+
+rule: "Pathfind to cursor." //
+Event.OnDamageTaken
+{
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,pos[EventDamage()-1],radius,EffectRev.VisibleToPositionAndRadius);
+    lastsphere[CountOf(lastsphere)] = LastCreatedEntity();
+    //CreateEffect(AllPlayers(),Effect.Orb,Color.Red,pos[EventDamage()-1] + dir[EventDamage()-1]* (radius + rate),0.2,EffectRev.VisibleToPositionAndRadius);
+    Heal(EventPlayer(),null,EventDamage()+1);
+}
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (CountOf(pos)>0)
+{
+    for(define current = 0;CountOf(pos); 1)
+    {
+        if(!IsInLineOfSight(pos[current] + dir[current]* -(0.001),pos[current] + dir[current]* (radius + rate))) 
+        {
+        dir[current] = dir[current] - 2 * DotProduct(dir[current],RayCastHitNormal(pos[current],pos[current] + dir[current]*(radius + rate)))*RayCastHitNormal(pos[current],pos[current] + dir[current]*(radius + rate));
+        }
+        pos[current] = RayCastHitPosition(pos[current],pos[current] + dir[current]  *  rate);
+        if(DistanceBetween(EventPlayer(),pos[current]) > 100)
+        {
+        pos[current] = RayCastHitPosition(EyePosition(),EyePosition() + dir[current]  *  rate);
+        }
+       
+    }
+    MinWait();
+    LoopIfConditionIsTrue();
+    
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+{
+    CreateHudText(AllPlayers(),ServerLoad());
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Melee))
+{ 
+    pos = EmptyArray();
+    dir = EmptyArray();
+    for(define current = 0;CountOf(lastsphere); 1)
+    {
+        DestroyEffect(lastsphere[current]);
+    }
+    lastsphere = EmptyArray();
+}

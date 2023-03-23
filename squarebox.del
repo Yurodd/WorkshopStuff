@@ -1,0 +1,971 @@
+globalvar define middlepos;
+globalvar define dir;
+globalvar define rotationpos;
+globalvar define started;
+globalvar define u;
+globalvar define cos_a;
+globalvar define sin_b;
+globalvar define radius = 0.01;
+globalvar define cos_up;
+globalvar define sin_up;
+globalvar define cos_down;
+globalvar define sin_down;
+globalvar define left;
+globalvar define right;
+globalvar define up;
+globalvar define down;
+globalvar define randomspot;
+globalvar define randomlookspot;
+globalvar define allines;
+globalvar define health = 10000;
+globalvar define maxhealth = health;
+globalvar define laserlines;
+globalvar define prevhealth = health;
+globalvar define effectid = EmptyArray();
+globalvar define stage = 1;
+globalvar define spawned;
+globalvar define attacking=0;
+globalvar define randomenemy;
+globalvar define invuln=false;
+globalvar define aimspot;
+globalvar define hearbeatradius=0.2;
+globalvar define startingeffectid;
+globalvar define isdead = false;
+globalvar define lasereffectid;
+globalvar define startlaserlines;
+playervar define countofdeaths=0;
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if (IsGameInProgress())
+{
+
+    dir = Vector(0,0,0);
+    //middlepos = EyePosition() + (dir*5);
+    middlepos = Vector(0,10,0);
+    rotationpos = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[0],allines[0]+DirectionTowards(middlepos,allines[0])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[1],allines[1]+DirectionTowards(middlepos,allines[1])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[2],allines[2]+DirectionTowards(middlepos,allines[2])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[3],allines[3]+DirectionTowards(middlepos,allines[3])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[4],allines[4]+DirectionTowards(middlepos,allines[4])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[5],allines[5]+DirectionTowards(middlepos,allines[5])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[6],allines[6]+DirectionTowards(middlepos,allines[6])*100,Color.Red);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,allines[7],allines[7]+DirectionTowards(middlepos,allines[7])*100,Color.Red);
+    CreateInWorldText(AllPlayers(),health,middlepos,1);
+    CreateEffect(FilteredArray(AllPlayers(),!invuln),Effect.Sparkles,Color.Purple,middlepos,0.5);
+    startingeffectid[0] = LastCreatedEntity();
+    CreateEffect(FilteredArray(AllPlayers(),!invuln),Effect.Cloud,Color.Purple,middlepos,0.5);
+    startingeffectid[1] = LastCreatedEntity();
+    CreateEffect(FilteredArray(AllPlayers(),!invuln),Effect.Sphere,Color.Purple,middlepos,hearbeatradius);
+    startingeffectid[2] = LastCreatedEntity();
+
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[0],allines[1]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[1],allines[2]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[2],allines[3]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[3],allines[0]);
+
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[4],allines[5]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[5],allines[6]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[6],allines[7]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[7],allines[4]);
+
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[0],allines[4]+Vector(0,0,0.001));
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[1],allines[5]+Vector(0,0,0.001));
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[3],allines[7]+Vector(0,0,0.001));
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allines[2],allines[6]+Vector(0,0,0.001));
+
+
+     
+    radius = 0.01;
+    started = true;
+    Wait(1);
+    ChaseVariableOverTime(radius,0.5,8,TimeChaseReevaluation.DestinationAndDuration);
+    randomspot = Vector(RandomReal(-20,20),RandomReal(0,10),RandomReal(-20,20));
+    randomlookspot = Vector(RandomReal(-20,20),RandomReal(0,10),RandomReal(-20,20));
+    ChaseVariableAtRate(rotationpos,randomlookspot,8,RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if (started)
+{
+    //     // o---------1     
+    //     // |         |
+    //     // |         |
+    //     // |         |
+    //     // 3---------2
+
+    //     // 4---------5
+    //     // |         |
+    //     // |         |
+    //     // |         |
+    //     // 7---------6
+
+    //rotationpos = EyePosition(ClosestPlayerTo(Vector(0,0,0))) + (FacingDirectionOf(ClosestPlayerTo(Vector(0,0,0)))*distance); 
+    u=CrossProduct(DirectionTowards(middlepos,rotationpos),CrossProduct(DirectionTowards(middlepos,rotationpos),Left()));
+    cos_up = radius*CosineFromDegrees(90)*Normalize(CrossProduct(DirectionTowards(middlepos,rotationpos),Left()));
+    sin_up = radius*SineFromDegrees(90)*u;
+    cos_down = radius*CosineFromDegrees(270)*Normalize(CrossProduct(DirectionTowards(middlepos,rotationpos),Left()));
+    sin_down = radius*SineFromDegrees(270)*u;
+    up = (rotationpos + cos_up + sin_up);
+    down = (rotationpos + cos_down + sin_down);
+
+    cos_a = radius*CosineFromDegrees(0)*Normalize(CrossProduct(DirectionTowards(middlepos,rotationpos),Left()));
+    //sin_b = radius*SineFromDegrees(0)*u;
+    sin_b = Vector(0,0,0);
+    allines[0] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*radius + DirectionTowards(middlepos,(middlepos + cos_up + sin_up))*radius;
+    allines[3] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*-radius + DirectionTowards(middlepos,(middlepos + cos_up + sin_up))*radius;
+    allines[4] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*radius + DirectionTowards(middlepos,(middlepos + cos_down + sin_down))*radius;
+    allines[7] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*-radius + DirectionTowards(middlepos,(middlepos + cos_down + sin_down))*radius;
+    left = (rotationpos + cos_a + sin_b);
+
+    cos_a = radius*CosineFromDegrees(180)*Normalize(CrossProduct(DirectionTowards(middlepos,rotationpos),Left()));
+    sin_b = radius*SineFromDegrees(180)*u;
+    allines[1] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*radius + DirectionTowards(middlepos,(middlepos + cos_up + sin_up))*radius;
+    allines[2] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*-radius + DirectionTowards(middlepos,(middlepos + cos_up + sin_up))*radius;
+    allines[5] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*radius + DirectionTowards(middlepos,(middlepos + cos_down + sin_down))*radius;
+    allines[6] = (middlepos + cos_a + sin_b) + DirectionTowards(middlepos,rotationpos)*-radius + DirectionTowards(middlepos,(middlepos + cos_down + sin_down))*radius;
+    right = (rotationpos + cos_a + sin_b);
+    
+    if(attacking!=2 && attacking!=3 && attacking!=4)
+    {
+       startlaserlines[0] = allines[0];
+       startlaserlines[1] = allines[1];
+       startlaserlines[2] = allines[2];
+       startlaserlines[3] = allines[3];
+       startlaserlines[4] = allines[4];
+       startlaserlines[5] = allines[5];
+       startlaserlines[6] = allines[6];
+       startlaserlines[7] = allines[7];
+        laserlines[0] = RayCastHitPosition(allines[0],allines[0]+DirectionTowards(middlepos,allines[0])*100,null,null);
+        laserlines[1] = RayCastHitPosition(allines[1],allines[1]+DirectionTowards(middlepos,allines[1])*100,null,null);
+        laserlines[2] = RayCastHitPosition(allines[2],allines[2]+DirectionTowards(middlepos,allines[2])*100,null,null);
+        laserlines[3] = RayCastHitPosition(allines[3],allines[3]+DirectionTowards(middlepos,allines[3])*100,null,null);
+        laserlines[4] = RayCastHitPosition(allines[4],allines[4]+DirectionTowards(middlepos,allines[4])*100,null,null);
+        laserlines[5] = RayCastHitPosition(allines[5],allines[5]+DirectionTowards(middlepos,allines[5])*100,null,null);
+        laserlines[6] = RayCastHitPosition(allines[6],allines[6]+DirectionTowards(middlepos,allines[6])*100,null,null);
+        laserlines[7] = RayCastHitPosition(allines[7],allines[7]+DirectionTowards(middlepos,allines[7])*100,null,null);
+    }
+
+
+
+    // left_up_forward = middlepos + (DirectionTowards(middlepos,rotationpos)*1) + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1 + CrossProduct(DirectionTowards(middlepos,rotationpos),DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos))))*1;
+    // right_up_forward = middlepos + (DirectionTowards(middlepos,rotationpos)*1) + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos))))*1;
+    // left_up_backwards = middlepos + (DirectionTowards(middlepos,rotationpos)*-1) + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos))))*1;
+    // right_up_backwards = middlepos + (DirectionTowards(middlepos,rotationpos)*-1) + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos))))*1;
+
+    // left_down_forward = middlepos + (DirectionTowards(middlepos,rotationpos)*1) +DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),CrossProduct(DirectionTowards(middlepos,rotationpos),Left()))*1;
+    // right_down_forward = middlepos + (DirectionTowards(middlepos,rotationpos)*1) +DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),CrossProduct(DirectionTowards(middlepos,rotationpos),Left()))*1;
+    // left_down_backwards = middlepos + (DirectionTowards(middlepos,rotationpos)*-1) +DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),CrossProduct(DirectionTowards(middlepos,rotationpos),Left()))*1;
+    // right_down_backwards = middlepos + (DirectionTowards(middlepos,rotationpos)*-1) +DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+-90,VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)))*1+ CrossProduct(DirectionTowards(middlepos,rotationpos),CrossProduct(DirectionTowards(middlepos,rotationpos),Left()))*1;
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if (radius == 0.5)
+{
+    Wait(1);
+    health = health * CountOf(AllPlayers());
+    DestroyEffect(startingeffectid[0]);
+    DestroyEffect(startingeffectid[1]);
+    spawned=true;
+}
+
+rule: "Pathfind to cursor." //
+Event.OnPlayerJoin
+if (spawned)
+{
+    health = health + 5000;
+}
+
+rule: "Pathfind to cursor." //
+Event.OnPlayerLeave
+if (spawned)
+{
+    health = health - 5000;
+}
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if (started&&stage==2)
+{
+    radius = 35;
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.2,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*0.2);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.4,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*0.4);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.6,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*0.6);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.8,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*0.8);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*1);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.2,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*1.2);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.4,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*1.4);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.6,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*1.6);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.8,allines[4]+Vector(0,0,0.001)+DirectionTowards(allines[4],allines[5])*radius*1.8);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+Wait(0.5);
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*0.2,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*0.2,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*0.4,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*0.4,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*0.6,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*0.6,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*0.8,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*0.8,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*1,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*1,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*1.2,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*1.2,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*1.4,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*1.4,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*1.6,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*1.6,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[1]+DirectionTowards(allines[1],allines[2])*radius*1.8,allines[5]+Vector(0,0,0.001)+DirectionTowards(allines[5],allines[6])*radius*1.8,Color.Blue);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+Wait(0.5);
+        CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*0.2,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*0.2,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*0.4,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*0.4,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*0.6,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*0.6,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*0.8,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*0.8,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*1,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*1,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*1.2,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*1.2,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*1.4,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*1.4,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*1.6,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*1.6,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[2]+DirectionTowards(allines[2],allines[3])*radius*1.8,allines[6]+Vector(0,0,0.001)+DirectionTowards(allines[6],allines[7])*radius*1.8,Color.Red);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+Wait(0.5);
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*0.2,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*0.2,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*0.4,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*0.4,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*0.6,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*0.6,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*0.8,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*0.8,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*1,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*1,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*1.2,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*1.2,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*1.4,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*1.4,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*1.6,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*1.6,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[3]+DirectionTowards(allines[3],allines[0])*radius*1.8,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[4])*radius*1.8,Color.Green);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+  Wait(0.5);   
+                CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.2,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*0.2,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.4,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*0.4,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.6,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*0.6,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*0.8,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*0.8,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*1,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.2,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*1.2,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.4,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*1.4,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.6,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*1.6,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[0]+DirectionTowards(allines[0],allines[1])*radius*1.8,allines[3]+Vector(0,0,0.001)+DirectionTowards(allines[3],allines[2])*radius*1.8,Color.Yellow);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    Wait(0.5);
+                CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*0.2,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*0.2,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*0.4,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*0.4,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*0.6,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*0.6,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*0.8,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*0.8,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*1,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*1,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*1.2,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*1.2,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*1.4,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*1.4,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*1.6,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*1.6,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+    CreateBeamEffect(AllPlayers(),BeamType.BadBeam,allines[4]+DirectionTowards(allines[4],allines[5])*radius*1.8,allines[7]+Vector(0,0,0.001)+DirectionTowards(allines[7],allines[6])*radius*1.8,Color.Orange);
+    effectid[CountOf(effectid)]=LastCreatedEntity();
+
+
+Wait(0.25);
+
+      CreateEffect(AllPlayers(),Effect.Ring,Color.Orange,allines[0],radius*2);
+      CreateEffect(AllPlayers(),Effect.Ring,Color.Blue,allines[1],radius*2);
+      CreateEffect(AllPlayers(),Effect.Ring,Color.Aqua,allines[2],radius*2);
+       CreateEffect(AllPlayers(),Effect.Ring,Color.Red,allines[3],radius*2);    
+             CreateEffect(AllPlayers(),Effect.Ring,Color.LimeGreen,allines[4],radius*2);
+      CreateEffect(AllPlayers(),Effect.Ring,Color.Turquoise,allines[5],radius*2);
+      CreateEffect(AllPlayers(),Effect.Ring,Color.SkyBlue,allines[6],radius*2);
+       CreateEffect(AllPlayers(),Effect.Ring,Color.Purple,allines[7],radius*2);  
+
+       startlaserlines[0] = allines[0];
+       startlaserlines[1] = allines[1];
+       startlaserlines[2] = allines[2];
+       startlaserlines[3] = allines[3];
+       startlaserlines[4] = allines[4];
+       startlaserlines[5] = allines[5];
+       startlaserlines[6] = allines[6];
+       startlaserlines[7] = allines[7];
+        
+       ChaseVariableOverTime(radius,0.5,4,TimeChaseReevaluation.DestinationAndDuration);
+       Wait(4);
+
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[0],laserlines[0],Color.Red);
+    lasereffectid[0] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[1],laserlines[1],Color.Red);
+    lasereffectid[1] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[2],laserlines[2],Color.Red);
+    lasereffectid[2] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[3],laserlines[3],Color.Red);
+    lasereffectid[3] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[4],laserlines[4],Color.Red);
+    lasereffectid[4] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[5],laserlines[5],Color.Red);
+    lasereffectid[5] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[6],laserlines[6],Color.Red);
+    lasereffectid[6] = LastCreatedEntity();
+    Wait(0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,startlaserlines[7],laserlines[7],Color.Red);
+    lasereffectid[7] = LastCreatedEntity();
+    spawned = true;
+    ChaseVariableAtRate(middlepos,randomspot,7,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(rotationpos,randomlookspot,10,RateChaseReevaluation.DestinationAndRate);
+}
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingGlobal
+// if (started)
+// {
+
+
+//     // o---------1     
+//     // |         |
+//     // |         |
+//     // |         |
+//     // 3---------2
+
+//     // 4---------5
+//     // |         |
+//     // |         |
+//     // |         |
+//     // 7---------6
+
+
+
+rule: "Pathfind to cursor." // Start chasing
+Event.OngoingGlobal
+if (started&&spawned)
+{
+    randomspot = Vector(RandomReal(-20,20),RandomReal(0,10),RandomReal(-20,20));
+    randomlookspot = Vector(RandomReal(-20,20),RandomReal(0,10),RandomReal(-20,20));
+    ChaseVariableAtRate(rotationpos,randomlookspot,8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Pathfind to cursor." //  Heartbeat
+Event.OngoingGlobal
+if (health > 0&&spawned && !invuln && !isdead)
+{
+    PlayEffect(AllPlayers(),PlayEffect.DebuffImpactSound,Color.Aqua,middlepos,40);
+    ChaseVariableOverTime(hearbeatradius,0.4,0.05,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(0.25);
+    ChaseVariableOverTime(hearbeatradius,0.2,0.1,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(1);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //  Death count
+Event.OnDeath
+{
+if(countofdeaths<10)
+{
+countofdeaths++;
+}
+DisableRespawning();
+SmallMessage(EventPlayer(),<"Respawn Time: <0>s",1+countofdeaths>);
+Wait(1+countofdeaths);
+EnableRespawning();
+}
+
+
+rule: "Pathfind to cursor." // Main movement
+Event.OngoingGlobal
+if (middlepos == randomspot && spawned && health > 0)
+{
+    attacking =0;
+    randomspot = Vector(RandomReal(-15,15),RandomReal(1,15),RandomReal(-15,15));
+    ChaseVariableAtRate(middlepos,randomspot,7,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(rotationpos,randomlookspot,8,RateChaseReevaluation.DestinationAndRate);
+
+    define randomchance = RandomReal(0,1);
+    define esp;
+    if(stage == 1)
+     esp = 0.2;
+    else
+     esp = 0.1;
+        if(randomchance <= esp)
+        {
+            StopChasingVariable(rotationpos);
+            StopChasingVariable(middlepos);
+            attacking = 1;
+            randomenemy = RandomValueInArray(FilteredArray(AllPlayers(),IsAlive(ArrayElement())&&!IsDummyBot(ArrayElement()))); 
+            ChaseVariableAtRate(rotationpos,EyePosition(randomenemy),60,RateChaseReevaluation.DestinationAndRate);
+            invuln = true;
+            Wait(RandomReal(0.2,2));
+            invuln = false;
+            define t;
+            define a = 50 * 50 - DotProduct(VelocityOf(randomenemy),VelocityOf(randomenemy));
+            define b = DotProduct(VelocityOf(randomenemy),EyePosition(randomenemy)-middlepos);
+            define c = DotProduct(EyePosition(randomenemy)-middlepos,EyePosition(randomenemy)-middlepos);
+
+            define d = b*b + a*c;
+
+            if (d >= 0)
+            {
+                t = (b + SquareRoot(d)) / a;
+                if (t < 0)
+                    t = 0;
+            }
+
+                aimspot = EyePosition(randomenemy) + VelocityOf(randomenemy) * t;
+                // aimspot = EyePosition(randomenemy) + VelocityOf(randomenemy) * t + 0.5*Vector(0,9.81,0)*t^2;  LEAD WITH GRAVITY
+                //randomspot = RayCastHitPosition(middlepos,middlepos+DirectionTowards(middlepos,EyePosition(randomenemy)+Normalize(VelocityOf(randomenemy))*DistanceBetween(middlepos,EyePosition(randomenemy))/(SpeedOf(randomenemy)+1))*100,null,null);
+                randomspot = RayCastHitPosition(middlepos,aimspot+DirectionTowards(middlepos,aimspot)*100,null,null);
+                PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Yellow,middlepos,2);
+                PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Red,middlepos,2);
+                PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Red,middlepos,5);
+                ChaseVariableAtRate(middlepos,randomspot,50,RateChaseReevaluation.DestinationAndRate);
+        }     
+}
+
+rule: "Pathfind to cursor." // Global rng
+Event.OngoingGlobal
+if (attacking==0 && spawned && health > 0)
+{
+    Wait(0.7);
+     define esps;
+    if(stage == 1)
+     esps = 15;
+    else
+     esps = 10;
+    define random = RandomInteger(0,esps);
+    if(random == 1)
+    attacking = RandomInteger(2,4);
+    LoopIfConditionIsTrue();
+}
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingGlobal
+// if (attacking==0 && spawned && health > 0)
+// {
+//     Wait(1);
+//     define random = RandomInteger(0,20)
+//     if(random == 1)
+//     attacking = RandomInteger(2,2);
+//     LoopIfConditionIsTrue();
+// }
+
+
+
+rule: "Pathfind to cursor." // rotatiopos reset
+Event.OngoingGlobal
+if (rotationpos == randomlookspot)
+{
+    randomlookspot = middlepos+Vector(RandomReal(-5,5),RandomReal(-5,5),RandomReal(-5,5));
+}
+
+
+rule: "Pathfind to cursor." // Cube hit players
+Event.OngoingPlayer
+if (HasSpawned() && DistanceBetween(EyePosition(),middlepos)<=1 && health > 0 && IsAlive(EventPlayer())&& !isdead && !IsDummyBot())
+{
+    ApplyImpulse(EventPlayer(),DirectionTowards(middlepos,EyePosition()+Vector(0,0.6,0)),30);
+    Damage(EventPlayer(),null,70);
+    randomspot = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+    ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+    attacking = 0;  
+}
+
+rule: "Pathfind to cursor." // Cube teleport
+Event.OngoingPlayer
+if (HasSpawned() &&!IsDummyBot()&&DistanceBetween(EyePosition()+FacingDirectionOf()*DistanceBetween(EyePosition(),middlepos),middlepos) <= 1 && health > 0 && !invuln && attacking == 0 && spawned)
+{
+    define esp;
+    if(stage == 1)
+     esp = 25;
+    else
+     esp = 32;
+    define random = RandomInteger(0,esp);
+    if(random == 1)
+    {
+        PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Yellow,middlepos,5);
+        middlepos = EyePosition() + Vector(0,2,0);
+        PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Yellow,middlepos,5);
+        randomspot = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+        ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+        ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+    }
+}
+
+rule: "Pathfind to cursor." // Cube dodging
+Event.OngoingPlayer
+if (HasSpawned() && !IsDummyBot()&&DistanceBetween(EyePosition()+FacingDirectionOf()*DistanceBetween(EyePosition(),middlepos),middlepos) <= 1 && health > 0 && !invuln && spawned)
+{
+    define random = RandomInteger(0,8);
+    if(random <= 1 && attacking ==0)
+    {
+        PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Yellow,middlepos,5);
+        define randomdir = [WorldVectorOf(Left(),EventPlayer()),WorldVectorOf(Right(),EventPlayer()),WorldVectorOf(Up(),EventPlayer()),WorldVectorOf(Down(),EventPlayer())];
+        randomspot = RayCastHitPosition(middlepos,middlepos + RandomValueInArray(randomdir)+Vector(0,0,0.001) * 4.5);
+        ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+        ChaseVariableAtRate(middlepos,randomspot,20,RateChaseReevaluation.DestinationAndRate);
+    }
+    if(random > 4 && attacking ==0)
+    {
+        define randomdir = [WorldVectorOf(Left(),EventPlayer()),WorldVectorOf(Right(),EventPlayer()),WorldVectorOf(Up(),EventPlayer()),WorldVectorOf(Down(),EventPlayer())];
+        randomspot = RayCastHitPosition(middlepos,middlepos + RandomValueInArray(randomdir)+Vector(0,0,0.001) * 3);
+        ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+        ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+    }
+}
+
+
+rule: "Pathfind to cursor." // Stage 2 attack 2 - laser tentacle
+Event.OngoingGlobal
+if (attacking==2 && stage ==2 && spawned)
+{
+   StopChasingVariable(rotationpos);
+    StopChasingVariable(middlepos);
+    randomenemy = RandomValueInArray(FilteredArray(AllPlayers(),IsAlive(ArrayElement())&&!IsDummyBot(ArrayElement())));
+    randomspot = EyePosition(randomenemy); 
+    Wait(RandomInteger(3,4));
+    attacking = 0;
+    randomspot = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+    ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Pathfind to cursor." // // Stage 2 attack 2- laser tentacle
+Event.OngoingGlobal
+if (attacking==2 && stage ==2 && spawned)
+{
+    define rate = 0.8;
+    laserlines[0] = laserlines[0] + DirectionTowards(laserlines[0],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot + WorldVectorOf(Left()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[1] = laserlines[1] + DirectionTowards(laserlines[1],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Right()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[2] = laserlines[2] + DirectionTowards(laserlines[2],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Forward()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[3] = laserlines[3] + DirectionTowards(laserlines[3],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Backward()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[4] = laserlines[4] + DirectionTowards(laserlines[4],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Left()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[5] = laserlines[5] + DirectionTowards(laserlines[5],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Right()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[6] = laserlines[6] + DirectionTowards(laserlines[6],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Forward()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    laserlines[7] = laserlines[7] + DirectionTowards(laserlines[7],RayCastHitPosition(middlepos,middlepos + DirectionTowards(middlepos,randomspot+ WorldVectorOf(Backward()*RandomInteger(1,4),randomenemy)) * 100,null,null)) * rate;
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+    
+}
+
+rule: "Pathfind to cursor." // Stage 1 attack 2
+Event.OngoingGlobal
+if (attacking==2 && stage ==1 && spawned)
+{
+    StopChasingVariable(rotationpos);
+    StopChasingVariable(middlepos);
+    invuln = true;
+    Wait(RandomReal(0.2,2));
+    ChaseVariableAtRate(rotationpos,randomlookspot,80,RateChaseReevaluation.DestinationAndRate);
+    define spotcount = RandomInteger(2,5);
+    define spotpos;
+    define entity;
+    CreateEffect(AllPlayers(),Effect.LightShaft,Color.Red,spotpos,3);
+    entity = LastCreatedEntity();
+    while (spotcount != 0 )
+    {   
+            
+            define randomppl = RandomValueInArray(FilteredArray(AllPlayers(),IsAlive(ArrayElement())&&!IsDummyBot(ArrayElement())));
+            define t;
+            define a = 50 * 50 - DotProduct(VelocityOf(randomppl),VelocityOf(randomppl));
+            define b = DotProduct(VelocityOf(randomppl),PositionOf(randomppl)-middlepos);
+            define c = DotProduct(PositionOf(randomppl)-middlepos,PositionOf(randomppl)-middlepos);
+
+            define d = b*b + a*c;
+
+            if (d >= 0)
+            {
+                t = (b + SquareRoot(d)) / a;
+                if (t < 0)
+                    t = 0;
+            }
+
+                spotpos = PositionOf(randomppl) + VelocityOf(randomppl) * t;
+        SmallMessage(randomppl,"DANGER!") ;
+        Wait(1);
+        define allplayers = FilteredArray(AllPlayers(),IsAlive(ArrayElement())&&DistanceBetween(ArrayElement(),spotpos)<=3&&!IsDummyBot(ArrayElement()));
+        define closestplayer = FirstOf(SortedArray(allplayers,DistanceBetween(ArrayElement(),middlepos)));
+        if(CountOf(allplayers)>0)
+        {
+        spotcount =0;
+        ApplyImpulse(allplayers,Vector(0,1,0),20);
+        Damage(allplayers,null,30);
+        Wait(0.05);
+        ChaseVariableAtRate(rotationpos,closestplayer,10,RateChaseReevaluation.DestinationAndRate);
+            if(IsAlive(closestplayer))
+            {
+
+                 a = 70 * 70 - DotProduct(VelocityOf(closestplayer),VelocityOf(closestplayer));
+                 b = DotProduct(VelocityOf(closestplayer),closestplayer-middlepos);
+                 c = DotProduct(closestplayer-middlepos,closestplayer-middlepos);
+
+                 d = b*b + a*c;
+
+                if (d >= 0)
+                {
+                    t = (b + SquareRoot(d)) / a;
+                    if (t < 0)
+                        t = 0;
+                }
+
+                    aimspot = closestplayer+Vector(0,0.5,0) + VelocityOf(closestplayer) * t;
+                    // aimspot = EyePosition(randomenemy) + VelocityOf(randomenemy) * t + 0.5*Vector(0,9.81,0)*t^2;  LEAD WITH GRAVITY
+                    //randomspot = RayCastHitPosition(middlepos,middlepos+DirectionTowards(middlepos,EyePosition(randomenemy)+Normalize(VelocityOf(randomenemy))*DistanceBetween(middlepos,EyePosition(randomenemy))/(SpeedOf(randomenemy)+1))*100,null,null);
+                    randomspot = RayCastHitPosition(middlepos,aimspot+DirectionTowards(middlepos,aimspot)*100,null,null);
+                    PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Yellow,middlepos,2);
+                    PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Red,middlepos,2);
+                    PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Red,middlepos,5);
+                    ChaseVariableAtRate(middlepos,randomspot,70,RateChaseReevaluation.DestinationAndRate);
+                    invuln = false;
+                    DestroyEffect(entity);
+                    Abort();
+            }
+        }
+        else
+        {
+            spotcount--;
+        }
+        Wait(0.016);
+    }
+    DestroyEffect(entity);
+    invuln = false;
+    attacking =0;
+    randomspot = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+    ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+}
+
+
+rule: "Pathfind to cursor." // Stage 2 attack 3 
+Event.OngoingGlobal
+if ((attacking==3 ||attacking==4)&& stage ==2 && spawned)
+{
+    ChaseVariableAtRate(rotationpos,Vector(0,0,0),8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,Vector(0,1,0),8,RateChaseReevaluation.DestinationAndRate);
+
+    startlaserlines[0] = Vector();
+    startlaserlines[1] = Vector();
+    startlaserlines[2] = Vector();
+    startlaserlines[3] = Vector();
+    startlaserlines[4] = Vector();
+    startlaserlines[5] = Vector();
+    startlaserlines[6] = Vector();
+    startlaserlines[7] = Vector();
+    
+}
+
+rule: "Pathfind to cursor." // Stage 2 attack 3 
+Event.OngoingGlobal
+if (attacking==3 && stage ==2 && middlepos == Vector(0,1,0) && spawned)
+{
+    StopChasingVariable(middlepos);
+    StopChasingVariable(rotationpos);
+
+    
+    // lasereffectid = EmptyArray();
+    Wait(1);
+    define randomheight = [middlepos+ Vector(0,0.5,0),middlepos + Vector(0,-0.5,0)];
+    startlaserlines[0] = RandomValueInArray(randomheight);
+    startlaserlines[1] = RandomValueInArray(randomheight);
+    startlaserlines[2] = RandomValueInArray(randomheight);
+    startlaserlines[3] = RandomValueInArray(randomheight);
+    laserlines[4] = 0;
+    laserlines[5] = 0;
+    laserlines[6] = 0;
+    laserlines[7] = 0;
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,middlepos , laserlines[0],Color.Red);
+    // lasereffectid[0] = LastCreatedEntity();
+    // Wait(0.1);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,,middlepos + DirectionTowards(middlepos,rotationpos) * -0.5,middlepos + DirectionTowards(middlepos,rotationpos) * -100,Color.Red);
+    // lasereffectid[1] = LastCreatedEntity();
+    // Wait(0.1);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,middlepos + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) + 90, VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) ) * 0.5,middlepos + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos))+ 90, VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) ) * 100,Color.Red);
+    // lasereffectid[2] = LastCreatedEntity();
+    // Wait(0.1);
+    // CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,middlepos + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) + -90, VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) ) * 0.5,middlepos + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) + -90, VerticalAngleFromDirection(DirectionTowards(middlepos,rotationpos)) ) * 100,Color.Red);
+    // lasereffectid[3] = LastCreatedEntity();
+    // Wait(0.1);
+    rotationpos = Vector(0,0,0);
+    define i;
+    define randomturns = RandomInteger (360,80);
+    for(i = 0; i < randomturns; )
+    {
+         i = i + 3;
+         ChaseVariableAtRate(rotationpos,  Vector(0,0,0) + DirectionFromAngles(i,VerticalAngleFromDirection(Vector(0,0,0))) * 1 + Vector(0,1,0),10,RateChaseReevaluation.DestinationAndRate);
+         laserlines[0] = startlaserlines[0] + DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[0]),0),rotationpos+Vector(0,YOf(startlaserlines[0]),0)) * i/10;
+         laserlines[1] = startlaserlines[1] + DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[1]),0),rotationpos+Vector(0,YOf(startlaserlines[1]),0)) * -i/10;
+         laserlines[2] = startlaserlines[2] + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[2]),0),rotationpos+Vector(0,YOf(startlaserlines[2]),0)))+ 90, VerticalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[2]),0),rotationpos+Vector(0,YOf(startlaserlines[2]),0))) ) * i/10;
+         laserlines[3] = startlaserlines[3] + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[3]),0),rotationpos+Vector(0,YOf(startlaserlines[3]),0)))+ -90, VerticalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[3]),0),rotationpos+Vector(0,YOf(startlaserlines[3]),0))) ) * i/10;
+         if(health <=0)
+         {
+             attacking = 0;
+             Abort();
+         }
+    }
+    attacking = 0;
+    randomspot = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+    ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Pathfind to cursor." // Stage 2 attack 4 
+Event.OngoingGlobal
+if (attacking==4 && stage ==2 && middlepos == Vector(0,1,0) && spawned)
+{
+    StopChasingVariable(middlepos);
+    StopChasingVariable(rotationpos);
+
+    
+    // lasereffectid = EmptyArray();
+    Wait(1);
+    define randomheight = [middlepos+ Vector(0,0.5,0),middlepos + Vector(0,-0.5,0)];
+    startlaserlines[0] = middlepos+ Vector(0,0.5,0);
+    startlaserlines[1] = middlepos+ Vector(0,0.5,0);
+    startlaserlines[2] = middlepos+ Vector(0,0.5,0);
+    startlaserlines[3] = middlepos+ Vector(0,0.5,0);
+
+    startlaserlines[4] = middlepos + Vector(0,-0.5,0);
+    startlaserlines[5] = middlepos + Vector(0,-0.5,0);
+    startlaserlines[6] = middlepos + Vector(0,-0.5,0);
+    startlaserlines[7] = middlepos + Vector(0,-0.5,0);
+
+
+    rotationpos = Vector(0,0,0);
+    define i;
+    define randomturns = RandomInteger (360,800);
+    for(i = 0; i < randomturns; )
+    {
+         i = i + 2;
+         ChaseVariableAtRate(rotationpos,  Vector(0,0,0) + DirectionFromAngles(i,VerticalAngleFromDirection(Vector(0,0,0))) * 1 + Vector(0,1,0),10,RateChaseReevaluation.DestinationAndRate);
+         laserlines[0] = startlaserlines[0] + DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[0]),0),rotationpos+Vector(0,YOf(startlaserlines[0]),0)) * i/10;
+         laserlines[1] = startlaserlines[1] + DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[1]),0),rotationpos+Vector(0,YOf(startlaserlines[1]),0)) * -i/10;
+         laserlines[2] = startlaserlines[2] + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[2]),0),rotationpos+Vector(0,YOf(startlaserlines[2]),0)))+ 90, VerticalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[2]),0),rotationpos+Vector(0,YOf(startlaserlines[2]),0))) ) * i/10;
+         laserlines[3] = startlaserlines[3] + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[3]),0),rotationpos+Vector(0,YOf(startlaserlines[3]),0)))+ -90, VerticalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[3]),0),rotationpos+Vector(0,YOf(startlaserlines[3]),0))) ) * i/10;
+         
+         laserlines[4] = startlaserlines[4] + DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[4]),0),rotationpos+Vector(0,YOf(startlaserlines[4]),0)) * i/10;
+         laserlines[5] = startlaserlines[5] + DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[5]),0),rotationpos+Vector(0,YOf(startlaserlines[5]),0)) * -i/10;
+         laserlines[6] = startlaserlines[6] + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[6]),0),rotationpos+Vector(0,YOf(startlaserlines[6]),0)))+ 90, VerticalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[6]),0),rotationpos+Vector(0,YOf(startlaserlines[6]),0))) ) * i/10;
+         laserlines[7] = startlaserlines[7] + DirectionFromAngles(HorizontalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[7]),0),rotationpos+Vector(0,YOf(startlaserlines[7]),0)))+ -90, VerticalAngleFromDirection(DirectionTowards(middlepos+Vector(0,YOf(startlaserlines[7]),0),rotationpos+Vector(0,YOf(startlaserlines[7]),0))) ) * i/10;
+         if(health <=0)
+         {
+             attacking = 0;
+             Abort();
+         }
+    }
+    attacking = 0;
+    randomspot = Vector(RandomReal(-10,10),RandomReal(0,10),RandomReal(-10,10));
+    ChaseVariableAtRate(rotationpos,randomspot,8,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,randomspot,4,RateChaseReevaluation.DestinationAndRate);
+}
+
+
+rule: "Pathfind to cursor." // laser hit players
+Event.OngoingPlayer
+if (IsTrueForAny(laserlines,RayCastHitPlayer(ValueInArray(startlaserlines,IndexOfArrayValue(laserlines,ArrayElement())),ArrayElement(),AllPlayers(),null) == EventPlayer()) && health > 0 && stage==2 && !isdead&&!IsDummyBot())
+{
+    SetStatus(EventPlayer(),null,Status.Burning,1);
+    StartDamageOverTime(EventPlayer(),null,2,45);
+    Wait(2);
+}
+
+// rule: "Pathfind to cursor." // laser hit players
+// Event.OngoingPlayer
+// if (IsTrueForAny(laserlines,DotProduct(DirectionTowards(ValueInArray(startlaserlines,IndexOfArrayValue(laserlines,ArrayElement())),ArrayElement()), DirectionTowards(ValueInArray(startlaserlines,IndexOfArrayValue(laserlines,ArrayElement())),EyePosition())) > 0.99 && DotProduct(DirectionTowards(ValueInArray(startlaserlines,IndexOfArrayValue(laserlines,ArrayElement())),ArrayElement()), DirectionTowards(ValueInArray(startlaserlines,IndexOfArrayValue(laserlines,ArrayElement())),EyePosition())) <= 1) && health > 0 && stage==2 && !isdead)
+// {
+//     SetStatus(EventPlayer(),null,Status.Burning,1);
+//     StartDamageOverTime(EventPlayer(),null,2,25);
+//     Wait(2);
+// }
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if (IsAssemblingHeroes())
+{
+    SetMatchTime(1);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&IsGameInProgress()&&!IsDummyBot())
+{
+    // SetInvisible(EventPlayer(),InvisibleTo.All);
+    // StartCamera(EventPlayer(),middlepos,DirectionTowards(middlepos,rotationpos),100)
+    CreateHudText(EventPlayer(),ServerLoad());
+    CreateHudText(EventPlayer(),null,null,"Made By: Oddish",Location.Right,0,Color.Aqua,Color.SkyBlue,Color.SkyBlue);
+}
+
+rule: "Pathfind to cursor." // hit cube
+Event.OngoingPlayer
+if (!invuln && DistanceBetween(EyePosition()+FacingDirectionOf()*DistanceBetween(EyePosition(),middlepos),middlepos) <= 1 && IsFiringPrimary()&& health > 0 && IsGameInProgress()&&spawned&&!IsDummyBot())
+{
+    PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Red,EyePosition()+FacingDirectionOf()*DistanceBetween(EyePosition(),middlepos),0.3);
+    if(attacking == 3 || attacking == 4)
+    health = health - RandomReal(20,30);
+    else
+    health = health - RandomReal(20,90);
+    Wait(0.05);
+    LoopIfConditionIsTrue();
+}
+
+
+rule: "Pathfind to cursor." 
+Event.OngoingGlobal
+if (health <=0 && stage==1)
+{
+        Wait(0.1);
+        StopChasingVariable(rotationpos);
+        StopChasingVariable(middlepos);
+        health = 0;
+        spawned = false;
+        attacking = 0;
+        Wait(1);
+        ChaseVariableOverTime(radius,30,3,TimeChaseReevaluation.DestinationAndDuration);
+        Wait(3);
+        stage=2;
+        health=maxhealth;
+
+        prevhealth = health;
+
+}
+
+rule: "Pathfind to cursor." 
+Event.OngoingGlobal
+if (health <=0 && stage==2)
+{   spawned = false;
+    Wait(1.1);
+    health =0;
+    StopChasingVariable(rotationpos);
+    StopChasingVariable(middlepos);
+    //started = false;
+    DestroyEffect(lasereffectid[0]);
+    DestroyEffect(lasereffectid[1]);
+    DestroyEffect(lasereffectid[2]);
+    DestroyEffect(lasereffectid[3]);
+    DestroyEffect(lasereffectid[4]);
+    DestroyEffect(lasereffectid[5]);
+    DestroyEffect(lasereffectid[6]);
+    DestroyEffect(lasereffectid[7]);
+
+    PlayEffect(AllPlayers(),PlayEffect.DebuffImpactSound,Color.Aqua,middlepos,50);
+    ChaseVariableOverTime(hearbeatradius,0.45,0.05,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(0.25);
+    ChaseVariableOverTime(hearbeatradius,0.2,0.1,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(1);
+
+    PlayEffect(AllPlayers(),PlayEffect.DebuffImpactSound,Color.Aqua,middlepos,40);
+    ChaseVariableOverTime(hearbeatradius,0.4,0.05,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(0.25);
+    ChaseVariableOverTime(hearbeatradius,0.2,0.1,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(1);
+
+        PlayEffect(AllPlayers(),PlayEffect.DebuffImpactSound,Color.Aqua,middlepos,30);
+    ChaseVariableOverTime(hearbeatradius,0.35,0.05,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(0.25);
+    ChaseVariableOverTime(hearbeatradius,0.2,0.1,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(1);
+
+        PlayEffect(AllPlayers(),PlayEffect.DebuffImpactSound,Color.Aqua,middlepos,20);
+    ChaseVariableOverTime(hearbeatradius,0.3,0.05,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(0.25);
+    ChaseVariableOverTime(hearbeatradius,0.2,0.1,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(1);
+
+        PlayEffect(AllPlayers(),PlayEffect.DebuffImpactSound,Color.Aqua,middlepos,10);
+    ChaseVariableOverTime(hearbeatradius,0.25,0.05,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(0.25);
+    ChaseVariableOverTime(hearbeatradius,0.2,0.1,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(2);
+
+    ChaseVariableOverTime(radius,0.01,4,TimeChaseReevaluation.DestinationAndDuration);
+    ChaseVariableOverTime(hearbeatradius,0.01,4,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(4);
+    PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Red,middlepos,30);
+    PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Aqua,middlepos,30);
+    PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Red,middlepos,30);
+    PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Orange,middlepos,30);
+    ChaseVariableOverTime(hearbeatradius,0.4,1,TimeChaseReevaluation.DestinationAndDuration);
+    CreateEffect(FilteredArray(AllPlayers(),!invuln),Effect.Sphere,Color.Aqua,middlepos,hearbeatradius);
+
+    ChaseVariableAtRate(rotationpos,randomlookspot,100,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableOverTime(radius,100,4,TimeChaseReevaluation.DestinationAndDuration);
+    Wait(2);
+    CreateEffect(AllPlayers(),Effect.Sparkles,Color.Aqua,middlepos,0.5);
+    CreateEffect(AllPlayers(),Effect.Sparkles,Color.Blue,middlepos,0.5);
+    CreateEffect(AllPlayers(),Effect.Sparkles,Color.SkyBlue,middlepos,0.5);
+    ChaseVariableAtRate(rotationpos,randomlookspot,10,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(middlepos,Vector(0,0.5,0),4,RateChaseReevaluation.DestinationAndRate);
+    isdead = true;
+}
+
+rule: "Pathfind to cursor." 
+Event.OngoingGlobal
+if (health <= prevhealth - maxhealth/54)
+{
+        health = prevhealth - maxhealth/54;
+        prevhealth = health;
+        define randomid=RandomValueInArray(effectid);
+        DestroyEffect(randomid);
+        ModifyVariable(effectid,Operation.RemoveFromArrayByValue,randomid);
+}
+
+rule: "Pathfind to cursor." 
+Event.OngoingPlayer
+if (isdead && DistanceBetween(EventPlayer(),middlepos) <= 1&&!IsDummyBot())
+{
+        DeclareTeamVictory(Team.Team1);  
+
+}
+
+void Sub() "My Subroutine!" {
+
+    DeclareTeamVictory(Team.Team1); 
+}
+     
+
+
+
+
+

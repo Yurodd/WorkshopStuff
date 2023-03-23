@@ -1,0 +1,411 @@
+globalvar define masterstartfinding;
+globalvar define nodes;
+globalvar define dummy;
+globalvar define all_pos_display;
+globalvar define prev_deleted_pos;
+globalvar define start_walking;
+globalvar define Slice;
+playervar define open_index_F_G;
+playervar define q_pos;
+playervar define attributes_index_F_G;
+playervar define current;
+playervar define succ;
+playervar define attribute_G_H;
+playervar define q_index_F_G;
+playervar define goal;
+playervar define finished;
+playervar define succ_pos;
+playervar define succ_index;
+playervar define succ_attributes_G_H_F;
+playervar define close_index_F_G;
+playervar define time;
+playervar define prev_q_pos;
+playervar define path_list;
+playervar define parent_index;
+playervar define child;
+playervar define reverse_path_list;
+playervar define parent_pos;
+playervar define time_finish;
+playervar define random_choice;
+playervar define block_random_choice;
+playervar define Z;
+playervar define Y;
+
+rule: "Create Hero"
+Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Reload) == true)
+if (IsButtonHeld(EventPlayer(), Button.Interact) == true)
+{
+    // CreateDummyBot(Hero.Ana, Team.All, -1, EventPlayer(), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, EventPlayer(), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, EventPlayer(), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, EventPlayer(), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, EventPlayer(), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, EventPlayer(), Vector(0, 0, 0));
+    // dummy = LastCreatedEntity();
+    CreateHudText(EventPlayer(), ServerLoad(), null, null, Location.Left, 0, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(EventPlayer(), <"Position: <0>", PositionOf(EventPlayer())>, null, null, Location.Left, 0, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateDummyBot(Hero.Genji, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // CreateDummyBot(Hero.Ana, Team.All, -1, NearestWalkablePosition(RandomValueInArray(nodes)), Vector(0, 0, 0));
+    // SetStatus(AllPlayers(Team.All), null, Status.PhasedOut, 9999);
+    CreateIcon(AllPlayers(Team.All), FilteredArray(AllPlayers(Team.All), IsDummyBot(ArrayElement()) == true), Icon.ArrowDown, IconRev.VisibleToAndPosition, Color.White, true);
+}
+
+disabled rule: "Start"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Melee) == true)
+if (IsButtonHeld(EventPlayer(), Button.Reload) == true)
+{
+    dummy = EventPlayer();
+    masterstartfinding = true;
+    // time = TotalTimeElapsed();
+    Reset();
+    Pathfind();
+    Wait(0.5, WaitBehavior.IgnoreCondition);
+    masterstartfinding = false;
+}
+
+recursive void Pathfind() "Sub - Pathfind"
+{
+    time = TotalTimeElapsed();
+    # goal = me
+    goal = FirstOf(SortedArray(FilteredArray(nodes, IsInLineOfSight(PositionOf(dummy), ArrayElement() + Vector(0, 0.5, 0), BarrierLOS.NoBarriersBlock) == true), DistanceBetween(ArrayElement(), PositionOf(dummy))));
+    // goal=dummy
+    // goal = FirstOf(SortedArray(FilteredArray(nodes, IsInLineOfSight(PositionOf(dummy), ArrayElement() + Vector(0, 0.5, 0), BarrierLOS.NoBarriersBlock) == true), DistanceBetween(ArrayElement(), PositionOf(dummy))));
+    # closest node
+    current = FirstOf(SortedArray(FilteredArray(nodes, IsInLineOfSight(PositionOf(EventPlayer()), ArrayElement() + Vector(0, 1.5, 0), BarrierLOS.NoBarriersBlock) == true), DistanceBetween(ArrayElement(), PositionOf(EventPlayer()))));
+    // CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Green, current, 0.3, EffectRev.None);
+    open_index_F_G[0] = Vector(IndexOfArrayValue(nodes, current), 0, 0);
+    while (CountOf(open_index_F_G) != 0)
+    {
+        MinWait();
+        // Test
+        // q_index_F_G = FirstOf(SortedArray(open_index_F_G, DistanceBetween(ArrayElement(), q_pos) + DistanceBetween(ArrayElement(), goal)));
+        # Smallest YComponent in OPEN list
+        q_index_F_G = FirstOf(SortedArray(open_index_F_G, YOf(ArrayElement())));
+        # The Position of q found in Global Nodes
+        q_pos = nodes[XOf(q_index_F_G)];
+        // if (q_pos != prev_q_pos)
+        {
+            // CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Yellow, q_pos, 0.3, EffectRev.None);
+        }
+        close_index_F_G[CountOf(close_index_F_G)] = q_index_F_G;
+        ModifyVariable(open_index_F_G, Operation.RemoveFromArrayByValue, q_index_F_G);
+        if (q_pos == goal)
+        {
+            // SmallMessage(AllPlayers(Team.All), "Pathfinding done");
+            Reconstruct();
+            Abort();
+        }
+        succ = ArraySlice(SortedArray(nodes, DistanceBetween(ArrayElement(), q_pos)), 0, Slice);
+        succ = FilteredArray(succ, IsInLineOfSight(q_pos + Vector(0, 0.5, 0), ArrayElement() + Vector(0, 0.5, 0), BarrierLOS.NoBarriersBlock));
+        for (Z = 0; CountOf(succ); 1)
+        {
+            // MinWait();
+            succ_pos = succ[Z];
+            succ_index = IndexOfArrayValue(nodes, succ_pos);
+            succ_attributes_G_H_F = Vector(ZOf(q_index_F_G) + DistanceBetween(succ_pos, q_pos), DistanceBetween(goal, succ_pos), ZOf(q_index_F_G) + DistanceBetween(succ_pos, q_pos) + DistanceBetween(goal, succ_pos));
+            if (CountOf(FilteredArray(open_index_F_G, succ_index == XOf(ArrayElement()))) > 0)
+            {
+                # Put a skip here later
+                if (ZOf(succ_attributes_G_H_F) < XOf(succ_attributes_G_H_F))
+                {
+                }
+            }
+            else if (CountOf(FilteredArray(close_index_F_G, succ_index == XOf(ArrayElement()))) > 0)
+            {
+                # Put a skip here later
+                if (ZOf(succ_attributes_G_H_F) < XOf(succ_attributes_G_H_F))
+                {
+                    // Original F cost 
+                    // open_index_F_G[CountOf(open_index_F_G)] = Vector(succ_index, ZOf(succ_attributes_G_H_F), XOf(succ_attributes_G_H_F));
+                    # Original F cost = Z Component of Succ_ghf
+                    open_index_F_G[CountOf(open_index_F_G)] = Vector(succ_index, DistanceBetween(succ_pos, goal), XOf(succ_attributes_G_H_F));
+                    ModifyVariable(close_index_F_G, Operation.RemoveFromArrayByValue, FilteredArray(close_index_F_G, XOf(ArrayElement()) == succ_index));
+                }
+            }
+            else
+            {
+                // Original F cost 
+                // open_index_F_G[CountOf(open_index_F_G)] = Vector(succ_index, ZOf(succ_attributes_G_H_F), XOf(succ_attributes_G_H_F));
+                # Original F cost = Z Component of Succ_ghf
+                open_index_F_G[CountOf(open_index_F_G)] = Vector(succ_index, DistanceBetween(succ_pos, goal), XOf(succ_attributes_G_H_F));
+                path_list[succ_index] = q_pos;
+            }
+        }
+        close_index_F_G[CountOf(close_index_F_G)] = Vector(XOf(q_index_F_G), YOf(q_index_F_G), ZOf(q_index_F_G));
+        prev_q_pos = q_pos;
+        // ModifyVariable(nodes, Operation.RemoveFromArrayByValue, q_pos);
+    }
+    if (finished == false)
+    {
+        // SmallMessage(AllPlayers(Team.All), "Empty");
+    }
+}
+
+recursive void Reset() "Sub - Reset"
+{
+    // DestroyAllEffects();
+    // Wait(0.25, WaitBehavior.IgnoreCondition);
+    time = TotalTimeElapsed();
+    open_index_F_G = null;
+    q_pos = null;
+    attributes_index_F_G = null;
+    current = null;
+    succ = null;
+    attribute_G_H = null;
+    goal = null;
+    q_index_F_G = null;
+    finished = false;
+    succ_pos = null;
+    succ_index = null;
+    succ_attributes_G_H_F = null;
+    close_index_F_G = null;
+    prev_q_pos = null;
+    path_list = null;
+    parent_index = 0;
+    child = null;
+    reverse_path_list = null;
+    parent_pos = null;
+}
+
+recursive void Reconstruct() "Sub-Reconstruct"
+{
+    reverse_path_list[CountOf(reverse_path_list)] = goal;
+    child = q_pos;
+    parent_index = IndexOfArrayValue(nodes, child);
+    parent_pos = path_list[parent_index];
+    reverse_path_list[CountOf(reverse_path_list)] = parent_pos;
+    // CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, child + Vector(0, 1, 0), parent_pos + Vector(0, 1, 0), Color.White, EffectRev.None);
+    while (child != current)
+    {
+        child = parent_pos;
+        parent_index = IndexOfArrayValue(nodes, child);
+        parent_pos = path_list[parent_index];
+        if (parent_pos != 0)
+        {
+            reverse_path_list[CountOf(reverse_path_list)] = parent_pos;
+            // CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, child + Vector(0, 1, 0), parent_pos + Vector(0, 1, 0), Color.White, EffectRev.None);
+        }
+        MinWait();
+    }
+    // SmallMessage(AllPlayers(Team.All), "Reconstruct Path Done");
+    finished = false;
+    time_finish = TotalTimeElapsed();
+    // SmallMessage(AllPlayers(Team.All), <"Time Finish: {0}sec", time_finish - time>);
+    Walk();
+}
+
+recursive void Walk() "Sub-Walk"
+{
+    // CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Green, reverse_path_list[Y], 1, EffectRev.VisibleToPositionAndRadius);
+    for (Y = CountOf(reverse_path_list) - 1; -1; -1)
+    {
+        StartFacing(EventPlayer(), DirectionTowards(EyePosition(EventPlayer()), reverse_path_list[Y] + Vector(0, 1, 0)), 500, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        StartThrottleInDirection(EventPlayer(), DirectionTowards(EyePosition(EventPlayer()), reverse_path_list[Y] + Vector(0, 1, 0)), 1, Relative.ToWorld, ThrottleBehavior.ReplaceExistingThrottle, ThrottleRev.DirectionAndMagnitude);
+        while (DistanceBetween(PositionOf(EventPlayer()), reverse_path_list[Y]) > 0.3)
+        {
+            if (IsInLineOfSight(EyePosition(EventPlayer()), PositionOf(ClosestPlayerTo(EventPlayer(), Team.All)), BarrierLOS.NoBarriersBlock) == true)
+            {
+                StopThrottleInDirection(EventPlayer());
+                Abort();
+                Abort();
+            }
+            // If object blocking infront
+            // if (IsInLineOfSight(EventPlayer(), EventPlayer() + FacingDirectionOf(EventPlayer()) * 0.3, BarrierLOS.NoBarriersBlock) == true)
+            {
+                // PressButton(EventPlayer(), Button.Melee);
+                // PressButton(EventPlayer(), Button.Jump);
+            }
+            # If bot stops
+            if (SpeedOf(EventPlayer()) < 2)
+            {
+                PressButton(EventPlayer(), Button.Jump);
+            }
+            # if no platform
+            if (IsInLineOfSight(EyePosition(EventPlayer()), PositionOf(EventPlayer()) + Vector(0, -1, 0), BarrierLOS.NoBarriersBlock) == true)
+            {
+                PressButton(EventPlayer(), Button.Jump);
+            }
+            if (IsInLineOfSight(EyePosition(EventPlayer()), reverse_path_list[Y] + Vector(0, 1, 0), BarrierLOS.NoBarriersBlock) == false)
+            {
+                if (IsInLineOfSight(FirstOf(SortedArray(nodes, DistanceBetween(PositionOf(EventPlayer()), ArrayElement()))) + Vector(0, 0.5, 0), reverse_path_list[Y] + Vector(0, 0.5, 0), BarrierLOS.NoBarriersBlock) == false)
+                {
+                    // SmallMessage(AllPlayers(Team.All), "not los");
+                    Reset();
+                    Pathfind();
+                    // CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, EyePosition(EventPlayer()), reverse_path_list[Y] + Vector(0, 1, 0), Color.White, EffectRev.None);
+                    // CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, PositionOf(EventPlayer()) + Vector(0, 0.5, 0), reverse_path_list[Y] + Vector(0, 0.5, 0), Color.White, EffectRev.None);
+                    Abort();
+                    Abort();
+                }
+            }
+            MinWait();
+        }
+    }
+    // SmallMessage(AllPlayers(Team.All), "Finished Walking");
+    // start_walking = false;
+    StopThrottleInDirection(EventPlayer());
+    StopFacing(EventPlayer());
+    // PlayEffect(AllPlayers(Team.All), PlayEffect.RingExplosion, Color.Green, reverse_path_list[Y + 1] + Vector(0, 1, 0), 3);
+    // Teleport(EventPlayer(), RandomValueInArray(nodes));
+    Reset();
+    Pathfind();
+}
+
+// disabled rule: "Rule 7"
+// Event.OngoingPlayer
+// if (IsDummyBot(EventPlayer()) == true)
+// if (masterstartfinding == true)
+// {
+//     Wait(RandomReal(0.1, 3), WaitBehavior.IgnoreCondition);
+//     CreateIcon(AllPlayers(Team.All), EventPlayer(), Icon.ArrowDown, IconRev.VisibleToAndPosition, Color.White, true);
+//     Reset();
+//     Pathfind();
+// }
+
+// disabled rule: "Nodes display"
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Crouch) == true)
+// {
+//     DestroyAllEffects();
+//     Wait(0.25, WaitBehavior.IgnoreCondition);
+//     CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Aqua, FirstOf(SortedArray(nodes, DistanceBetween(ArrayElement(), EventPlayer()))), 0.4, EffectRev.VisibleToPositionAndRadius);
+//     all_pos_display = SortedArray(nodes, DistanceBetween(EventPlayer(), ArrayElement()));
+//     for (Z = 0; 126; 1)
+//     {
+//         CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Yellow, all_pos_display[Z], 0.2, EffectRev.None);
+//         MinWait();
+//     }
+// }
+
+// disabled rule: "Closest node display"
+// Event.OngoingPlayer
+// if (HasSpawned(EventPlayer()) == true)
+// {
+//     CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Aqua, FirstOf(SortedArray(nodes, DistanceBetween(ArrayElement(), EventPlayer()))), 0.4, EffectRev.VisibleToPositionAndRadius);
+//     CreateHudText(EventPlayer(), FirstOf(SortedArray(nodes, DistanceBetween(EventPlayer(), ArrayElement()))), null, null, Location.Left, 0, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+// }
+
+// disabled rule: "Rule 12"
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Reload) == true)
+// {
+//     ModifyVariable(nodes, Operation.RemoveFromArrayByValue, FirstOf(SortedArray(nodes, DistanceBetween(ArrayElement(), EventPlayer()))));
+//     SmallMessage(AllPlayers(Team.All), <"Removed: {0}", FirstOf(SortedArray(nodes, DistanceBetween(ArrayElement(), EventPlayer())))>);
+//     DestroyAllEffects();
+//     Wait(0.25, WaitBehavior.IgnoreCondition);
+//     CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Aqua, FirstOf(SortedArray(nodes, DistanceBetween(ArrayElement(), EventPlayer()))), 0.4, EffectRev.VisibleToPositionAndRadius);
+//     all_pos_display = SortedArray(nodes, DistanceBetween(EventPlayer(), ArrayElement()));
+//     for (Z = 0; 126; 1)
+//     {
+//         CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Yellow, all_pos_display[Z], 0.2, EffectRev.None);
+//         MinWait();
+//     }
+//     prev_deleted_pos = FirstOf(SortedArray(nodes, DistanceBetween(ArrayElement(), EventPlayer())));
+// }
+
+// disabled rule: "Rule 13"
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Ultimate) == true)
+// {
+//     nodes = nodes;
+// }
+
+// disabled rule: "Add node"
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Interact) == true)
+// {
+//     nodes[CountOf(nodes)] = PositionOf(EventPlayer());
+//     CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Yellow, PositionOf(EventPlayer()), 0.3, EffectRev.None);
+// }
+
+rule: "Rule 14"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true)
+if (IsInLineOfSight(EyePosition(EventPlayer()), PositionOf(ClosestPlayerTo(EventPlayer(), Team.All)), BarrierLOS.NoBarriersBlock) == true)
+if (IsAlive(ClosestPlayerTo(EventPlayer(), Team.All)) == true)
+{
+    random_choice = RandomInteger(0, 20);
+    StartThrottleInDirection(EventPlayer(), DirectionTowards(EyePosition(EventPlayer()), EyePosition(ClosestPlayerTo(EventPlayer(), Team.All))), 1, Relative.ToWorld, ThrottleBehavior.ReplaceExistingThrottle, ThrottleRev.DirectionAndMagnitude);
+    // StartThrottleInDirection(EventPlayer(), DirectionTowards(EyePosition(EventPlayer()), EyePosition(ClosestPlayerTo(EventPlayer(), Team.All)) + Vector(RandomReal(-4, 4), 0, RandomReal(-4, 4))), 1, Relative.ToWorld, ThrottleBehavior.AddToExistingThrottle, ThrottleRev.DirectionAndMagnitude);
+    StartFacing(EventPlayer(), DirectionTowards(EyePosition(EventPlayer()), EyePosition(ClosestPlayerTo(EventPlayer(), Team.All))), 500, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+    if (DistanceBetween(EventPlayer(), ClosestPlayerTo(EventPlayer(), Team.All)) < 2)
+    {
+        PressButton(EventPlayer(), Button.SecondaryFire);
+        PressButton(EventPlayer(), Button.Melee);
+        Wait(0.25, WaitBehavior.IgnoreCondition);
+    }
+    if (YOf(EyePosition(EventPlayer())) < YOf(ClosestPlayerTo(EventPlayer(), Team.All)))
+    {
+        PressButton(EventPlayer(), Button.Jump);
+        StartHoldingButton(EventPlayer(), Button.Jump);
+    }
+    if ((DistanceBetween(EventPlayer(), ClosestPlayerTo(EventPlayer(), Team.All)) < 3) + (Health(ClosestPlayerTo(EventPlayer(), Team.All)) < 70))
+    {
+        PressButton(EventPlayer(), Button.SecondaryFire);
+        Wait(0.1, WaitBehavior.IgnoreCondition);
+        StopFacing(EventPlayer());
+        SetFacing(EventPlayer(), DirectionTowards(EyePosition(EventPlayer()), PositionOf(ClosestPlayerTo(EventPlayer(), Team.All))), Relative.ToWorld);
+        PressButton(EventPlayer(), Button.Ability1);
+    }
+    if (DistanceBetween(EventPlayer(), ClosestPlayerTo(EventPlayer(), Team.All)) < 5)
+    {
+        PressButton(EventPlayer(), Button.SecondaryFire);
+    }
+    else
+    {
+        PressButton(EventPlayer(), Button.PrimaryFire);
+    }
+    MinWait();
+    if (random_choice == 1)
+    {
+        PressButton(EventPlayer(), Button.Jump);
+    }
+    LoopIfConditionIsTrue();
+    StopFacing(EventPlayer());
+    // StopThrottleInDirection(EventPlayer());
+    StopHoldingButton(EventPlayer(), Button.Jump);
+}
+
+rule: "Rule 14"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true)
+if (IsInLineOfSight(EyePosition(EventPlayer()), PositionOf(ClosestPlayerTo(EventPlayer(), Team.All)), BarrierLOS.NoBarriersBlock) == false)
+if (IsAlive(EventPlayer()) == true)
+{
+    dummy = ClosestPlayerTo(EventPlayer(), Team.All);
+    // Wait(0.1, WaitBehavior.IgnoreCondition);
+    Reset();
+    Pathfind();
+}
+
+rule: "Rule 17"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true)
+// if (IsButtonHeld(ClosestPlayerTo(EventPlayer(), Team.All), Button.PrimaryFire) || IsButtonHeld(ClosestPlayerTo(EventPlayer(), Team.All), Button.SecondaryFire) || IsButtonHeld(ClosestPlayerTo(EventPlayer(), Team.All), Button.Ability1) == true)
+if (IsInLineOfSight(EyePosition(EventPlayer()), ClosestPlayerTo(EventPlayer(), Team.All), BarrierLOS.NoBarriersBlock) == true)
+if (IsFiringPrimary(ClosestPlayerTo(EventPlayer(), Team.All)) || IsFiringSecondary(ClosestPlayerTo(EventPlayer(), Team.All)) || IsUsingAbility1(ClosestPlayerTo(EventPlayer(), Team.All)) || IsUsingAbility2(ClosestPlayerTo(EventPlayer(), Team.All)) || IsUsingUltimate(ClosestPlayerTo(EventPlayer(), Team.All)) == true)
+{
+    block_random_choice = RandomInteger(0, 2);
+    if (block_random_choice == 1)
+    {
+        // Wait(RandomReal(0, 0.2), WaitBehavior.IgnoreCondition);
+        PressButton(EventPlayer(), Button.Ability2);
+    }
+}
+
+rule: "Rule 17"
+Event.OnFinalBlow
+{
+    Heal(EventPlayer(), null, 200);
+}

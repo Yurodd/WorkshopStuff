@@ -1,0 +1,513 @@
+define playervar size = 6;
+define playervar sizestate = size*size;
+define playervar hm_episodes = 100000;
+define playervar move_penalty = 5;
+define playervar enemy_penalty = 300;
+define playervar food_reward = 300;
+define playervar epsilon = 0.50;
+define playervar eps_decay = 0.90;
+define playervar show_every = 20;
+define globalvar q_table1 = EmptyArray();
+define globalvar q_table2 = EmptyArray();
+define globalvar q_table3 = EmptyArray();
+define globalvar q_table4 = EmptyArray();
+define globalvar start_q_table = EmptyArray();
+
+define playervar learning_rate = 0.1;
+define playervar discount = 0.95;
+define playervar nodes = EmptyArray();
+define playervar area = EmptyArray();
+define playervar dummy;
+define playervar dummy2;
+define playervar dummy3;
+define playervar dummy4;
+define playervar food;
+define playervar self;
+define playervar enemy;
+define playervar enemy2;
+define playervar enemy3;
+define playervar enemy4;
+define playervar movepos;
+define playervar reward;
+define playervar max_future_q;
+define playervar current_q;
+define playervar new_q;
+define playervar food_huid;
+define playervar wincount=0;
+define playervar startingself;
+define playervar startingenemy;
+define playervar show=false;
+define playervar actionchoice;
+define playervar started=false;
+define playervar state;
+define playervar testq;
+define playervar i = 0;
+define playervar ii;
+define playervar steps =0;
+define playervar died=0;
+define playervar out=false;
+define playervar prev_self = EmptyArray();
+define playervar juststarted;
+define playervar nextstate;
+define playervar prev_action;
+define playervar end=false;
+define globalvar allplayerpos = EmptyArray();
+define playervar movefood;
+define playervar moveself;
+define playervar moveenemy;
+define playervar moveenemy2 ;
+define playervar moveenemy3;
+define playervar moveenemy4;
+// class Blob
+// {
+//     public define x;
+//     public define y;
+//     public define Location;
+//     public define Radius;
+//     public define other_x;
+//     public define other_y;
+// }
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (HasSpawned()&&!IsDummyBot())
+// {
+//     myClass player = new myClass();
+//     myClass food = new myClass();
+//     myClass enemy = new myClass();
+//     init(player);
+//     init(food);
+//     init(enemy);
+//     CreateHudText(AllPlayers(),<"Player - Food: <0>, <1>",player.x - food.x,player.y - food.y>);
+//     CreateHudText(AllPlayers(),<"Player: <0>, <1>",player.x ,player.y>);
+//     CreateHudText(AllPlayers(),<"Food: <0>, <1>",food.x,food.y>);
+
+//     //move(player,1,0);
+//     // action(player,2);
+//     // CreateHudText(AllPlayers(),<"Action Player - Food: <0>, <1>",player.x - food.x,player.y - food.y>,null,null,Location.Right);
+//     //action(player, food);
+//     // SmallMessage(AllPlayers(), blob.classVar);
+//     // //init(myVar);
+//     // //myVar.x=1;
+//     // //action(myVar);
+//     // SmallMessage(AllPlayers(), blob.x);
+// }
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot()&&HostPlayer()==EventPlayer())
+{   
+
+     CreateHudText(AllPlayers(),ServerLoad(),null,null,Location.Left);
+      CreateHudText(AllPlayers(),ServerLoadPeak(),null,null,Location.Left);
+
+      CreateDummyBot(Hero.Ana,Team.All,-1,NearestWalkablePosition(ObjectivePosition()));
+      dummy = LastCreatedEntity();
+      CreateDummyBot(Hero.Ana,Team.All,-1,NearestWalkablePosition(ObjectivePosition()));
+      dummy2 = LastCreatedEntity();
+            CreateDummyBot(Hero.Ana,Team.All,-1,NearestWalkablePosition(ObjectivePosition()));
+      dummy3 = LastCreatedEntity();
+            CreateDummyBot(Hero.Ana,Team.All,-1,NearestWalkablePosition(ObjectivePosition()));
+      dummy4 = LastCreatedEntity();
+      SetStatus(dummy3,null,Status.PhasedOut,9999);
+      SetStatus(dummy4,null,Status.PhasedOut,9999);
+      SetStatus(dummy2,null,Status.PhasedOut,9999);
+      SetStatus(dummy,null,Status.PhasedOut,9999);
+    Teleport(EventPlayer(),Vector(215,27.5,-45));
+    define startpoint = Vector(200.93- (size) + 5,27.5,-43.91-(size));
+    if(start_q_table == EmptyArray())
+    {
+        for (define x = 0; x < 4; x++)
+        {
+            for (define y = 0; y < sizestate; y++)
+            {
+
+                        nodes = Append(nodes, Vector(x,y,0));
+                        MinWait();
+            }
+         
+        }
+
+    }
+    else
+    {
+        nodes = start_q_table;
+    }
+
+    for (define x = 0; x < size; x++)
+        {
+            for (define y = 0; y < size; y++)
+            {
+                    area[CountOf(area)] = Vector(XOf(startpoint)+(x*5),YOf(startpoint),ZOf(startpoint)+(y*5));     
+                    CreateEffect(EventPlayer(),Effect.Sphere,Color.White,Vector(XOf(startpoint)+(x*5),YOf(startpoint),ZOf(startpoint)+(y*5)),1,EffectRev.None);
+                    MinWait();
+            }
+         
+        }
+    // define random = IndexOfArrayValue(RandomValueInArray(q_table1[0][0]));
+
+
+     //SmallMessage(AllPlayers(),"Done");
+     //Teleport(EventPlayer(),RandomValueInArray(FilteredArray(area, !ArrayContains(ArrayElement(),food))));
+     Wait(0.1);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.LimeGreen,food,1.5,EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Orange,self,2,EffectRev.VisibleToPositionAndRadius);
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,area[YOf(prev_self)],2,EffectRev.VisibleToPositionAndRadius);
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,area[YOf(state)],2,EffectRev.VisibleToPositionAndRadius);
+
+    CreateHudText(AllPlayers(),<"Episodes: <0>", i>,null,null,Location.Right);
+     //CreateHudText(AllPlayers(),<"NewQ: <0>",new_q*10>,null,null,Location.Right);
+     CreateHudText(AllPlayers(),<"Epsilon: <0>", epsilon>,null,null,Location.Right);
+       CreateHudText(AllPlayers(),<"Goal Count: <0>", wincount>,null,null,Location.Right);
+     CreateHudText(AllPlayers(),<"Died: <0>",died>,null,null,Location.Right);
+    CreateHudText(AllPlayers(),<"Actionchoice: <0>",actionchoice>,null,null,Location.Right);
+        //CreateHudText(AllPlayers(),<"Prev_self: <0>",prev_self>,null,null,Location.Right);
+    //CreateHudText(AllPlayers(),<"selfq: <0>",SortedArray(FilteredArray(nodes,YOf(ArrayElement()) == IndexOfArrayValue(area,self)),ZOf(ArrayElement()))[3]>,null,null,Location.Right);
+
+
+
+    //CreateHudText(AllPlayers(),<"ii: <0>", ii>,null,null,Location.Right);
+    //CreateHudText(AllPlayers(),<"Action: <0>", actionchoice>,null,null,Location.Right);
+    started = true;
+        
+
+    // Teleport(dummy,RandomValueInArray(FilteredArray(area, !ArrayContains(ArrayElement(),PositionOf())&&!ArrayContains(ArrayElement(),food))));
+    // SmallMessage(AllPlayers(),random);
+    // SmallMessage(AllPlayers(),q_table1[random]);
+    //SmallMessage(AllPlayers(),"Done");
+    //q_table1[CountOf(q_table1)] = RandomReal(-5,0);
+}
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (started)
+{   
+//     define random = RandomValueInArray(area);
+//    CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, enemy),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,enemy)),ZOf(ArrayElement()))))>,enemy,1);
+//     CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, enemy2),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,enemy2)),ZOf(ArrayElement()))))>,enemy2,1);
+//     CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, food),ZOf(LastOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,food)),ZOf(ArrayElement()))))>,area[IndexOfArrayValue(area,YOf(LastOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,food)),ZOf(ArrayElement())))))],1);
+//     CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, random),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,random)),ZOf(ArrayElement()))))>,random,1);
+
+CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[3])>,area[0],1);
+CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[2])>,area[0]+Vector(0,0.5,0),1);
+CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[1])>,area[0]+Vector(0,1,0),1);
+CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[0])),ZOf(ArrayElement()))[0])>,area[0]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[3])>,area[1],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[2])>,area[1]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[1])>,area[1]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))[0])>,area[1]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[3])>,area[2],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[2])>,area[2]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[1])>,area[2]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))[0])>,area[2]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[3])>,area[3],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[2])>,area[3]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[1])>,area[3]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))[0])>,area[3]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[3])>,area[4],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[2])>,area[4]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[1])>,area[4]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))[0])>,area[4]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[3])>,area[5],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[2])>,area[5]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[1])>,area[5]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))[0])>,area[5]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[3])>,area[6],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[2])>,area[6]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[1])>,area[6]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))[0])>,area[6]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[3])>,area[7],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[2])>,area[7]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[1])>,area[7]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))[0])>,area[7]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[3])>,area[8],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[2])>,area[8]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[1])>,area[8]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))[0])>,area[8]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[3])>,area[9],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[2])>,area[9]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[1])>,area[9]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))[0])>,area[9]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[3])>,area[10],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[2])>,area[10]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[1])>,area[10]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))[0])>,area[10]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[3])>,area[11],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[2])>,area[11]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[1])>,area[11]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))[0])>,area[11]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[3])>,area[12],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[2])>,area[12]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[1])>,area[12]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))[0])>,area[12]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[3])>,area[13],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[2])>,area[13]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[1])>,area[13]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))[0])>,area[13]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[3])>,area[14],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[2])>,area[14]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[1])>,area[14]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))[0])>,area[14]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[3]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[3])>,area[15],1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[2]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[2])>,area[15]+Vector(0,0.5,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[1]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[1])>,area[15]+Vector(0,1,0),1);
+// CreateInWorldText(EventPlayer(),<"Dir:<0> GridQ:<1>",XOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[0]),ZOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))[0])>,area[15]+Vector(0,1.5,0),1);
+
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[1]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[1])),ZOf(ArrayElement()))))>,area[1],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[2]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[2])),ZOf(ArrayElement()))))>,area[2],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[3]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[3])),ZOf(ArrayElement()))))>,area[3],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[4]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[4])),ZOf(ArrayElement()))))>,area[4],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[5]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[5])),ZOf(ArrayElement()))))>,area[5],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[6]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[6])),ZOf(ArrayElement()))))>,area[6],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[7]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[7])),ZOf(ArrayElement()))))>,area[7],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[8]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[8])),ZOf(ArrayElement()))))>,area[8],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[9]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[9])),ZOf(ArrayElement()))))>,area[9],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[10]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[10])),ZOf(ArrayElement()))))>,area[10],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[11]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[11])),ZOf(ArrayElement()))))>,area[11],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[12]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[12])),ZOf(ArrayElement()))))>,area[12],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[13]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[13])),ZOf(ArrayElement()))))>,area[13],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[14]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[14])),ZOf(ArrayElement()))))>,area[14],1);
+// CreateInWorldText(EventPlayer(),<"GridPos:<0> GridQ:<1>",IndexOfArrayValue(area, area[15]),ZOf(FirstOf(SortedArray(FilteredArray(nodes, YOf(ArrayElement()) == IndexOfArrayValue(area,area[15])),ZOf(ArrayElement()))))>,area[15],1);
+
+//         define movefood = RandomValueInArray(area);
+//    define moveself = RandomValueInArray(FilteredArray(area, !ArrayContains(ArrayElement(),movefood)));
+    if(start_q_table == EmptyArray())
+    {
+         movefood = LastOf(area);
+    moveself = FirstOf(area);
+//     define moveenemy = area[2];
+ moveenemy = RandomValueInArray(FilteredArray(area, ArrayElement() != movefood && ArrayElement() != moveself && ArrayElement() != area[1] && ArrayElement() != area[4]));
+    moveenemy2 = RandomValueInArray(FilteredArray(area, ArrayElement() != movefood && ArrayElement() != moveself && ArrayElement() != moveenemy&& ArrayElement() != area[1] && ArrayElement() != area[4]));
+     moveenemy3 = RandomValueInArray(FilteredArray(area, ArrayElement() != movefood && ArrayElement() != moveself && ArrayElement() != moveenemy && ArrayElement() != moveenemy2&& ArrayElement() != area[1] && ArrayElement() != area[4]));
+     moveenemy4 = RandomValueInArray(FilteredArray(area, ArrayElement() != movefood && ArrayElement() != moveself && ArrayElement() != moveenemy && ArrayElement() != moveenemy2 && ArrayElement() != enemy3&& ArrayElement() != area[1] && ArrayElement() != area[4]));
+    }
+    else
+    {
+        moveself = allplayerpos[0];
+        moveenemy = allplayerpos[1];
+        moveenemy2 = allplayerpos[2];
+        moveenemy3= allplayerpos[3];
+        moveenemy4 = allplayerpos[4];
+        movefood = allplayerpos[5];
+    }
+                     Teleport(dummy,moveenemy+Vector(0,1,0));
+                     Teleport(dummy2,moveenemy2+Vector(0,1,0));
+                     Teleport(dummy3,moveenemy3+Vector(0,1,0));
+                     Teleport(dummy4,moveenemy4+Vector(0,1,0));
+for (i = 0; i < hm_episodes; i++)
+        {   
+            steps++;
+                food = movefood;
+                self = moveself;
+                enemy = moveenemy;
+                enemy2 = moveenemy2;
+                 enemy3 = moveenemy3;
+                enemy4 = moveenemy4;
+                if(IsButtonHeld(EventPlayer(),Button.Interact))
+                {
+                    show = true;
+                    Teleport(EventPlayer(),self+Vector(0,1,0));
+                     Teleport(dummy,enemy+Vector(0,1,0));
+                     Teleport(dummy2,enemy2+Vector(0,1,0));
+                     Teleport(dummy3,enemy3+Vector(0,1,0));
+                     Teleport(dummy4,enemy4+Vector(0,1,0));
+                }
+                else 
+                show = false;
+                 juststarted=true;
+            // if (steps >= show_every)
+            // {
+            //     show = true;
+            //     //steps = 0;
+            //     Teleport(EventPlayer(),self+Vector(0,1,0));
+            //     Teleport(dummy,enemy+Vector(0,1,0));
+            // }
+            // else
+            // {
+            //     show = false;
+            // }
+           // prev_self=FilteredArray(nodes,YOf(ArrayElement())==IndexOfArrayValue(area,self)&&XOf(ArrayElement())==actionchoice);
+
+            for (ii = 0; ii < 200; ii++)
+            {
+                //Wait(2);
+                prev_self=SortedArray(FilteredArray(nodes,YOf(ArrayElement()) == IndexOfArrayValue(area,self)),ZOf(ArrayElement()))[3];
+                   // nextstate = self;
+                    actionchoice = XOf(SortedArray(FilteredArray(nodes,YOf(ArrayElement()) == IndexOfArrayValue(area,self)),ZOf(ArrayElement()))[3]);
+                
+                    
+                //action(self,actionchoice);
+                //nextstate = FilteredArray(nodes,YOf(ArrayElement())==IndexOfArrayValue(area,self)&&XOf(ArrayElement())==actionchoice);
+                
+                //prev_action = actionchoice;
+                    if(RandomReal(0,1) > epsilon && !juststarted)
+                    {
+                    action(self,actionchoice);
+                    }
+                    else
+                    {
+                    action(self,RandomInteger(0,3));
+                    //SmallMessage(EventPlayer(),"Randomed!");
+                    }
+                
+                        juststarted=false;
+
+
+                if (self == enemy || self == enemy2 || self == enemy3 || self == enemy4)
+                {
+                died++;
+                reward = enemy_penalty*-1;
+                }
+                else if(self == food)
+                {
+                reward = food_reward;
+                wincount++;
+                }
+                // else if(out)
+                // {
+                // reward = -1;
+                // out = false;
+                // }
+                else
+                reward = -move_penalty;
+                //nextstate = FilteredArray(nodes,YOf(ArrayElement())==IndexOfArrayValue(area,self)&&XOf(ArrayElement())==actionchoice);
+                state = SortedArray(FilteredArray(nodes,YOf(ArrayElement()) == IndexOfArrayValue(area,self)),ZOf(ArrayElement()))[3];
+                max_future_q = ZOf(state);
+                current_q =ZOf(prev_self);
+                if(reward == food_reward)
+                new_q = food_reward;
+                else
+                new_q = (1 - learning_rate) * current_q + learning_rate * (reward + discount * max_future_q);
+                //new_q = current_q + learning_rate*(reward+discount*max_future_q-current_q);
+                
+    
+                //SmallMessage(EventPlayer(),prev_self);
+                nodes[IndexOfArrayValue(nodes,prev_self)] = Vector(XOf(nodes[IndexOfArrayValue(nodes,prev_self)]),YOf(nodes[IndexOfArrayValue(nodes,prev_self)]),new_q);
+                //prev_self=state;
+                
+
+
+                if(show)
+                {
+                    StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),Vector(XOf(self),YOf(EyePosition()),ZOf(self))),1);
+                    while(DistanceBetween(PositionOf(),self)>0.2)
+                    {
+                        if(IsButtonHeld(EventPlayer(),Button.Crouch))
+                        {
+                            StopThrottleInDirection(EventPlayer());
+                            Teleport(EventPlayer(),self);
+                        }
+                        
+                    }
+                    StopThrottleInDirection(EventPlayer());
+                }
+
+                if(reward == food_reward || reward == -enemy_penalty)
+                {
+                ii=200;        
+                    if (show)
+                    {
+                    steps=0;
+                        if(reward == -enemy_penalty)
+                        {
+                        Kill(EventPlayer(),ClosestPlayerTo(EventPlayer()));
+                        Teleport(EventPlayer(),Vector(215,27.5,-45));
+                        Resurrect(EventPlayer());
+                        }
+                        else
+                        {
+                        Teleport(EventPlayer(),Vector(215,27.5,-45));
+                        SmallMessage(EventPlayer(),"Yummy!");
+                        PlayEffect(AllPlayers(),PlayEffect.GoodPickupEffect,Color.Green,PositionOf(),5);
+                        }
+                    }
+                    if(reward == food_reward)
+                    epsilon*=0.99;
+                }
+
+            }
+            
+             epsilon*=0.9998;
+
+        }
+
+        SmallMessage(AllPlayers(),"Finished Everything");
+
+}
+
+
+
+method action(define person, define choice)
+{
+    //blob.classVar = 4;
+    //SmallMessage(AllPlayers(),<"ActionStarted with <0> <1>",person,choice>);
+    actionchoice = choice;
+    if(choice == 0)
+     self = Vector(XOf(person),27.5,ZOf(person)+5);
+    else if(choice == 1)
+    self = Vector(XOf(person),27.5,ZOf(person)-5);
+     else if(choice == 2)
+    self = Vector(XOf(person)+5,27.5,ZOf(person));
+    else if(choice == 3)
+    self = Vector(XOf(person)-5,27.5,ZOf(person));
+
+    if(!ArrayContains(area,self))
+    {
+        self = person;
+        out = true;
+
+    }
+
+    // if (XOf(self) < 210.93)
+    // self = Vector(210.93,YOf(person),ZOf(person));
+    // else if (XOf(self) > 210.93+(5*(size-1)))
+    // self = Vector(210.93+(5*2),YOf(person),ZOf(person));
+
+    // if (ZOf(self) < -38.91)
+    // self = Vector(XOf(person),YOf(person),-38.91);
+    // else if (ZOf(self) > -38.91+(5*(size-1)))
+    // self = Vector(XOf(person),YOf(person),-38.91+(5*(size-1)));
+
+    
+}
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsCommunicatingAnyVoiceLine())
+{
+    for (define qaction = -1; qaction < CountOf(nodes); qaction++)
+    {
+        
+        start_q_table[qaction] = Vector(XOf(nodes[qaction]),YOf(nodes[qaction]),ZOf(nodes[qaction]));
+
+    }
+
+ 
+        allplayerpos[0] = moveself;
+        allplayerpos[1] = moveenemy;
+        allplayerpos[2] = moveenemy2;
+        allplayerpos[3] = moveenemy3;
+        allplayerpos[4] = moveenemy4;
+        allplayerpos[5] = movefood;
+    
+
+    SmallMessage(EventPlayer(),"Exported");
+
+}

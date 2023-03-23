@@ -1,0 +1,141 @@
+playervar define hasShot;
+playervar define maxSpeed;
+playervar define minSpeed;
+playervar define arrowPos;
+playervar define direction;
+playervar define mass;
+playervar define gravity;
+playervar define deltaTime;
+playervar define time;
+playervar define hasShot2;
+playervar define gravity_Velocity;
+globalvar define allpos;
+playervar define MyAllPos;
+playervar define myPoint;
+playervar define tempgrav = 0.3;
+rule: "is button press"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.SecondaryFire))
+{
+    //DestroyAllEffects();
+    hasShot = true;
+    //hasShot2 = false;
+    maxSpeed = 60 ;
+
+}
+
+// rule: "Rule 3"
+// Event.OngoingPlayer
+// if (IsFiringPrimary(EventPlayer()) == true)
+// {
+//     define aura;
+//     for(define x = 0; 10; 1)
+//     {
+//         aura[x] = (EyePosition()  + FacingDirectionOf() * 5 )+ Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)) * 1
+//     }
+//    while(IsFiringPrimary(EventPlayer()) == true)
+//    {
+//        for(define y = 0; 10; 1)
+//         {
+//             aura[y] = aura[y] + DirectionTowards(aura[y],EyePosition() + Vector(0,-0.1,0) + FacingDirectionOf() * 5) * 0.3
+//             PlayEffect(AllPlayers(Team.All), PlayEffect.RingExplosion, Color.Blue, aura[y], 0.3);
+//             if(DistanceBetween(aura[y],EyePosition() + Vector(0,-0.1,0) + FacingDirectionOf() * 5) <= 0.1)
+//             aura[y] = (EyePosition()  + FacingDirectionOf() * 5 )+ Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)) * 1
+//             Wait(0.016);
+//         }
+//        Wait(0.016);
+//    }
+// }
+
+rule: "Initiate after shot"
+Event.OngoingPlayer
+if (hasShot == true)
+{
+        
+        arrowPos = EyePosition(EventPlayer());
+        direction = (FacingDirectionOf(EventPlayer()) + Vector(0,0.01 - (YOf(FacingDirectionOf())*0),0))  * maxSpeed;
+        mass = 1;
+        gravity = 20 + (YOf(FacingDirectionOf())*0.4);
+        deltaTime = 0.016;
+        time = 0;
+        hasShot2 = true;
+         hasShot = false;
+        gravity_Velocity = Vector(0, -1 * gravity * mass, 0);
+        direction = direction + (gravity_Velocity / mass) * deltaTime;
+        arrowPos = arrowPos + direction * deltaTime;
+        time = time + deltaTime;
+        
+}
+
+rule: "tracking"
+Event.OngoingPlayer
+if (hasShot2 == true)
+if (DistanceBetween(arrowPos, PreProjectile()) >= 1 + minSpeed / 100)
+{
+    direction = direction + (gravity_Velocity / mass) * deltaTime;
+    arrowPos = arrowPos + direction * deltaTime;
+    time = time + deltaTime;
+    PlayEffect(AllPlayers(Team.All), PlayEffect.BadExplosion, Color.Blue, arrowPos, 0.05);
+    MinWait();
+    LoopIfConditionIsTrue();
+    hasShot = false;
+    hasShot2 = false;
+}
+
+
+rule: "Cam"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact) == true)
+{
+    StartCamera(EventPlayer(), arrowPos, arrowPos + direction * deltaTime * 1, 0);
+    WaitUntil(IsButtonHeld(EventPlayer(), Button.Interact) == false,999);
+     StopCamera(EventPlayer());
+}
+
+
+
+rule: "CamOFF"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Crouch) == true)
+{
+    SetSlowMotion(10);
+    WaitUntil(IsButtonHeld(EventPlayer(), Button.Crouch) == false,999);
+    SetSlowMotion(100);
+
+}
+
+
+rule: "Has spawned"
+Event.OngoingPlayer
+if (HasSpawned())
+{
+    CreateHudText(EventPlayer(),tempgrav * 10000);
+    CreateHudText(EventPlayer(),YOf(FacingDirectionOf()) * 10000);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,PreProjectile(),0.1);
+    for(define x = 0; 100; 1)
+    {
+    CreateEffect(AllPlayers(),Effect.Ring,Color.Red,arrowPos + Vector(0,-1,0),RandomReal(0.1,0.5),EffectRev.VisibleToPositionAndRadius);
+    }
+    //SetProjectileGravity(EventPlayer(),0);
+    //SetProjectileSpeed(EventPlayer(),10);
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,arrowPos,0.3);
+}
+
+
+
+// rule: "Rule 9"
+// Event. OngoingGlobal
+// {
+//     if(CountOf(AllPlayers()) < 6)
+//     {
+//         for(define x = 0; 6 - CountOf(AllPlayers()); 1)
+//         {
+//             CreateDummyBot(Hero.Hanzo,Team.Team1,-1);
+//             CreateDummyBot(Hero.Hanzo,Team.Team2,-1);
+//         }
+//     }
+//     Wait(10);
+//     Loop();
+// }
+
+define PreProjectile(): RayCastHitPosition(arrowPos, arrowPos + direction * deltaTime * 1000, AllPlayers(Team.All), EventPlayer(), true);

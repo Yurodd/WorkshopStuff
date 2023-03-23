@@ -1,0 +1,76 @@
+playervar define openMenu;
+playervar define UI_FacingDir;
+globalvar define maxItemCount = 8;
+playervar define item;
+playervar define center;
+playervar define anglez;
+
+playervar define closestItem;
+playervar define distance = 2;
+
+
+rule: "IWT Pos"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Interact))
+{
+
+    UI_FacingDir = FacingDirectionOf();
+    
+   
+    while(IsButtonHeld(eventPlayer,Button.Interact))
+    {
+        Wait(0.016);
+        for(define count = 0; maxItemCount; 1)
+        {
+        define theta = 360 / maxItemCount;
+        define angle = (theta * count) + 0.001;
+        center = ScreenToWorldForPlayer(eventPlayer,0,0);
+        item[count] = ScreenToWorldForPlayer(eventPlayer,CosineFromDegrees(angle),SineFromDegrees(angle));
+        anglez[count] = angle;
+        }
+        
+        if(DistanceBetween(EyePosition() + FacingDirectionOf() * distance * 3, ScreenToWorldForPlayer(eventPlayer,0,0)) > 0.5)
+        {
+            closestItem = FirstOf(SortedArray(item, DotProduct(FacingDirectionOf(), DirectionTowards(ArrayElement(),EyePosition()))));
+        }
+        else
+        closestItem = Vector();
+
+    }
+}
+
+
+rule: "IWT Pos"
+Event.OngoingPlayer
+if(HasSpawned())
+{
+
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Blue,closestItem,0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,center,0.5);
+
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[0],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[1],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[2],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[3],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[4],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[5],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[6],0.2);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,item[7],0.2);
+    CreateInWorldText(AllPlayers(),anglez[0],item[0],1);
+    CreateInWorldText(AllPlayers(),anglez[1],item[1],1);
+    CreateInWorldText(AllPlayers(),anglez[2],item[2],1);
+    CreateInWorldText(AllPlayers(),anglez[3],item[3],1);
+    CreateInWorldText(AllPlayers(),anglez[4],item[4],1);
+    CreateInWorldText(AllPlayers(),anglez[5],item[5],1);
+    CreateInWorldText(AllPlayers(),anglez[6],item[6],1);
+    CreateInWorldText(AllPlayers(),anglez[7],item[7],1);
+}
+
+define eventPlayer: EventPlayer();
+
+Vector UpAxis(Vector zAxis): DirectionFromAngles(HorizontalAngleFromDirection(zAxis), VerticalAngleFromDirection(zAxis) - 90);
+
+Vector RightAxis(Vector zAxis): CrossProduct(zAxis, UpAxis(zAxis));
+
+Vector ScreenToWorldForPlayer(define player, define x, define y): ScreenToWorld(EyePosition(player), UI_FacingDir, x, y);
+Vector ScreenToWorld(Vector position, Vector zAxis, define x, define y): EyePosition() + distance *(x*RightAxis(zAxis) + (y-0.2)*UpAxis(zAxis) + 3*zAxis);

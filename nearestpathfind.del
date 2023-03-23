@@ -1,0 +1,60 @@
+playervar define pos;
+playervar define enemy;
+playervar define count = 0;
+playervar define startingpos;
+playervar define difdir;
+playervar define randomvect;
+playervar define returncount;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    CreateDummyBot(Hero.Ana,Team.Team2,-1, EyePosition()+FacingDirectionOf()*5)
+    enemy = LastCreatedEntity();
+    CreateHudText(EventPlayer(),count);
+    CreateHudText(EventPlayer(),ServerLoad());
+    CreateHudText(EventPlayer(),returncount);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    startingpos = EyePosition();
+    pos[count] = RayCastHitPosition(EyePosition(),EyePosition()+DirectionTowards(EyePosition(),EyePosition(enemy))*DistanceBetween(EyePosition(),EyePosition(enemy)));
+    pos[count] = NearestWalkablePosition(pos[count] + DirectionTowards(pos[count],startingpos)*1);
+    while(!IsInLineOfSight(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),EyePosition(enemy)))),EyePosition(enemy)))
+    {
+        // difdir[0] = NearestWalkablePosition(RayCastHitPosition(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy))),FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+DirectionTowards(pos[count-1],Left())*1));
+        // difdir[1] = NearestWalkablePosition(RayCastHitPosition(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy))),FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+DirectionTowards(pos[count-1],Right())*1))
+        // difdir[2] = NearestWalkablePosition(RayCastHitPosition(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy))),FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+DirectionTowards(pos[count-1],Forward())*1))
+        // difdir[3] = NearestWalkablePosition(RayCastHitPosition(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy))),FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+DirectionTowards(pos[count-1],Backward())*1))
+        count++;
+        if(IsInLineOfSight(pos[count],pos[count-1]))
+        pos[count] = NearestWalkablePosition(RayCastHitPosition(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),EyePosition(enemy)))),FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),EyePosition(enemy))))+DirectionTowards(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),EyePosition(enemy)))),EyePosition(enemy))*DistanceBetween(FirstOf(SortedArray(pos,DistanceBetween(ArrayElement(),EyePosition(enemy)))),EyePosition(enemy))))
+        //pos[count] = NearestWalkablePosition(pos[count] + DirectionTowards(pos[count],startingpos)*0.1);
+        while(!ArrayContains(pos,pos[count])||DistanceBetween(pos[count],pos[count-1])<1||pos[count] == pos[count-1] || !IsInLineOfSight(pos[count],pos[count-1]))
+        {
+        returncount ++;
+        randomvect = Vector(RandomReal(-5,5),RandomReal(-2,2),RandomReal(-5,5));
+        pos[count] = NearestWalkablePosition(RayCastHitPosition(pos[count-1]+randomvect,pos[count-1]+randomvect + Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)) * RandomReal(1,100)));
+        // pos[count] = NearestWalkablePosition(RayCastHitPosition(LastOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+randomvect,LastOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+randomvect+DirectionTowards(LastOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+randomvect,EyePosition(enemy))*DistanceBetween(LastOf(SortedArray(pos,DistanceBetween(ArrayElement(),enemy)))+randomvect,EyePosition(enemy))))
+        //pos[count] = NearestWalkablePosition(pos[count] + DirectionTowards(pos[count],startingpos)*0.1);
+        // if(count>1&&DistanceBetween(pos[count],pos[count-1])<1||pos[count] == pos[count-1] || !IsInLineOfSight(pos[count],pos[count-1]))
+        // {
+        //     count--;
+        // }
+        }
+        if(DistanceBetween(pos[count],pos[count-1])>1)
+        CreateEffect(EventPlayer(),Effect.Sphere,Color.Aqua,pos[count],0.4,EffectRev.None);
+        
+        if(count > 500)
+        {
+        SmallMessage(EventPlayer(),"Aborted");
+        Wait(0.25);
+        Abort();
+        }
+        
+    }
+     SmallMessage(EventPlayer(),"DONE");
+}

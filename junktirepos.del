@@ -1,0 +1,79 @@
+playervar define centerPoint;
+playervar define hitNormal;
+playervar define pointPos;
+playervar define initNormal;
+playervar define eyePos;
+playervar define prevPos;
+globalvar define radius = 0.4;
+
+playervar define facingDir;
+playervar define allDirHoriz=EmptyArray();
+playervar define allDirVert=EmptyArray();
+playervar define furthestDir;
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Ultimate))
+{ 
+    facingDir = FacingDirectionOf() * Vector(1,0,1);
+    allDirHoriz=EmptyArray();
+    allDirVert=EmptyArray();
+    for(define current =0; 360;1)
+    {
+    allDirHoriz[current] = DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf()) + current,0);
+    }
+    allDirHoriz[CountOf(allDirHoriz)] = Vector(0,1,0);
+    allDirHoriz[CountOf(allDirHoriz)] = Vector(0,-1,0);
+/*     for(define allDirVert =0; 360;1)
+    {
+    allDirHoriz[current] = DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf()) + current,0);
+    } */
+    //SetSlowMotion(10);
+    Wait(1);
+    SmallMessage(EventPlayer(),"HI");
+    SetStatus(EventPlayer(),null,Status.PhasedOut);
+    eyePos = EyePosition() + Vector(0,-0.7,0)+ facingDir * 3;
+    pointPos = RayCastHitPosition(eyePos, EyePosition() + facingDir * -3,AllPlayers(),null);
+    hitNormal = RayCastHitNormal(eyePos, EyePosition() + facingDir * -3,AllPlayers(),null);
+    centerPoint = pointPos + hitNormal * radius * -1;
+    initNormal = Vector(0,-1,0);
+    prevPos = centerPoint;
+    Track();
+}
+
+void Track() "Tracking"
+{
+    while(IsUsingUltimate())
+    {
+        furthestDir = FirstOf(SortedArray(FilteredArray(allDirHoriz,DistanceBetween(centerPoint + ArrayElement() * radius*2,RayCastHitPosition(centerPoint + ArrayElement() * radius*2,centerPoint + ArrayElement() * -radius*2,AllPlayers(),null))!=DistanceBetween(centerPoint + ArrayElement() * radius*2,centerPoint + ArrayElement() * -radius*2)),DistanceBetween(centerPoint,pointPos + RayCastHitNormal(pointPos + ArrayElement() * radius*2,pointPos + ArrayElement() * -radius*2,AllPlayers(),null) * -radius)));
+        pointPos = RayCastHitPosition(centerPoint + furthestDir * radius*2,centerPoint + furthestDir * -radius*2,AllPlayers(),null);
+        //hitNormal = FirstOf(SortedArray(FilteredArray(),DistanceBetween(centerPoint,pointPos + ArrayElement() * )))
+        hitNormal = RayCastHitNormal(pointPos + furthestDir * radius*2,pointPos + furthestDir * -radius*2,AllPlayers(),null);
+        prevPos = centerPoint;
+        centerPoint = pointPos + hitNormal * -radius;
+        Wait(0.016);
+    }
+    SetSlowMotion(100);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned())
+{ 
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,centerPoint,0.4);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,pointPos,0.1);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,eyePos,pointPos);
+    //CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,pointPos,pointPos + hitNormal * 100);
+    CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,pointPos,pointPos + FacingDirectionOf() * 100);
+    CreateHudText(EventPlayer(),ServerLoad());
+}
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (UltimateChargePercent() != 100 && HasSpawned())
+{ 
+Wait(0.5);
+ SetUltimateCharge(EventPlayer(),100);
+}

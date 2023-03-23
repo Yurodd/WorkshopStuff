@@ -1,0 +1,81 @@
+globalvar define teamPoint;
+globalvar define team1Center;
+globalvar define team2Center;
+globalvar define team1Radius = WorkshopSettingInteger("Radius","Team 1", 20, 0, 1000,0);
+globalvar define team2Radius = WorkshopSettingInteger("Radius","Team 2", 20, 0, 1000,0);
+globalvar define damage = WorkshopSettingInteger("Damage","DPS when out of range", 10, 0, 1000,0);
+playervar define mypos;
+rule: "Press Interact to start"
+Event.OngoingPlayer
+Team.Team1
+if (IsAlive())
+{
+    teamPoint[0][SlotOf()] = PositionOf();
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Press Interact to start"
+Event.OngoingPlayer
+Team.Team2
+if (IsAlive())
+{
+    teamPoint[1][SlotOf()] = PositionOf();
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Press Interact to start"
+Event.OngoingGlobal
+{
+    if(CountOf(teamPoint[0])> 1)
+    {
+        define teamFilterCount = FilteredArray(teamPoint[0],ArrayElement() != 0);
+        define totalVector = Vector();
+        for(define num =0; CountOf(teamFilterCount);1)
+        {
+            totalVector = totalVector + teamFilterCount[num];
+        }
+        totalVector = totalVector / CountOf(teamFilterCount);
+        team1Center = totalVector;
+    }
+     if(CountOf(teamPoint[1])> 1)
+    {
+        define teamFilterCount = FilteredArray(teamPoint[1],ArrayElement() != 0);
+        define totalVector = Vector();
+        for(define num =0; CountOf(teamFilterCount);1)
+        {
+            totalVector = totalVector + teamFilterCount[num];
+        }
+        totalVector = totalVector / CountOf(teamFilterCount);
+        team2Center = totalVector;
+    }
+    Wait(0.016);
+    Loop();
+}
+
+
+rule: "Press Interact to start"
+Event.OngoingPlayer
+if (HasSpawned() && HostPlayer() == eventPlayer)
+{
+    CreateIcon(AllPlayers(),team1Center,Icon.ArrowDown,IconRev.VisibleToAndPosition,Color.Team1);
+    CreateIcon(AllPlayers(),team2Center,Icon.ArrowDown,IconRev.VisibleToAndPosition,Color.Team2);
+    CreateEffect(AllPlayers(),Effect.Ring,Color.Team1,team1Center,team1Radius);
+    CreateEffect(AllPlayers(),Effect.Ring,Color.Team2,team2Center,team2Radius);
+}
+
+rule: "Press Interact to start"
+Event.OngoingPlayer
+Team.Team1
+if (DistanceBetween(eventPlayer,team1Center) > team1Radius)
+{
+    define damageID;
+    StartDamageOverTime(eventPlayer,null,999,damage);
+    damageID = LastDamageOverTime();
+    WaitUntil(DistanceBetween(eventPlayer,team1Center) <= team1Radius,999);
+    StopDamageOverTime(LastDamageOverTime());
+}
+
+define eventPlayer : EventPlayer();
+

@@ -1,0 +1,162 @@
+
+
+globalvar define pillarPos; //HP0AH
+playervar define dummy;
+playervar define dummyPos;
+playervar define opposite;
+playervar define prevPos;
+playervar define prev_dummyPillar;
+globalvar define signOff;
+globalvar define pillarID;
+playervar define myBoss;
+rule: "Make long black sausage" 
+Event.OngoingGlobal
+{
+    for(define count; 20; 1)
+    {
+        
+        pillarPos[count] = NearestWalkablePosition(Vector(RandomInteger(-18,18),0,RandomInteger(-18,18)));
+
+          while(IsTrueForAny(FilteredArray(pillarPos,ArrayElement() != pillarPos[count]),DistanceBetween(pillarPos[count],ArrayElement()) < 10))
+            {
+                pillarPos[count] = NearestWalkablePosition(Vector(RandomInteger(-18,18),0,RandomInteger(-18,18)));
+                Wait(0.016);
+            }  
+
+        CreateEffect(AllPlayers(),Effect.LightShaft,Color.Black,pillarPos[count],0.85,EffectRev.VisibleTo);
+        CreateEffect(AllPlayers(),Effect.LightShaft,Color.Black,pillarPos[count],0.85,EffectRev.VisibleTo);
+        CreateBeamEffect(AllPlayers(),BeamType.GoodBeam,pillarPos[count],pillarPos[count] + Vector(0,1000,-0.001),Color.Black,EffectRev.VisibleTo);
+        CreateEffect(AllPlayers(),Effect.Ring,Color.Black,pillarPos[count],0.85,EffectRev.VisibleTo);
+    }
+
+
+    //CreateHudText(AllPlayers(),ServerLoad());
+}
+
+rule: "ShtsTakingTooLong"
+Event.OngoingGlobal
+if(IsAssemblingHeroes())
+{
+    SetMatchTime(0);
+}
+
+rule: "SpawnButts"
+Event.OngoingPlayer
+if(HasSpawned()&& !IsDummyBot())
+{
+ Wait(1);
+ CreateDummyBot(Hero.WreckingBall,Team.All,SlotOf() + 6,dummyPos);
+ dummy = LastCreatedEntity();
+ dummy.myBoss = eventPlayer;
+ SetDamageReceived(dummy,0.001);
+ DisableMovementCollisionWithEnvironment(dummy,true);
+ SetInvisible(dummy,InvisibleTo.All);
+}
+
+rule: "Dont Leave me"
+Event.OngoingPlayer
+if(IsDummyBot() && !EntityExists(myBoss))
+{
+    DestroyDummyBot(eventPlayer);
+}
+
+rule: "Player Pillar Block"
+Event.OngoingPlayer
+if(IsTrueForAny(pillarPos,DistanceBetween(EyePosition(),Vec(ArrayElement(),EyePosition(),ArrayElement())) <= 1.3) && !IsDummyBot())
+{
+    define closestPill = FirstOf(SortedArray(pillarPos,DistanceBetween(eventPlayer,ArrayElement())));
+    define EyeposPill = Vec(closestPill,EyePosition(),closestPill);
+    ApplyImpulse(eventPlayer,DirectionTowards(EyeposPill,EyePosition()), 0.001);
+    SetMoveSpeed(eventPlayer,100 - (DotProduct(DirectionTowards(EyePosition(),EyePosition() + WorldVectorOf(ThrottleOf(),eventPlayer)),DirectionTowards(EyePosition(),EyeposPill)) * 100));
+    if(DistanceBetween(EyePosition(),EyeposPill) <= 0.8)
+    {
+    Teleport(eventPlayer,RayCastHitPosition(EyeposPill,EyeposPill+ DirectionTowards(EyeposPill,EyePosition()) * 1.3));
+    CancelPrimaryAction();
+    }
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+    SetMoveSpeed(eventPlayer,100);
+}
+
+rule: "Pillar intersect"
+Event.OngoingPlayer
+if(IsAlive() && !IsDummyBot())
+{
+
+    define closestPillar;
+    define horizontalFacingDir = FacingDirectionOf() * Vector(1,0,1);
+    define tempPillar = MappedArray(pillarPos,
+    YMaxVec(
+    ArrayElement(),
+    EyePosition() + FacingDirectionOf() * DotProduct(ArrayElement() - EyePosition(),horizontalFacingDir) / DotProduct(FacingDirectionOf() , horizontalFacingDir),
+    ArrayElement())
+    );
+
+    closestPillar = FilteredArray(tempPillar,DistanceBetween(ArrayElement(),EyePosition() + FacingDirectionOf() * DistanceBetween(EyePosition(),ArrayElement())) <= 0.85);
+    closestPillar = FirstOf(SortedArray(closestPillar,DistanceBetween(ArrayElement(),EyePosition())));
+
+    closestPillar = closestPillar + Vector(0,-1.1,0);
+    if(closestPillar == 0)
+    {
+        closestPillar = FirstOf(SortedArray(tempPillar,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition()))));
+        define intersection_length = DotProduct(closestPillar - EyePosition(),horizontalFacingDir) / DotProduct(FacingDirectionOf() , horizontalFacingDir);
+         define intersection = EyePosition() + FacingDirectionOf() * intersection_length;
+         closestPillar = YMaxVec(closestPillar,intersection,closestPillar) + Vector(0,-1.1,0);
+    }
+
+    Teleport(dummy,closestPillar);
+
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+    Teleport(dummy,Vector(0,100,0));
+}
+
+rule: "Grapple Pillar intersect"
+Event.OngoingPlayer
+if(IsUsingAbility1() && !IsDummyBot())
+{
+
+    define grapplePillar;
+     define horizontalFacingDir = FacingDirectionOf() * Vector(1,0,1);
+
+    for (define i = 0; CountOf(pillarPos); 1)
+    {
+        define intersection_length = DotProduct(pillarPos[i] - EyePosition(),horizontalFacingDir) / DotProduct(FacingDirectionOf() , horizontalFacingDir);
+        define intersection = EyePosition() + FacingDirectionOf() * intersection_length;
+        if(DistanceBetween(Vec(pillarPos[i],intersection,pillarPos[i]),intersection) <= 0.85)
+        {
+            grapplePillar[CountOf(grapplePillar)] = Vec(pillarPos[i],intersection,pillarPos[i]);
+        }
+    }
+    grapplePillar = FilteredArray(grapplePillar,YOf(ArrayElement())>-2 && DistanceBetween(ArrayElement(),EyePosition())<=20);
+    grapplePillar = FirstOf(SortedArray(grapplePillar,DistanceBetween(ArrayElement(),EyePosition()))) + Vector(0,-1.1,0);
+    if(grapplePillar !=0)
+    {
+    DisallowButton(eventPlayer,Button.Ability1);
+    define eyepos = Vector();
+    define tempGrapple;
+    ChaseVariableAtRate(eyepos,grapplePillar,40);
+    WaitUntil(eyepos == grapplePillar, 3);
+    CancelPrimaryAction();
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,grapplePillar,eventPlayer);
+    tempGrapple = LastCreatedEntity();
+    define tempTime = TotalTimeElapsed();
+    while(DistanceBetween(eventPlayer,grapplePillar) >= 3 && !IsButtonHeld(eventPlayer,Button.Jump))
+    {
+
+        ApplyImpulse(eventPlayer,DirectionTowards(PositionOf(),grapplePillar),20);
+        Wait(0.016);
+    }
+
+    DestroyEffect(tempGrapple);
+    SetAbilityCooldown(eventPlayer,Button.Ability1,2);
+    AllowButton(eventPlayer,Button.Ability1);
+    StopChasingVariable(eyepos);
+
+    }
+    
+}
+
+define eventPlayer : EventPlayer();
+define Vec(define X,define Y,define Z): Vector(XOf(X),YOf(Y),ZOf(Z));
+define YMaxVec(define X,define Y,define Z): Vector(XOf(X),Max(YOf(Y)),ZOf(Z));

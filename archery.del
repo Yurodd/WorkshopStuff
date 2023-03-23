@@ -1,0 +1,1617 @@
+//import "E:/Overwatch-Script-To-Workshop-master/Release/hanzoleadmap.pathmap" as map;
+
+playervar define pullarrow! = false;
+playervar define maxspeed! = 109.884;
+playervar define minspeed  =25;
+playervar define hud!;
+playervar define eyepos!;
+playervar define dir!;
+playervar define mass! = 1;
+playervar define gravity! = 9.806;
+playervar define d! = 0.016;
+playervar define t! = 0;
+playervar define isshot! = false;
+playervar define gravitydownwards!;
+playervar define projectile!;
+globalvar define radius! = 1;
+playervar define points! = 10000;
+globalvar define center! = Vector(98.25,-1.65,74.53);
+globalvar define shop! = Vector(48.27,-2.38,57.13);
+globalvar define rangeportal! = Vector(49.99,-2.48,59.6);
+globalvar define rangeexit! = Vector(58.96,4.15,62.65);
+globalvar define exitid! =0;
+globalvar define leadid! =0;
+globalvar define leadidexit! =0;
+globalvar define exithud! =0;
+playervar define startround! =false;
+playervar define startrange! =false;
+playervar define shophudtext! =0;
+playervar define rangehudtext! =0;
+playervar define round1! = false;
+playervar define roundlevel ! =1;
+playervar define eyeshop! =0;
+playervar define eyerange! =0;
+globalvar define home! = Vector(40.263,-1.288,68.599);
+globalvar define trickshotstartpos! = Vector(80.61,-3.02,56.54);
+globalvar define leadportal! = Vector(39.42,-2.38,59.47);
+globalvar define dummy1v1pos! = Vector(-47.79,1,-115.89);
+globalvar define player1v1pos! = Vector(-34.5,1,-102.42);
+globalvar define leadplayerpos! = Vector(-5.34,-0.9,-79.87);
+globalvar define leaddummypos! = Vector(-13,-0.9,-86.31);
+globalvar define leadexit! = Vector(-0.56,-0.14,-74.06);
+globalvar define grapplearrowshoppos! = Vector(-39.41,0.25,-113.33);
+globalvar define firearrowshoppos! = Vector(-37.21,0.25,-111.24);
+globalvar define freezingarrowshoppos! = Vector(-34.97,0.25,-109.01);
+globalvar define gravitonarrowshoppos! = Vector(-40.75,0.25,-103.15);
+globalvar define leadqueue! = EmptyArray();
+globalvar define hanzo!;
+playervar define leadtrainer! = false;
+playervar define 1v1start! = false;
+playervar define time!  =0;
+playervar define dummypull  =0;
+playervar define closestplayer!;
+playervar define firstpos!;
+playervar define secondpos!;
+playervar define leadpos!;
+playervar define leadballid!;
+playervar define redballtarget! = false;
+playervar define grapplearrow = false;
+playervar define firearrow! = false;
+playervar define freezingarrow! = false;
+playervar define gravitonarrow! = false;
+playervar define freezingeffectid!;
+globalvar define freezinglist! = EmptyArray();
+playervar define gravitoneffectid1!;
+playervar define gravitoneffectid2!;
+globalvar define gravitonlist! = EmptyArray();
+playervar define gravitonpos;
+playervar define gravitonisshot! =false;
+playervar define gravitonfirstpos!;
+playervar define grappleid!;
+playervar define inshop! = false;
+playervar define shopexitid!;
+playervar define grapplearrowhudid! =0;
+playervar define freezingearrowhudid! =0;
+playervar define firearrowhudid! =0;
+playervar define gravitonarrowhudid! =0;
+playervar define hudspacer1! =0;
+playervar define hudspacer2! =0;
+playervar define hudspacer3! =0;
+playervar define hudspacer4! =0;
+playervar define hudspacer5! =0;
+playervar define hit! =false;
+playervar define abilittoggle! =false;
+playervar define menuopen! =false;
+playervar define abilityID! =0;
+playervar define savedabilityID! =0;
+playervar define abilitymenuID! =0;
+playervar define abilitylist! = 0;
+playervar define abilitylistvar! = 0;
+playervar define abilityhudmain! =0;
+playervar define abilithudid0! =0;
+playervar define abilithudid1! =0;
+playervar define abilithudid2! =0;
+playervar define abilithudid3! =0;
+playervar define abilithudid4! =0;
+playervar define nextability! =0;
+playervar define abilitlisthud! =0;
+playervar define areyousure! =false;
+playervar define thankyou! =false;
+playervar define alreadybought! =false;
+playervar define mainentrancestart =EmptyArray();
+playervar define mainentranceend =EmptyArray();
+playervar define fishstart =EmptyArray();
+playervar define fishend =EmptyArray();
+playervar define cliffstart =EmptyArray();
+playervar define cliffend =EmptyArray();
+playervar define rightstart =EmptyArray();
+playervar define rightend =EmptyArray();
+playervar define leftstart =EmptyArray();
+playervar define leftend =EmptyArray();
+playervar define adad =EmptyArray();
+//  globalvar define noexitnode! =
+//   [
+//       Vector(24.86,2.02,-62.16), //left window
+//       Vector(8.82,4.34,-49.56), //right window
+//       Vector(-13.03,1,-33.81), //jump of cliff
+//       Vector(26.95,3,-78.71), //left fish ++
+//       Vector(10.48,-1.73,-63.08) //main entrance ++
+//   ];
+
+// globalvar define reversenoexitnode! =
+//   [
+//       Vector(1.51,5.54,-59.35), //right window side1
+//       Vector(-0.23,5.45,-57.43), //right window side2
+//       Vector(16.51,5.62,-74.04), //left window side1
+//       Vector(11.63,5.51,-69.42), //left window side2
+//       Vector(24.92,4.99,-82.6), //fish side 1
+//       Vector(22.41,4.99,-80.04), //fish side 2
+//       Vector(22.4,6.23,-80.06), //fish side 3
+//       Vector(24.96,6.23,-82.57), //fish side 4
+
+//       Vector(8.18,3.99,-65.63), //main entrance up
+//       Vector(8.2,-1.72,-65.66), //main entrance down
+//       Vector(6.22,3.08,-63.69), //main entrance diagonal 1
+//       Vector(10.21,-1.71,-67.64), //main entrance diagonal 2
+//       Vector(10.21,3.09,-67.64), //main entrance diagonal 3
+//       Vector(6.21,-1.72,-63.69), //main entrance diagonal 4
+//       Vector(6.03,0.81,-63.89), //main entrance middle across 1
+//       Vector(10.2,0.81,-67.65) //main entrance middle across 2
+//   ];
+  
+
+
+    globalvar define roundpos! =
+  [
+
+        Vector(78.51,6.98,42.87),
+        Vector(74.05,4.96,49.59),
+         Vector(69.24,13.71,37.03),
+       Vector(47.5,4.76,45.61),
+       Vector(33,10.22,-14.86),
+        Vector(43.88,1.84,26.06),
+        Vector(-5.33,69.17,-77.68),
+         Vector(12.57,7.05,-49.43),
+           Vector(12.57,7.25,-24.58),
+           Vector(-9.14,1,-7.75), 
+           Vector(10.66,8.7,-63.23),//far medal
+           Vector(-12.71,77.90,-84.95) //high roof top
+
+  ];
+
+  //randompos for range
+      globalvar define targetposition! =
+  [
+
+        Vector(50.51,-2.88,72.8),//done
+        Vector(53.76,-2.74,66.23),//done
+         Vector(38,-2.62,68.42),//done
+       Vector(41.92,-2.54,64.5),//done
+       Vector(45.54,-2.79,71.72),//done
+        Vector(36.78,-2.52,65.37), //done
+        Vector(45.44,-2.67,67.52),//done
+         Vector(56.26,-2.92,71.12),//done
+           Vector(46.05,-2.63,65.88),//done
+           Vector(52.72,-2.73,66.47), //done
+           Vector(49.23,-2.83,71.58),//
+           Vector(42.65,-2.57,65.15) //
+
+  ];
+
+
+  rule: "Pathfind to cursor." //teleport and revive on death
+Event.OnDeath
+{
+    if(!IsDummyBot())
+    {
+        if(leadtrainer)
+        Teleport(EventPlayer(),leaddummypos);
+            else if(roundlevel<7)
+            Teleport(EventPlayer(),home);
+            else if(roundlevel < 10)
+            Teleport(EventPlayer(),Vector(-5.33,69.17,-77.68));
+            else if(roundlevel == 10)
+            Teleport(EventPlayer(),home);
+            else if(roundlevel == 11)
+            Teleport(EventPlayer(), Vector(12.57,7.05,-49.43));
+    Wait(0.2);
+    Resurrect();
+    Wait(0.2);
+    }
+    else
+    {
+    Teleport(EventPlayer(),leaddummypos);
+     Wait(0.2);
+    Resurrect();
+    }
+
+
+}
+
+rule: "Pathfind to cursor." //Create huds
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot())
+{
+     CreateHudText(EventPlayer(),CountOf(abilitylist));
+      CreateHudText(EventPlayer(),grapplearrowhudid[1]);
+    CreateHudText(EventPlayer(),ServerLoad(),ServerLoadPeak());
+    CreateHudText(EventPlayer(),PreProjectile());
+    CreateHudText(EventPlayer(),Pathmap.IsPathfinding(hanzo));
+    
+   //CreateHudText(EventPlayer(),DistanceBetween(EventPlayer(),FirstOf(SortedArray(gravitonlist,DistanceBetween(EventPlayer(),ArrayElement())))));
+    abilitylist[0] = -1;
+    CreateHudText(FilteredArray(AllPlayers(),!IsDummyBot()),<"<0>: $<1>",EventPlayer(),points>);
+    CreateIcon(FilteredArray(EventPlayer(),ArrayElement().redballtarget),roundpos[roundlevel],Icon.ArrowDown,IconRev.VisibleToAndPosition,Color.Red,true);
+    CreateEffect(FilteredArray(EventPlayer(),ArrayElement().redballtarget),Effect.Orb,Color.Red,roundpos[roundlevel],0.4,EffectRev.VisibleToPositionAndRadius);
+   // CreateHudText(AllPlayers(),DistanceBetween(roundpos[1],PreProjectile()));
+     Teleport(EventPlayer(),home); //base
+     //Teleport(EventPlayer(), Vector(12.57,7.05,-49.43)); //high tower
+     SetStatus(EventPlayer(),null,Status.PhasedOut,9999);
+}
+
+
+
+rule: "Pathfind to cursor." //create range board
+Event.OngoingGlobal
+{
+    Wait(5);
+    Pathmap hanamura = new Pathmap("hanzoleadmap.pathmap");
+    CreateDummyBot(Hero.Hanzo,Team.All,-1,leaddummypos);
+    hanzo=LastCreatedEntity();
+    // CreateDummyBot(Hero.Hanzo,Team.All,-1,leaddummypos);
+    // CreateDummyBot(Hero.Hanzo,Team.All,-1,leaddummypos);
+    // CreateDummyBot(Hero.Hanzo,Team.All,-1,leaddummypos);
+    // CreateDummyBot(Hero.Hanzo,Team.All,-1,leaddummypos);
+    ////////////////////////////////////////////////////////////////////////////shop icons
+    CreateInWorldText(FilteredArray(AllPlayers(),ArrayElement().inshop),IconString(Icon.ArrowUp),Add(grapplearrowshoppos,Vector(0,1,0)),1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToAndString,Color.White);
+    CreateInWorldText(FilteredArray(AllPlayers(),ArrayElement().inshop),IconString(Icon.Fire),Add(firearrowshoppos,Vector(0,1,0)),1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToAndString,Color.Red);
+    CreateInWorldText(FilteredArray(AllPlayers(),ArrayElement().inshop),IconString(Icon.Diamond),Add(freezingarrowshoppos,Vector(0,1,0)),1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToAndString,Color.Aqua);
+    CreateInWorldText(FilteredArray(AllPlayers(),ArrayElement().inshop),IconString(Icon.Spiral),Add(gravitonarrowshoppos,Vector(0,1,0)),1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToAndString,Color.White);
+    // CreateIcon(AllPlayers(),grapplearrowshoppos,Icon.ArrowUp,IconRev.None,Color.White,false);
+    // CreateIcon(AllPlayers(),firearrowshoppos,Icon.Fire,IconRev.None,Color.Red,false);
+    // CreateIcon(AllPlayers(),freezingarrowshoppos,Icon.Diamond,IconRev.None,Color.Aqua,false);
+    // CreateIcon(AllPlayers(),gravitonarrowshoppos,Icon.Spiral,IconRev.None,Color.White,false);
+    ////////////////////////////////////////////////////////////////////////////
+    CreateInWorldText(FilteredArray(AllPlayers(),DistanceBetween(Add(EyePosition(ArrayElement()),Multiply(FacingDirectionOf(ArrayElement()),DistanceBetween(Add(leadexit,Vector(0,1,0)),EyePosition(ArrayElement())))),Add(leadexit,Vector(0,1,0)))<1),"Crouch Here To Exit111",leadexit,1,Clipping.DoNotClip,InworldTextRev.VisibleToAndString);
+    CreateInWorldText(FilteredArray(AllPlayers(),!ArrayElement().redballtarget&&DistanceBetween(Add(EyePosition(ArrayElement()),Multiply(FacingDirectionOf(ArrayElement()),DistanceBetween(Add(leadportal,Vector(0,1,0)),EyePosition(ArrayElement())))),Add(leadportal,Vector(0,1,0)))<1),"Crouch Here For: FFA Arena",leadportal,1);
+    CreateInWorldText(FilteredArray(AllPlayers(),!ArrayElement().redballtarget&&DistanceBetween(Add(EyePosition(ArrayElement()),Multiply(FacingDirectionOf(ArrayElement()),DistanceBetween(Add(rangeportal,Vector(0,1,0)),EyePosition(ArrayElement())))),Add(rangeportal,Vector(0,1,0)))<1),"Crouch Here For: Range Mode",rangeportal,1);
+    CreateInWorldText(FilteredArray(AllPlayers(),!ArrayElement().redballtarget&&DistanceBetween(Add(EyePosition(ArrayElement()),Multiply(FacingDirectionOf(ArrayElement()),DistanceBetween(Add(shop,Vector(0,1,0)),EyePosition(ArrayElement())))),Add(shop,Vector(0,1,0)))<1),"Crouch Here To: Shop",shop,1);
+    CreateInWorldText(FilteredArray(AllPlayers(),ArrayElement().inshop&&DistanceBetween(Add(EyePosition(ArrayElement()),Multiply(FacingDirectionOf(ArrayElement()),DistanceBetween(Add(player1v1pos,Vector(0,1,0)),EyePosition(ArrayElement())))),Add(player1v1pos,Vector(0,1,0)))<1),"Crouch Here to Exit",player1v1pos,1);
+    ////////////////////////////////////////////////////////////////////////////
+
+    define i = 0;
+    define size = 0;
+    define Spheresize=0.2;
+        
+
+            
+           // CreateInWorldText(AllPlayers(),number2,Add(center,Multiply(Vector(0,-1,1),0.5)),0,Clipping.ClipAgainstSurfaces,InworldTextRev.String);
+    //     for (define x = 0; x < 10; x++)
+    //     {
+    //     //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+    //     CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+36),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+36),radius))),3)),Color.Red,EffectRev.None);
+    //     i=i+36;
+        
+    //     }
+    //     Spheresize = Spheresize + 0.0075;
+    //     radius = radius +8;
+
+    //           for (define x = 0; x < 23; x++)
+    //     {
+    //     //CreateEffect(EventPlayer(),Effect.Sphere,Color.Red,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+    //     CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+14.8),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+14.8),radius))),3)),Color.Red,EffectRev.None);
+    //     i=i+15.65;
+        
+    //     }
+    //     Spheresize = Spheresize + 0.0075;
+    //     radius = radius +8;
+
+    //           for (define x = 0; x < 23; x++)
+    //     {
+    //    //CreateEffect(EventPlayer(),Effect.Sphere,Color.Blue,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+    //     CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+14.8),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+14.8),radius))),3)),Color.Red,EffectRev.None);
+    //     i=i+15.65;
+        
+    //     }
+    //     Spheresize = Spheresize + 0.0075;
+    //     radius = radius +8;
+
+    //           for (define x = 0; x < 23; x++)
+    //     {
+    //   // CreateEffect(EventPlayer(),Effect.Sphere,Color.Green,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+    //     CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+14.8),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+14.8),radius))),3)),Color.Red,EffectRev.None);
+    //     i=i+15.65;
+        
+    //     }
+    //     Spheresize = Spheresize + 0.0075;
+    //     radius = radius +8;
+
+    //           for (define x = 0; x < 23; x++)
+    //     {
+    //     //CreateEffect(EventPlayer(),Effect.Sphere,Color.White,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+    //     CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+14.8),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+14.8),radius))),3)),Color.Red,EffectRev.None);
+    //     i=i+15.65;
+        
+    //     }
+    //     Spheresize = Spheresize + 0.0075;
+    //     radius = radius +8;
+    CreateEffect(FilteredArray(AllPlayers(),ArrayElement().startrange),Effect.Sphere,Color.Red,Add(center,Vector(3,0,0)),0.05,EffectRev.VisibleTo);
+
+            for (define x = 0; x < 6; x++)  //49 effects left after all this
+        {
+        //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+        CreateBeamEffect(FilteredArray(AllPlayers(),ArrayElement().startrange),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+90),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+90),radius))),3)),Color.Red,EffectRev.VisibleTo);
+        i=i+60;
+        
+        }
+        Spheresize = Spheresize + 0.0075;
+        radius = radius +8;
+                for (define x = 0; x < 10; x++)
+        {
+        //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+        CreateBeamEffect(FilteredArray(AllPlayers(),ArrayElement().startrange),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+38),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+38),radius))),3)),Color.Red,EffectRev.VisibleTo);
+        i=i+36;
+        
+        }
+        Spheresize = Spheresize + 0.0075;
+        radius = radius +8;
+                for (define x = 0; x < 16; x++)
+        {
+        //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+        CreateBeamEffect(FilteredArray(AllPlayers(),ArrayElement().startrange),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+24),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+24),radius))),3)),Color.Red,EffectRev.VisibleTo);
+        i=i+22.5;
+        
+        }
+        Spheresize = Spheresize + 0.0075;
+        radius = radius +8;
+                for (define x = 0; x < 20; x++)
+        {
+        //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+        CreateBeamEffect(FilteredArray(AllPlayers(),ArrayElement().startrange),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+18.5),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+18.5),radius))),3)),Color.Red,EffectRev.VisibleTo);
+        i=i+18;
+        
+        }
+        Spheresize = Spheresize + 0.0075;
+        radius = radius +8;
+                for (define x = 0; x < 26; x++)
+        {
+        //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Spheresize,EffectRev.None);
+        CreateBeamEffect(FilteredArray(AllPlayers(),ArrayElement().startrange),BeamType.GrappleBeam,Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i),radius))),3)),Add(center,Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(CosineFromDegrees(i+14),radius)),Add(VerticalAngleFromDirection(DirectionTowards(center,Vector(98.25,-1.65,74.53))),Multiply(SineFromDegrees(i+14),radius))),3)),Color.Red,EffectRev.VisibleTo);
+        i=i+13.84;
+        
+        }
+        Spheresize = Spheresize + 0.0075;
+        radius = radius +8;
+    
+
+}
+
+rule: "Pathfind to cursor." //Pull Bow
+Event.OngoingPlayer
+if (IsFiringPrimary()&&!pullarrow&&!IsDummyBot())
+{
+    //DestroyAllEffects();
+    //isshot=false;
+    StopChasingVariable(minspeed);
+ 
+    ChaseVariableOverTime(minspeed,maxspeed,0.726,TimeChaseReevaluation.DestinationAndDuration);
+    hit = false;
+    pullarrow = true;
+    
+}
+
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (!IsFiringPrimary()&&pullarrow)
+{
+
+        if(!IsButtonHeld(EventPlayer(),Button.SecondaryFire))
+        {
+        StopChasingVariable(minspeed);
+        //DestroyHudText(hud);
+    // CreateHudText(EventPlayer(),minspeed);
+        //hud = LastTextID();
+        eyepos = EyePosition();
+        dir = Multiply(FacingDirectionOf(),minspeed);
+        gravitydownwards = Vector(0,Multiply(-1,Multiply(gravity,mass)),0);
+        dir = Add(dir,Multiply(Divide(gravitydownwards,mass),d));
+        projectile = Add(eyepos,Multiply(dir,d));
+        isshot = true;
+        if(leadtrainer)
+            {
+            if(grapplearrow)
+                {
+                DestroyEffect(grappleid);
+                CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,EventPlayer(),projectile);
+                grappleid = LastCreatedEntity();
+                }
+
+                if(gravitonarrow)
+                {
+                gravitonisshot=true;
+                DestroyEffect(gravitoneffectid1);
+                DestroyEffect(gravitoneffectid2);
+                CreateEffect(AllPlayers(),Effect.BadAura,Color.White,projectile,0.5);
+                gravitoneffectid1=LastCreatedEntity();
+                CreateEffect(AllPlayers(),Effect.GoodAura,Color.White,projectile,0.5);
+                gravitoneffectid2=LastCreatedEntity();
+                }
+            }
+        
+        }
+    
+
+    
+    pullarrow = false;
+   
+   
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Purple,PreProjectile(),0.035,EffectRev.VisibleToPositionAndRadius);
+    //StartCamera(EventPlayer(),Add(projectile,Multiply(Multiply(dir,d),-1)),Add(projectile,Multiply(Multiply(dir,d),1)));
+}
+
+
+rule: "Pathfind to cursor." //Arrow Trajectory
+Event.OngoingPlayer
+if (isshot&&DistanceBetween(projectile,PreProjectile())>=Add(1,Divide(minspeed,100)))
+{
+
+    dir = Add(dir,Multiply(Divide(gravitydownwards,mass),d));
+    projectile = Add(projectile,Multiply(dir,d));
+    // if(pinshot)
+    // {
+    // //pinshotlist = FilteredArray(AllLivingPlayers(),ArrayElement()!=EventPlayer()&&DistanceBetween(ArrayElement(),projectile)<2);
+    // pinshotlist[IndexOfArrayValue(pinshotlist,EventPlayer())] = projectile;
+    // }
+    if(leadtrainer)
+    {
+        if(redballtarget)
+        PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.SkyBlue,projectile,0.05);
+        if(firearrow)
+        {
+        PlayEffect(AllPlayers(),PlayEffect.BadPickupEffect,Color.Red,projectile,1);
+        define players = FilteredArray(AllPlayers(),DistanceBetween(ArrayElement(),projectile)<2);
+        SetStatus(players,null,Status.Burning,3);
+        StartDamageOverTime(players,EventPlayer(),3,15);
+        }
+        if(freezingarrow)
+        {
+        PlayEffect(AllPlayers(),PlayEffect.BadPickupEffect,Color.SkyBlue,projectile,1);
+        freezinglist = FilteredArray(AllPlayers(),DistanceBetween(ArrayElement(),projectile)<2);
+        }
+    }
+    MinWait();
+    SkipIf(IsFiringPrimary()||pullarrow,1);
+    LoopIfConditionIsTrue();
+    minspeed = 25.007;
+    isshot = false;
+    if(leadtrainer)
+    {
+        if(gravitonarrow)
+        {
+        // gravitonlist=RemoveFromArray(gravitonlist,gravitonpos);
+        // gravitonlist=RemoveFromArray(gravitonlist,PreProjectile());
+        // gravitonfirstpos = PreProjectile();
+        // gravitonlist = Append(gravitonlist,gravitonfirstpos);
+        gravitonpos = PreProjectile();
+        }
+        hit=true;
+    }
+
+    // Wait(0.2);
+    // hit=false;
+    //Teleport(EventPlayer(),projectile);
+
+    
+}
+
+rule: "Pathfind to cursor." //Range board points
+Event.OngoingPlayer
+if (isshot&&DistanceBetween(projectile,PreProjectile())<=Add(1,Divide(minspeed,100))&&startrange)
+{
+    define number1=100;
+    define number2=40;
+            define number3=30;
+            define number4=20;
+            define number5=10;
+    pullarrow = false;
+    if(DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))<=0.05)
+    {
+        points = points + 100;
+        BigMessage(AllPlayers(),<"<0>: BULLSEYE!!", EventPlayer()>);
+        SmallMessage(EventPlayer(),number1);
+    }
+    else if(DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))>0.05 && DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))<=0.47) 
+    {
+        //ChasePlayerVariableOverTime(EventPlayer(),points,points+40,2,TimeChaseReevaluation.None);
+        points = points + 40;   
+        SmallMessage(EventPlayer(),number2);
+    }
+    else if(DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))>0.47 && DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))<=0.9) 
+    {
+        points = points + 30;   
+        SmallMessage(EventPlayer(),number3);
+    }
+    else if(DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))>0.9 && DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))<=1.3) 
+    {
+        points = points + 20;   
+        SmallMessage(EventPlayer(),number4);
+    }
+     else if(DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))>1.3 && DistanceBetween(PreProjectile(),Add(center,Vector(3,0,0)))<=1.68) 
+    {
+        points = points + 10;   
+        SmallMessage(EventPlayer(),number5);
+    }
+     Teleport(EventPlayer(),RandomValueInArray(targetposition));
+}
+
+rule: "Pathfind to cursor." //start camera
+Event.OngoingPlayer
+if (redballtarget||startrange&&IsButtonHeld(EventPlayer(), Button.Interact)&&isshot)
+{
+    StartCamera(EventPlayer(),Add(projectile,Multiply(Multiply(dir,d),-1)),Add(projectile,Multiply(Multiply(dir,d),1)));
+}
+
+rule: "Pathfind to cursor." //stop camera
+Event.OngoingPlayer
+if (redballtarget||startrange&&!IsButtonHeld(EventPlayer(), Button.Interact))
+{
+    StopCamera();
+}
+
+rule: "Pathfind to cursor." //If arrow landed logic
+Event.OngoingPlayer
+// if (isshot&&DistanceBetween(roundpos[roundlevel],PreProjectile())<=0.5&&DistanceBetween(projectile,PreProjectile())<=Add(1,Divide(minspeed,100)))
+// {
+    if (redballtarget&&isshot&&DistanceBetween(roundpos[roundlevel],PreProjectile())<=0.5&&DistanceBetween(projectile,PreProjectile())<=Add(1,Divide(minspeed,100)))
+{
+    if(roundlevel==1)
+    {
+        time = TotalTimeElapsed();
+    }
+    //SmallMessage(EventPlayer(),<"level: <1>",0,roundlevel+1>);
+   // SmallMessage(EventPlayer(),<"level: <1>",0,roundlevel+1>);
+    SmallMessage(EventPlayer(),<"Level:<0>",roundlevel+1>);
+    PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Yellow,roundpos[roundlevel],5);
+    PlayEffect(AllPlayers(),PlayEffect.RingExplosionSound,Color.SkyBlue,EventPlayer(),70);
+    PlayEffect(AllPlayers(),PlayEffect.RingExplosionSound,Color.SkyBlue,roundpos[roundlevel],70);
+    Wait(0.2);
+    roundlevel++;
+    points = points + (roundlevel*10);
+    if(roundlevel==7)
+    Teleport(EventPlayer(),Vector(-5.33,69.17,-77.68));
+    if(roundlevel==10)
+     Teleport(EventPlayer(), Vector(68.69,-2.9,58.38));
+    if(roundlevel==11)
+     Teleport(EventPlayer(), Vector(12.57,7.05,-49.43));
+      if(roundlevel==12)
+      {
+        roundlevel=0;
+        points = points * 2;
+        BigMessage(AllPlayers(),<"Congrats <0> on finishing Level 12 with the time: <1>!!",EventPlayer(),Divide(time - TotalTimeElapsed(),60)>);
+        SmallMessage(EventPlayer(),<"Doubled your points!">);
+        Teleport(EventPlayer(),home);
+      }
+    
+}
+
+
+rule: "Pathfind to cursor." //Play Portal Effects
+Event.OngoingGlobal
+{
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.RingExplosion,Color.SkyBlue,Vector(XOf(shop),Add(YOf(shop),0.1),ZOf(shop)),2);
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.GoodPickupEffect,Color.SkyBlue,Vector(XOf(shop),Add(YOf(shop),0.5),ZOf(shop)),1);
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.RingExplosion,Color.SkyBlue,Vector(XOf(rangeportal),Add(YOf(rangeportal),0.1),ZOf(rangeportal)),2);
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.GoodPickupEffect,Color.SkyBlue,Vector(XOf(rangeportal),Add(YOf(rangeportal),0.5),ZOf(rangeportal)),1);
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.RingExplosion,Color.SkyBlue,Vector(XOf(leadportal),Add(YOf(leadportal),0.1),ZOf(leadportal)),2);
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.GoodPickupEffect,Color.SkyBlue,Vector(XOf(leadportal),Add(YOf(leadportal),0.5),ZOf(leadportal)),1);
+
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.RingExplosion,Color.SkyBlue,Vector(XOf(trickshotstartpos),Add(YOf(trickshotstartpos),0.1),ZOf(trickshotstartpos)),2);
+    PlayEffect(FilteredArray(AllPlayers(),!ArrayElement().redballtarget),PlayEffect.GoodPickupEffect,Color.SkyBlue,Vector(XOf(trickshotstartpos),Add(YOf(trickshotstartpos),0.5),ZOf(trickshotstartpos)),1);
+    
+    Wait(1);
+    Loop();
+}
+
+
+
+rule: "Pathfind to cursor." //Starting target range
+Event.OngoingPlayer
+if (!redballtarget&&!startrange&&IsButtonHeld(EventPlayer(),Button.Crouch)&&DistanceBetween(PositionOf(),rangeportal)<1.5)
+{
+    SmallMessage(EventPlayer(),<"Target Range Is Starting...">);
+    SetStatus(EventPlayer(),null,Status.Rooted,9999);
+    Wait(1);
+    startrange = true;
+     CreateHudText(EventPlayer(),"Hit the Green Orb To Exit!",null,null,Location.Top,2);
+     //CreateHudText(EventPlayer(),<"red <0>: exit",0>,null,null,Location.Top,2);
+     exithud=LastTextID();
+    CreateEffect(AllPlayers(),Effect.Orb,Color.Green,rangeexit,0.4,EffectRev.VisibleToPositionAndRadius);
+    exitid = LastCreatedEntity();
+    Teleport(EventPlayer(),RandomValueInArray(targetposition));
+}
+
+
+rule: "Pathfind to cursor." //Exit Target range
+Event.OngoingPlayer
+if (startrange&&isshot&&DistanceBetween(rangeexit,PreProjectile())<=0.5&&DistanceBetween(projectile,PreProjectile())<=Add(1,Divide(minspeed,100)))
+{
+    SmallMessage(EventPlayer(),<"Exited Target Range">);
+    ClearStatus(EventPlayer(),Status.Rooted);
+    DestroyEffect(exitid);
+    DestroyHudText(exithud);
+    startrange=false;
+}
+
+rule: "Pathfind to cursor." //Kills player if too far
+Event.OngoingPlayer
+if (redballtarget&&!IsInAir()&&roundlevel==4||roundlevel==6||roundlevel==10&&DistanceBetween(PositionOf(),Vector(66.67,-1.76,71.55))>50)
+{
+    //Kill(EventPlayer());
+    Teleport(EventPlayer(),,Vector(66.67,-1.76,71.55));
+    SmallMessage(EventPlayer(),"Sorry, Cant Let You Go There... Yet");
+    Wait(1);
+}
+
+
+
+
+
+
+/////////////////////////////////////////////////Trickshot/////////////////////////////////////////////
+rule: "Pathfind to cursor." 
+Event.OngoingPlayer
+if (!redballtarget&&IsButtonHeld(EventPlayer(),Button.Crouch)&&DistanceBetween(PositionOf(),trickshotstartpos)<1.5)
+{
+    redballtarget = true;
+    SmallMessage(EventPlayer(),"Trick Shot Challenge: Started...");
+    Kill(EventPlayer());
+    Wait(1);
+    SmallMessage(EventPlayer(),"Look for a Red Orb target and see if you can hit it. Press F to start camera on your flying arrow.");
+    Wait(3);
+    SmallMessage(EventPlayer(),"Every level completed will give you money. Last round on Level 12 will double your current money. gl");
+}
+
+rule: "Pathfind to cursor." 
+Event.OngoingPlayer
+if (redballtarget&&IsButtonHeld(EventPlayer(),Button.Crouch)&&IsButtonHeld(EventPlayer(),Button.Interact)&&DistanceBetween(PositionOf(),trickshotstartpos)>1.5)
+{
+    redballtarget = false;
+    Teleport(EventPlayer(),Vector(70.51,-3.05,61.23)); //base
+    SmallMessage(EventPlayer(),"Trick Shot Challenge: Ended");
+    Wait(1);
+    SmallMessage(EventPlayer(),"Your level is saved.");
+}
+
+
+
+/////////////////////////////////////////////////Trickshot/////////////////////////////////////////////
+
+
+
+////////////////////////////////////////////////SHOP STUFF////////////////////////////////////////////////////////////////
+
+
+rule: "Pathfind to cursor." //Shop teleport
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch)&&DistanceBetween(PositionOf(),shop)<1.5)
+{
+    inshop = true;
+    Teleport(EventPlayer(),dummy1v1pos);
+    DisallowButton(EventPlayer(),Button.PrimaryFire);
+    DisallowButton(EventPlayer(),Button.Ultimate);
+}
+
+rule: "Pathfind to cursor." //Exit shop portal
+Event.OngoingPlayer
+if (inshop&& IsButtonHeld(EventPlayer(),Button.Crouch)&&DistanceBetween(PositionOf(),player1v1pos)<1.5)
+{
+    inshop = false;
+    Teleport(EventPlayer(),home);
+    AllowButton(EventPlayer(),Button.PrimaryFire);
+    AllowButton(EventPlayer(),Button.Ultimate);
+}
+
+
+rule: "Pathfind to cursor."//shop effect
+Event.OngoingPlayer
+if (inshop)
+{
+    PlayEffect(EventPlayer(),PlayEffect.RingExplosion,Color.SkyBlue,Vector(XOf(player1v1pos),Add(YOf(player1v1pos),0.1),ZOf(player1v1pos)),2);
+    //PlayEffect(EventPlayer(),PlayEffect.GoodPickupEffect,Color.SkyBlue,Vector(XOf(player1v1pos),Add(YOf(player1v1pos),0.5),ZOf(player1v1pos)),1);
+    Wait(1);
+    LoopIfConditionIsTrue();
+}
+
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(grapplearrowshoppos,Vector(0,1,0)),EyePosition())))),Add(grapplearrowshoppos,Vector(0,1,0)))<1)
+{
+    //if(!ArrayContains(abilitylist,1))
+    grapplearrowhudid[0]=grapplearrowhudid[0]+1;
+    if(ArrayContains(abilitylist,1))
+    grapplearrowhudid[0]=3;
+    if(!ArrayContains(abilitylist,1)&&grapplearrowhudid[0] ==2)
+    {
+    points = points - 1000;
+    abilitylist = Append(abilitylist,1);
+    //grapplearrow=true;
+     DestroyEffect(grappleid);
+     CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,EventPlayer(),projectile);
+     grappleid = LastCreatedEntity();
+     DestroyEffect(grappleid);
+    }
+    Wait(0.2);
+    // MinWait();
+    // LoopIfConditionIsTrue();
+
+}
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(grapplearrowshoppos,Vector(0,1,0)),EyePosition())))),Add(grapplearrowshoppos,Vector(0,1,0)))>1)
+{
+
+    grapplearrowhudid[0]=0;
+
+}
+
+
+
+
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(firearrowshoppos,Vector(0,1,0)),EyePosition())))),Add(firearrowshoppos,Vector(0,1,0)))<1)
+{
+    //if(!ArrayContains(abilitylist,1))
+    firearrowhudid[0]=firearrowhudid[0]+1;
+    if(ArrayContains(abilitylist,2))
+    firearrowhudid[0]=3;
+    if(!ArrayContains(abilitylist,2)&&firearrowhudid[0] ==2)
+    {
+    points = points - 1000;
+    abilitylist = Append(abilitylist,2);
+    }
+    Wait(0.2);
+    // MinWait();
+    // LoopIfConditionIsTrue();
+
+}
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(firearrowshoppos,Vector(0,1,0)),EyePosition())))),Add(firearrowshoppos,Vector(0,1,0)))>1)
+{
+
+    firearrowhudid[0]=0;
+
+}
+
+
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(freezingarrowshoppos,Vector(0,1,0)),EyePosition())))),Add(freezingarrowshoppos,Vector(0,1,0)))<1)
+{
+    //if(!ArrayContains(abilitylist,1))
+    freezingearrowhudid[0]=freezingearrowhudid[0]+1;
+    if(ArrayContains(abilitylist,3))
+    freezingearrowhudid[0]=3;
+    if(!ArrayContains(abilitylist,3)&&freezingearrowhudid[0] ==2)
+    {
+    points = points - 1000;
+    abilitylist = Append(abilitylist,3);
+    }
+    Wait(0.2);
+    // MinWait();
+    // LoopIfConditionIsTrue();
+
+}
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(freezingarrowshoppos,Vector(0,1,0)),EyePosition())))),Add(freezingarrowshoppos,Vector(0,1,0)))>1)
+{
+
+    freezingearrowhudid[0]=0;
+
+}
+
+
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(gravitonarrowshoppos,Vector(0,1,0)),EyePosition())))),Add(gravitonarrowshoppos,Vector(0,1,0)))<1)
+{
+    //if(!ArrayContains(abilitylist,1))
+    gravitonarrowhudid[0]=gravitonarrowhudid[0]+1;
+    if(ArrayContains(abilitylist,4))
+    gravitonarrowhudid[0]=3;
+    if(!ArrayContains(abilitylist,4)&&gravitonarrowhudid[0] ==2)
+    {
+    points = points - 1000;
+    abilitylist = Append(abilitylist,4);
+    }
+    Wait(0.2);
+    // MinWait();
+    // LoopIfConditionIsTrue();
+
+}
+
+rule: "Pathfind to cursor." //Hud text for shop description - grapple
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(gravitonarrowshoppos,Vector(0,1,0)),EyePosition())))),Add(gravitonarrowshoppos,Vector(0,1,0)))>1)
+{
+
+    gravitonarrowhudid[0]=0;
+
+}
+
+
+
+
+rule: "Pathfind to cursor." //Kills player if round ==9 and height is less than 18
+Event.OngoingPlayer
+if (redballtarget&&roundlevel==9&&Subtract(YOf(PositionOf()),YOf(home)) < 18)
+{
+     Kill(EventPlayer());
+    SmallMessage(EventPlayer(),"Sorry, Cant Let You Go There... Yet");
+}
+
+rule: "Pathfind to cursor." //start lead trainer 
+Event.OngoingPlayer
+if (!redballtarget&&IsButtonHeld(EventPlayer(),Button.Crouch)&&DistanceBetween(PositionOf(),leadportal)<1.5)
+{
+    leadtrainer = true;
+    abilitylist = SortedArray(abilitylist,ArrayElement());
+    ClearStatus(EventPlayer(),Status.PhasedOut);
+    leadqueue = Append(leadqueue,EventPlayer());
+    Teleport(EventPlayer(),leadplayerpos);
+    //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,leadpos,Multiply(Multiply(DistanceBetween(EventPlayer(),PlayerClosestToReticle(EventPlayer(),Team.All)),0.14),0.05));
+    leadballid=LastCreatedEntity();
+}
+
+rule: "Pathfind to cursor." //Exit Lead portal if crouch there
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch)&&DistanceBetween(PositionOf(),leadexit)<1.5)
+{
+    leadtrainer = false;
+    SetStatus(EventPlayer(),null,Status.PhasedOut,9999);
+    leadqueue = RemoveFromArray(leadqueue,EventPlayer());
+    Teleport(EventPlayer(),home);
+}
+
+
+rule: "Pathfind to cursor."//leadtrainer effects exit 
+Event.OngoingPlayer
+if (leadtrainer)
+{
+    PlayEffect(EventPlayer(),PlayEffect.RingExplosion,Color.SkyBlue,Vector(XOf(leadexit),Add(YOf(leadexit),0.1),ZOf(leadexit)),2);
+    PlayEffect(EventPlayer(),PlayEffect.GoodPickupEffect,Color.SkyBlue,Vector(XOf(leadexit),Add(YOf(leadexit),0.5),ZOf(leadexit)),1);
+    Wait(1);
+    LoopIfConditionIsTrue();
+}
+
+
+
+//////////////////////////////////////////////////////////Stay Inside Please////////////////////////////////////////////////////////////
+rule: "Pathfind to cursor."//Anti leave - left window
+Event.OngoingPlayer
+if (leadtrainer&&DotProduct(Vector(0.48,0,0.48),DirectionTowards(EventPlayer(),Vector(7.49,100,-66.25))) < 0)
+{
+    ApplyImpulse(EventPlayer(),-Vector(0.48,0,0.48),0.001);
+    StartThrottleInDirection(EventPlayer(),Vector(),0,Relative.ToPlayer,ThrottleBehavior.AddToExistingThrottle);
+    hit=false;
+    DestroyEffect(grappleid);
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+    StopThrottleInDirection();
+    //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[0],EventPlayer()),50);
+    //Teleport(EventPlayer(),Vector(13.25,4,-75.58));
+    // hit=false;
+    // DestroyEffect(grappleid);
+    // SmallMessage(EventPlayer(),"Stay Inside Please...");
+    
+}
+
+// rule: "Pathfind to cursor."//Anti leave - left window
+// Event.OngoingPlayer
+// if (leadtrainer&&DotProduct(Vector(0.48,0,0.48),DirectionTowards(EventPlayer(),Vector(7.49,100,-66.25))) < -0.006)
+// {
+//     ApplyImpulse(EventPlayer(),-Vector(0.48,0,0.48),0.001);
+//     StartThrottleInDirection(EventPlayer(),Vector(),0,Relative.ToPlayer,ThrottleBehavior.AddToExistingThrottle);
+//     Wait(0.016);
+//     LoopIfConditionIsTrue();
+//     StopThrottleInDirection();
+//     //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[0],EventPlayer()),50);
+//     //Teleport(EventPlayer(),Vector(13.25,4,-75.58));
+//     hit=false;
+//     DestroyEffect(grappleid);
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+    
+// }
+
+/* rule: "Pathfind to cursor."//Anti leave - left window
+Event.OngoingPlayer
+if (leadtrainer&&DistanceBetween(noexitnode[0],EventPlayer())<=15)
+{
+
+    //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[0],EventPlayer()),50);
+    Teleport(EventPlayer(),Vector(13.25,4,-75.58));
+    hit=false;
+    DestroyEffect(grappleid);
+    SmallMessage(EventPlayer(),"Stay Inside Please...");
+    
+} */
+
+// rule: "Pathfind to cursor."//Anti leave - right window
+// Event.OngoingPlayer
+// if (leadtrainer&&DistanceBetween(noexitnode[1],EventPlayer())<=12)
+// {
+//      SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[1],EventPlayer()),50);
+//     Teleport(EventPlayer(),Vector(-1.46,4,-60.48));
+//     hit=false;
+//     DestroyEffect(grappleid);
+// }
+
+// rule: "Pathfind to cursor."//Anti leave - jump off cliff
+// Event.OngoingPlayer
+// if (leadtrainer&&DistanceBetween(noexitnode[2],EventPlayer())<=8)
+// {
+//      SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[2],EventPlayer()),50);
+//     Teleport(EventPlayer(),Vector(-29.48,1,-66.11));
+//     hit=false;
+//     DestroyEffect(grappleid);
+// }
+
+// rule: "Pathfind to cursor."//Anti leave - Left fish
+// Event.OngoingPlayer
+// if (leadtrainer&&DistanceBetween(noexitnode[3],EventPlayer())<=7)
+// {
+//      SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[3],EventPlayer()),50);
+//     Teleport(EventPlayer(),Vector(20.12,4,-84.93));
+//     hit=false;
+//     DestroyEffect(grappleid);
+// }
+
+// rule: "Pathfind to cursor."//Anti leave - main entrance
+// Event.OngoingPlayer
+// if (leadtrainer&&DistanceBetween(noexitnode[4],EventPlayer())<=5)
+// {
+//      SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[4],EventPlayer()),50);
+//     Teleport(EventPlayer(),Vector(6.66,-1,-67.51));
+//     hit=false;
+//     DestroyEffect(grappleid);
+// }
+
+// rule: "Pathfind to cursor."//Anti leave - main entrance
+// Event.OngoingPlayer
+// if (leadtrainer&&IsInViewAngle(EventPlayer(),Vector(-26.88,5.96,-21.98),45)&&hit&&grapplearrow)
+// {
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     //ApplyImpulse(EventPlayer(),DirectionTowards(noexitnode[4],EventPlayer()),50);
+//     Teleport(EventPlayer(),Vector(-29.48,1,-66.11));
+//     hit=false;
+//     DestroyEffect(grappleid);
+// }
+    // Vector(1.51,5.54,-59.35), //right window side1
+    //   Vector(-0.23,5.45,-57.43), //right window side2
+    //   Vector(16.51,5.62,-74.04), //left window side1
+    //   Vector(11.63,5.51,-69.42), //left window side2
+    //   Vector(24.92,4.99,-82.6), //fish side 1
+    //   Vector(22.41,4.99,-80.04), //fish side 2
+    //   Vector(22.4,6.23,-80.06), //fish side 3
+    //   Vector(24.96,6.23,-82.57), //fish side 4
+
+    //   Vector(8.18,3.99,-65.63), //main entrance up
+    //   Vector(8.2,-1.72,-65.66), //main entrance down
+    //   Vector(6.22,3.08,-63.69), //main entrance diagonal 1
+    //   Vector(10.21,-1.71,-67.64), //main entrance diagonal 2
+    //   Vector(10.21,3.09,-67.64), //main entrance diagonal 3
+    //   Vector(6.21,-1.72,-63.69), //main entrance diagonal 4
+    //   Vector(6.03,0.81,-63.89), //main entrance middle across 1
+    //   Vector(10.2,0.81,-67.65) //main entrance middle across 2
+
+
+
+
+// rule: "Pathfind to cursor."//Reverse Anti leave - main entrance
+// Event.OngoingPlayer
+// if (redballtarget)
+// {
+//     cliffstart = EmptyArray();
+//     cliffend = EmptyArray();
+//     rightstart= EmptyArray();
+//     rightend = EmptyArray();
+//     leftstart = EmptyArray();
+//     leftend = EmptyArray();
+//     fishstart  = EmptyArray();
+//     fishend = EmptyArray();
+//     mainentrancestart  = EmptyArray();
+//     mainentranceend  = EmptyArray();
+
+//     define start = Vector(-45,7,-10.23); //cliff
+//     define end = RayCastHitPosition(start,Vector(10.21,7,-67.64)); //cliff
+//     define right = Vector(1.51,7.5,-59.35);
+//     define rightends = Vector(-0.23,7.5,-57.43);
+//     define left = Vector(16.51,7.5,-74.04);
+//     define leftends = Vector(11.63,7.5,-69.42);
+//     define fish = Vector(22.4,7.5,-80.06);
+//     define fishends = Vector(24.96,7.5,-82.57);
+//     define mainstart = Vector(6.22,3.5,-63.69);
+//     define mainend = Vector(10.21,3.5,-67.64);
+//     cliffstart [CountOf(cliffstart)] = start;
+//     cliffend [CountOf(cliffend)] = end;
+//     rightstart [CountOf(rightstart)] = right;
+//     rightend [CountOf(rightend)] = rightends;
+//     leftstart [CountOf(leftstart)] = left;
+//     leftend [CountOf(leftend)] = leftends;
+//     fishstart [CountOf(fishstart)] = fish;
+//     fishend [CountOf(fishend)] = fishends;
+//     mainentrancestart [CountOf(mainentrancestart)] = mainstart;
+//     mainentranceend [CountOf(mainentranceend)] = mainend;
+
+//     while(YOf(start)>-2.5)
+//     {
+//         //CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,start,end,Color.Aqua,EffectRev.None);
+//         start = start - Vector(0,0.75,0);
+//         end = end - Vector(0,0.75,0);
+//         cliffstart [CountOf(cliffstart)] = start;
+//         cliffend [CountOf(cliffend)] = end;
+
+//         if(YOf(right)>4.75)
+//         {
+//         //CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,right,rightends,Color.Aqua,EffectRev.None);
+//         right = right - Vector(0,0.5,0);
+//         rightends = rightends - Vector(0,0.5,0);
+//         rightstart [CountOf(rightstart)] = right;
+//         rightend [CountOf(rightend)] = rightends;
+//         }
+
+//         if(YOf(left)>4.75)
+//         {
+//         //CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,left,leftends,Color.Aqua,EffectRev.None);
+//         left = left - Vector(0,0.5,0);
+//         leftends = leftends - Vector(0,0.5,0);
+//         leftstart [CountOf(leftstart)] = left;
+//         leftend [CountOf(leftend)] = leftends;
+//         }
+
+//         if(YOf(fish)>4.75)
+//         {
+//         //CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,fish,fishends,Color.Aqua,EffectRev.None);
+//         fish = fish - Vector(0,0.5,0);
+//         fishends = fishends - Vector(0,0.5,0);
+//         fishstart [CountOf(fishstart)] = fish;
+//         fishend [CountOf(fishend)] = fishends;
+//         }
+
+//         if(YOf(mainstart)>-1.38)
+//         {
+//         //CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,mainstart,mainend,Color.Aqua,EffectRev.None);
+//         mainstart = mainstart - Vector(0,0.5,0);
+//         mainend = mainend - Vector(0,0.5,0);
+//         mainentrancestart [CountOf(mainentrancestart)] = mainstart;
+//         mainentranceend [CountOf(mainentranceend)] = mainend;
+//         }
+//         //Wait(0.1);
+//     }
+
+//     // CreateEffect(EventPlayer(),Effect.Sphere,Color.Aqua,FirstOf(SortedArray(fishstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),0.4);
+//     // CreateEffect(EventPlayer(),Effect.Sphere,Color.Aqua,FirstOf(SortedArray(rightstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),0.4);
+//     // CreateEffect(EventPlayer(),Effect.Sphere,Color.Aqua,FirstOf(SortedArray(leftstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),0.4);
+//     // CreateEffect(EventPlayer(),Effect.Sphere,Color.Aqua,FirstOf(SortedArray(cliffstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),0.4);
+//     //  CreateEffect(EventPlayer(),Effect.Sphere,Color.Aqua,FirstOf(SortedArray(mainentrancestart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),0.4);
+
+// }
+
+// rule: "Pathfind to cursor."//Reverse Anti leave - main entrance
+// Event.OngoingPlayer
+// if (redballtarget&&RayCastHitPlayer(FirstOf(SortedArray(cliffstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),cliffend[IndexOfArrayValue(cliffstart,FirstOf(SortedArray(cliffstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))))],EventPlayer(),null)==EventPlayer())
+// {
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),Vector(-45.4,-11.99,-3.71)),100);
+// }
+// rule: "Pathfind to cursor."//Reverse Anti leave - main entrance
+// Event.OngoingPlayer
+// if (redballtarget&&RayCastHitPlayer(FirstOf(SortedArray(rightstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),rightend[IndexOfArrayValue(rightstart,FirstOf(SortedArray(rightstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))))],EventPlayer(),null)==EventPlayer())
+// {
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),Vector(11.68,7.26,-49.53)),50);
+// }
+// rule: "Pathfind to cursor."//Reverse Anti leave - main entrance
+// Event.OngoingPlayer
+// if (redballtarget&&RayCastHitPlayer(FirstOf(SortedArray(leftstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),leftend[IndexOfArrayValue(leftstart,FirstOf(SortedArray(leftstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))))],EventPlayer(),null)==EventPlayer())
+// {
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),Vector(27.84,3.94,-57.85)),50);
+// }
+// rule: "Pathfind to cursor."//Reverse Anti leave - main entrance
+// Event.OngoingPlayer
+// if (redballtarget&&RayCastHitPlayer(FirstOf(SortedArray(fishstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),fishend[IndexOfArrayValue(fishstart,FirstOf(SortedArray(fishstart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))))],EventPlayer(),null)==EventPlayer())
+// {
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),FirstOf(SortedArray(noexitnode,DistanceBetween(ArrayElement(),EventPlayer())))),50);
+// }
+// rule: "Pathfind to cursor."//Reverse Anti leave - main entrance
+// Event.OngoingPlayer
+// if (redballtarget&&RayCastHitPlayer(FirstOf(SortedArray(mainentrancestart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))),mainentranceend[IndexOfArrayValue(mainentrancestart,FirstOf(SortedArray(mainentrancestart,DistanceBetween(ArrayElement(),Add(PositionOf(),Vector(0,Divide(DistanceBetween(EyePosition(),PositionOf()),2),0))))))],EventPlayer(),null)==EventPlayer())
+// {
+//     SmallMessage(EventPlayer(),"Stay Inside Please...");
+//     ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),FirstOf(SortedArray(noexitnode,DistanceBetween(ArrayElement(),EventPlayer())))),50);
+// }
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+rule: "Pathfind to cursor."//Grapple
+Event.OngoingPlayer
+if (leadtrainer&&grapplearrow&&hit)
+{
+    define timer=0;
+    while(DistanceBetween(EventPlayer(),PreProjectile())>3)
+    {
+    ApplyImpulse(EventPlayer(),DirectionTowards(EyePosition(),PreProjectile()),40);
+    timer++;
+        if(timer >= 125) //2 seconds
+        {
+        DestroyEffect(grappleid);
+        return;
+        }
+        //AbortIfConditionIsFalse()
+        Wait(0.016);
+    }
+    hit=false;
+    Wait(0.2);
+    DestroyEffect(grappleid);
+}
+
+
+rule: "Pathfind to cursor."//freeze
+Event.OngoingPlayer
+if (ArrayContains(freezinglist,EventPlayer()))
+{
+    define timer=0;
+    CreateEffect(AllPlayers(),Effect.Sparkles,Color.SkyBlue,EventPlayer(),1);
+    freezingeffectid = LastCreatedEntity();
+    while (timer <= 156)
+    {
+        SetMoveSpeed(EventPlayer(),40);
+        timer++;
+         Wait(0.016);
+    }
+    freezinglist = RemoveFromArray(freezingeffectid,EventPlayer());
+    DestroyEffect(freezingeffectid);
+    SetMoveSpeed(EventPlayer(),100);
+}
+
+// rule: "Pathfind to cursor."//Grapple
+// Event.OngoingPlayer
+// if (CountOf(gravitonlist)>0&&DistanceBetween(EventPlayer(),FirstOf(SortedArray(gravitonlist,DistanceBetween(EventPlayer(),ArrayElement()))))<8)
+// {
+//     //define pos = FirstOf(SortedArray(gravitonlist,DistanceBetween(EventPlayer(),ArrayElement())));
+//     //SmallMessage(AllPlayers(),"hit");
+//     while(IsConditionTrue())
+//     {
+//         //pos = FirstOf(SortedArray(gravitonlist,DistanceBetween(EventPlayer(),ArrayElement())));
+//         ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),FirstOf(SortedArray(gravitonlist,DistanceBetween(EventPlayer(),ArrayElement())))),4);
+//         Wait(0.03);
+//     }
+// }
+rule: "Pathfind to cursor."//graviton slowly going
+Event.OngoingPlayer
+if (leadtrainer&&hit&&gravitonisshot)
+{
+      foreach (define players in FilteredArray(AllPlayers(),DistanceBetween(ArrayElement(),gravitonpos)<8))
+  {
+      ApplyImpulse(players,DirectionTowards(PositionOf(players),gravitonpos),4);
+  }
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+}
+
+
+
+
+rule: "Pathfind to cursor."//graviton slowly going
+Event.OngoingPlayer
+if (leadtrainer&&gravitonarrow&&hit&&gravitonisshot)
+{
+    define timers = 0;
+    define uplimits=0;
+    define secs = 0;
+    //gravitonpos = gravitonfirstpos;
+    DestroyEffect(gravitoneffectid1);
+    DestroyEffect(gravitoneffectid2);
+    CreateEffect(AllPlayers(),Effect.BadAura,Color.White,gravitonpos,0.5);
+    gravitoneffectid1=LastCreatedEntity();
+    CreateEffect(AllPlayers(),Effect.GoodAura,Color.White,gravitonpos,0.5);
+    gravitoneffectid2=LastCreatedEntity();
+    while(timers <= 250)
+    {
+    //ApplyImpulse(FilteredArray(AllPlayers(),DistanceBetween(ArrayElement(),gravitonpos)<8),DirectionTowards(PositionOf(),gravitonpos),2);
+        if(uplimits<=81)
+        gravitonpos = Add(gravitonpos,Vector(0,0.02,0));
+            // if(secs >= 60)
+            // {
+            // gravitonlist[IndexOfArrayValue(gravitonlist,gravitonpos)]=gravitonpos;
+            // secs =0;
+            // }
+    //secs++;
+    uplimits++;
+    timers++;
+    // if(!IsConditionTrue())
+    // timers =250;
+     Wait(0.016);
+    }
+    hit=false;
+    gravitonisshot=false;
+    Wait(0.2);
+    DestroyEffect(gravitoneffectid1);
+    DestroyEffect(gravitoneffectid2);
+    //gravitonlist=RemoveFromArray(gravitonlist,gravitonpos);
+}
+
+
+
+void EDAbility (define id)
+{
+    grapplearrow=false;
+    firearrow=false;
+    freezingarrow=false;
+    gravitonarrow=false;
+        if(id==1)
+        {
+        grapplearrow=true;
+        }
+        else if(id==2)
+        {
+        firearrow=true;
+        }
+        else if(id==3)
+        {
+        freezingarrow=true;
+        }
+        else if(id==4)
+        {
+        gravitonarrow=true;
+        }
+        //return id;
+}
+
+
+
+
+
+rule: "Pathfind to cursor."//SHOP HUD TOGGLES - grapple
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(grapplearrowshoppos,Vector(0,1,0)),EyePosition()))),Add(grapplearrowshoppos,Vector(0,1,0)))<1)
+{
+    if(grapplearrowhudid[0]==0)
+    abilitlisthud=1;
+    else
+    abilitlisthud=0;
+
+    if(!ArrayContains(abilitylist,1)&&grapplearrowhudid[0]==1)
+    areyousure=true;
+    else
+    areyousure=false;
+
+    if(ArrayContains(abilitylist,1)&&grapplearrowhudid[0]==2)
+    thankyou=true;
+    else
+    thankyou=false;
+
+    if(ArrayContains(abilitylist,1)&&grapplearrowhudid[0]==3)
+    alreadybought=true;
+    else
+    alreadybought=false;
+
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+    abilitlisthud=0;
+    areyousure=false;
+    thankyou=false;
+    alreadybought=false;
+}
+
+rule: "Pathfind to cursor."//SHOP HUD TOGGLES - Fire
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(firearrowshoppos,Vector(0,1,0)),EyePosition()))),Add(firearrowshoppos,Vector(0,1,0)))<1)
+{
+    if(firearrowhudid[0]==0)
+    abilitlisthud=2;
+    else
+    abilitlisthud=0;
+
+    if(!ArrayContains(abilitylist,2)&&firearrowhudid[0]==1)
+    areyousure=true;
+    else
+    areyousure=false;
+
+    if(ArrayContains(abilitylist,2)&&firearrowhudid[0]==2)
+    thankyou=true;
+    else
+    thankyou=false;
+
+    if(ArrayContains(abilitylist,2)&&firearrowhudid[0]==3)
+    alreadybought=true;
+    else
+    alreadybought=false;
+    
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+    abilitlisthud=0;
+    areyousure=false;
+    thankyou=false;
+    alreadybought=false;
+}
+
+rule: "Pathfind to cursor."//SHOP HUD TOGGLES - freeze
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(freezingarrowshoppos,Vector(0,1,0)),EyePosition()))),Add(freezingarrowshoppos,Vector(0,1,0)))<1)
+{
+    if(freezingearrowhudid[0]==0)
+    abilitlisthud=3;
+    else
+    abilitlisthud=0;
+
+    if(!ArrayContains(abilitylist,3)&&freezingearrowhudid[0]==1)
+    areyousure=true;
+    else
+    areyousure=false;
+
+    if(ArrayContains(abilitylist,3)&&freezingearrowhudid[0]==2)
+    thankyou=true;
+    else
+    thankyou=false;
+
+    if(ArrayContains(abilitylist,3)&&freezingearrowhudid[0]==3)
+    alreadybought=true;
+    else
+    alreadybought=false;
+    
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+    abilitlisthud=0;
+    areyousure=false;
+    thankyou=false;
+    alreadybought=false;
+}
+
+rule: "Pathfind to cursor."//SHOP HUD TOGGLES - gravity
+Event.OngoingPlayer
+if (inshop&&DistanceBetween(Add(EyePosition(),Multiply(FacingDirectionOf(),DistanceBetween(Add(gravitonarrowshoppos,Vector(0,1,0)),EyePosition()))),Add(gravitonarrowshoppos,Vector(0,1,0)))<1)
+{
+    if(gravitonarrowhudid[0]==0)
+    abilitlisthud=4;
+    else
+    abilitlisthud=0;
+
+    if(!ArrayContains(abilitylist,4)&&gravitonarrowhudid[0]==1)
+    areyousure=true;
+    else
+    areyousure=false;
+
+    if(ArrayContains(abilitylist,4)&&gravitonarrowhudid[0]==2)
+    thankyou=true;
+    else
+    thankyou=false;
+
+    if(ArrayContains(abilitylist,4)&&gravitonarrowhudid[0]==3)
+    alreadybought=true;
+    else
+    alreadybought=false;
+    
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+    abilitlisthud=0;
+    areyousure=false;
+    thankyou=false;
+    alreadybought=false;
+}
+
+
+
+
+/////////////////////////////////////////////////////Toggle Abilities////////////////////////////////////////////////////////////////////
+
+
+rule: "Pathfind to cursor."//HUD TOGGLES
+Event.OngoingPlayer
+if (!IsDummyBot()&&HasSpawned())
+{
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilittoggle&&leadtrainer),"Press Crouch to toggle through abilities.",null,null,Location.Top,1,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+
+
+
+
+////////////////////////////////////////////////////////////////////////////Ability Menu///////////////////////////////////////////////////////
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().grapplearrow==true&&ArrayElement().abilittoggle&&leadtrainer),IconString(Icon.Checkmark),"Grapple Arrow",null,Location.Top,2,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().firearrow==true&&ArrayElement().abilittoggle&&leadtrainer),IconString(Icon.Checkmark),"Fire Arrow",null,Location.Top,3,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().freezingarrow==true&&ArrayElement().abilittoggle&&leadtrainer),IconString(Icon.Checkmark),"Freeze Arrow",null,Location.Top,4,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().gravitonarrow==true&&ArrayElement().abilittoggle&&leadtrainer),IconString(Icon.Checkmark),"GravitArrow",null,Location.Top,5,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilityID==0&&ArrayElement().abilittoggle&&leadtrainer),IconString(Icon.Checkmark),"None",null,Location.Top,6,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    Wait(0.2);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().grapplearrow==false&&ArrayElement().abilittoggle&&ArrayContains(abilitylist,1)&&leadtrainer),"     ","Grapple Arrow",null,Location.Top,2,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().firearrow==false&&ArrayElement().abilittoggle&&ArrayContains(abilitylist,2)&&leadtrainer),"     ","Fire Arrow",null,Location.Top,3,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().freezingarrow==false&&ArrayElement().abilittoggle&&ArrayContains(abilitylist,3)&&leadtrainer),"     ","Freeze Arrow",null,Location.Top,4,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().gravitonarrow==false&&ArrayElement().abilittoggle&&ArrayContains(abilitylist,4)&&leadtrainer),"     ","GravitArrow",null,Location.Top,5,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilityID!=0&&ArrayElement().abilittoggle&&leadtrainer),"     ","None",null,Location.Top,6,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    Wait(0.2);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////////Shop/////////////////////////////////////////////////////////////////////////////////////////
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilitlisthud==1),"Grapple Hook Arrow", "Shoots out a grapple hook which will pull yourself towards the arrow","Press F to buy for: $1000",Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().areyousure),"Press F again to confirm", null,null,Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().thankyou),"Thank you for shopping", null,null,Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().alreadybought),"You already have this ability unlocked", null,null,Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    Wait(0.2);  
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilitlisthud==2),"Fire Arrow", "Shoots out a big fire arrow. Applying AOE burn to anyone near the arrow while in flight","Press F to buy for: $1000",Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+
+    Wait(0.2);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilitlisthud==3),"Freezing Arrow", "Shoots out a big cold arrow. Applying AOE slow to anyone near the arrow while in flight","Press F to buy for: $1000",Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+   
+    Wait(0.2);
+    CreateHudText(FilteredArray(EventPlayer(),ArrayElement().abilitlisthud==4),"Gravitarrow", "Shoots out a graviton orb. Anyone within 8 meters will get pulled","Press F to buy for: $1000",Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+    
+    //CreateHudText(FilteredArray(EventPlayer(),ArrayElement().inshop&&ArrayElement().gravitonarrowhudid[0]==2||ArrayElement().freezingearrowhudid[0]==2||ArrayElement().firearrowhudid[0]==2||ArrayElement().grapplearrowhudid[0]==2&&DistanceBetween(Add(EyePosition(ArrayElement()),Multiply(FacingDirectionOf(ArrayElement()),DistanceBetween(Add(grapplearrowshoppos,Vector(0,1,0)),EyePosition(ArrayElement())))),Add(grapplearrowshoppos,Vector(0,1,0)))<1),"Thank you for shopping", null,null,Location.Top,10,Color.Aqua,Color.Yellow,Color.Red,HudTextRev.VisibleToAndString);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+}
+
+
+
+rule: "Pathfind to cursor."//Toggle Abilities
+Event.OngoingPlayer
+if (leadtrainer&&IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    abilittoggle =!abilittoggle;
+}
+
+rule: "Pathfind to cursor."//Toggle Abilities
+Event.OngoingPlayer
+if (leadtrainer&&abilittoggle&&IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    //StartHuds(savedabilityID);
+    if(abilityID < CountOf(abilitylist)-1)
+    abilityID++;
+    else
+    abilityID=0;
+    savedabilityID = abilitylist[abilityID];
+    EDAbility(savedabilityID);
+    //EndHuds(savedabilityID);
+    //Huds(savedabilityID);
+    //Huds zone = new Huds(savedabilityID);
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// rule: "Pathfind to cursor."//Pathfind
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(),Button.Interact))
+// {
+//     closestplayer=ClosestPlayerTo(hanzo,Team.All);
+//     Pathfind(hanzo,map,NearestWalkablePosition(closestplayer));
+// }
+
+
+// rule: "Pathfind to cursor."//Pathfind
+// Event.OngoingPlayer
+// if (CountOf(leadqueue)>0&&IsDummyBot())
+// {
+//     closestplayer=ClosestPlayerTo(EventPlayer(),Team.All);
+//     if(IsPathfindStuck(EventPlayer(),1))
+//     {
+//     PressButton(EventPlayer(),Button.Jump);
+//     FixPathfind(EventPlayer());
+//     }
+//     if(!IsInLineOfSight(EventPlayer(),closestplayer)&&!IsPathfinding(EventPlayer())||IsPathfindStuck(EventPlayer(),1))
+//     {
+//     StopPathfind(EventPlayer());
+//     Pathfind(EventPlayer(),map,NearestWalkablePosition(closestplayer));
+//     //SmallMessage(AllPlayers(),"finding");
+//     }
+
+//     if(IsInLineOfSight(EventPlayer(),closestplayer))
+//     StopPathfind(EventPlayer());
+//     MinWait();
+//     LoopIfConditionIsTrue();
+//     //LoopIf(!IsInLineOfSight(EventPlayer(),ClosestPlayerTo())||!IsPathfinding(EventPlayer()));
+// }
+
+
+// rule: "Pathfind to cursor."//Pull arrow logic
+// Event.OngoingPlayer
+// if (CountOf(leadqueue)>0&&IsDummyBot()&&IsInLineOfSight(hanzo,ClosestPlayerTo(EventPlayer())))
+// {
+//     define randomchance = RandomInteger(0,4);
+//     StartThrottleInDirection(EventPlayer(),Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)),1);
+//     //StartFacing(EventPlayer(),DirectionTowards(EyePosition(),ClosestPlayerTo(EventPlayer(),Team.All)),1000);
+//     if (randomchance == 1)
+//     {
+//     PressButton(EventPlayer(),Button.Jump);
+//     Wait(0.2);
+//     PressButton(EventPlayer(),Button.Jump);
+//     }
+
+//     StartHoldingButton(EventPlayer(),Button.PrimaryFire);
+//     adad = PositionOf(ClosestPlayerTo(EventPlayer(),Team.All));
+//     //ChasePlayerVariableOverTime(EventPlayer(),dummypull,100,0.727,TimeChaseReevaluation.DestinationAndDuration);
+    
+//     // if(dummypull==100)
+//     // {
+//     // StopHoldingButton(EventPlayer(),Button.PrimaryFire);
+//     // Wait(0.1);
+//     // StopFacing();
+//     // dummypull=0;
+//     // }
+    
+//     //Wait(RandomReal(0.727,1.5));
+//    // Wait(RandomReal(0.727,1.5));
+//     Wait(1.5);
+//     LoopIfConditionIsTrue();
+//     StopThrottleInDirection();
+//     //LoopIf(!IsInLineOfSight(EventPlayer(),ClosestPlayerTo())||!IsPathfinding(EventPlayer()));
+// }
+
+// rule: "Pathfind to cursor."//Pull arrow logic
+// Event.OngoingPlayer
+// if (CountOf(leadqueue)>0&&IsDummyBot()&&IsInLineOfSight(hanzo,ClosestPlayerTo(EventPlayer())))
+// {
+//     define speed = 15;
+//      define g = 100;
+//     define closest = ClosestPlayerTo(EventPlayer(),Team.All);
+//      firstpos = PositionOf(closest);
+//      Wait(0.016);
+//      secondpos = PositionOf(closest);
+//      if(firstpos == secondpos ||DistanceBetween(adad, secondpos) < 2 )
+//      leadpos = EyePosition(closest);
+//      else
+//      leadpos = Add(EyePosition(closest),Multiply(DirectionTowards(firstpos,secondpos),Divide(Add(DistanceBetween(EventPlayer(),closest),SpeedOf(closest)),speed)));
+//      leadpos = Add(leadpos,Vector(0,Divide(DistanceBetween(EventPlayer(),closest),g),0));
+//      StartFacing(EventPlayer(),DirectionTowards(EyePosition(),leadpos),1000);
+//     LoopIfConditionIsTrue();
+//     StopFacing();
+// }
+
+// rule: "Pathfind to cursor."//User Lead
+// Event.OngoingPlayer
+// if (leadtrainer&&!IsDummyBot())
+// {
+//     //define speed = 26.7;
+//      define speed = 20;
+//      define g = 81;
+//     // define leadpos;
+//     // define aimplayer;
+//     // CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,leadpos,Multiply(Multiply(DistanceBetween(EventPlayer(),aimplayer),0.14),0.05));
+//     // define ball = LastCreatedEntity();
+//     // while(leadtrainer&&!IsDummyBot())
+//     // {
+//     //     aimplayer = PlayerClosestToReticle(EventPlayer(),Team.All);
+//     //     define distance = DistanceBetween(EventPlayer(),aimplayer);
+//     //     leadpos = Add(EyePosition(aimplayer),Multiply(Vector(Divide(SpeedOfInDirection(aimplayer,Left()),SpeedOf(aimplayer)),0,Divide(SpeedOfInDirection(aimplayer,Forward()),SpeedOf(aimplayer))),Divide(Add(distance,SpeedOf(aimplayer)),speed)));
+//     //     leadpos = Add(leadpos,Vector(0,Divide(distance,g),0));
+//     //     Wait(0.016);
+//     // }
+//     // DestroyEffect(ball);
+
+
+
+
+//     define closest = PlayerClosestToReticle(EventPlayer(),Team.All);
+//      firstpos = PositionOf(closest);
+//      Wait(0.016);
+//      secondpos = PositionOf(closest);
+//      if(firstpos == secondpos)
+//      leadpos = EyePosition(closest);
+//      else
+//      leadpos = Add(EyePosition(closest),Multiply(DirectionTowards(firstpos,secondpos),Divide(Add(DistanceBetween(EventPlayer(),closest),SpeedOf(closest)),speed)));
+//      leadpos = Add(leadpos,Vector(0,Divide(DistanceBetween(EventPlayer(),closest),g),0));
+//     LoopIfConditionIsTrue();
+//     DestroyEffect(leadballid);
+// }
+
+
+
+
+define Add(define x,define y): x+y;
+
+define Multiply(define x,define y): x*y;
+define Subtract(define x,define y): x-y;
+define Divide(define x,define y): x/y;
+define PreProjectile(): RayCastHitPosition(projectile,Add(projectile,Multiply(Multiply(dir,d),1000)));
+define EyeCast(): RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),100)));
+define LookingAtSpot(): RayCastHitPosition(EyePosition(), Destination(EyePosition(), FacingDirectionOf(), 100), null, null, false);

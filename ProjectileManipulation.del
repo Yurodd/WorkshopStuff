@@ -1,0 +1,110 @@
+playervar define dummy;
+playervar define pos;
+playervar define pos2;
+playervar define dir;
+/* rule: "Reset"
+Event.OngoingPlayer
+if (IsButtonHeld(eventplayer,Button.Interact) && HostPlayer() == eventplayer)
+{
+    pos = EyePosition() + FacingDirectionOf() * 5
+    dir = FacingDirectionOf();
+    ChaseVariableAtRate(pos,EyePosition() + FacingDirectionOf() * 5,100,RateChaseReevaluation.DestinationAndRate);
+    // while(true)
+    // {
+    //     Teleport(dummy[0],pos + FacingDirectionOf() * 4);
+    //     Teleport(dummy[1],pos + FacingDirectionOf() * 1);
+    //     SetFacing(dummy[0],DirectionTowards(EyePosition(dummy[0]),pos))
+    //     SetFacing(dummy[0],DirectionTowards(EyePosition(dummy[0]),pos))
+    //     Wait(0.016);
+    // }
+}
+ */
+rule: "Reset"
+Event.OngoingPlayer
+if (!IsDummyBot())
+{
+    while(!HasSpawned())
+    {
+        Wait(0.016);
+    }
+    SetStatus(eventplayer,null,Status.PhasedOut,9999);
+    SetProjectileSpeed(eventplayer,100);
+    CreateDummyBot(Hero.Genji,Team.All,-1,pos + FacingDirectionOf() * 2,-FacingDirectionOf());
+    dummy[CountOf(dummy)] = LastCreatedEntity();
+    CreateDummyBot(Hero.Genji,Team.All,-1,pos + FacingDirectionOf() * 1,FacingDirectionOf());
+    dummy[CountOf(dummy)] = LastCreatedEntity();
+    // CreateDummyBot(Hero.Torbjorn,Team.All,-1,pos + FacingDirectionOf() * 1,FacingDirectionOf());
+    // dummy[CountOf(dummy)] = LastCreatedEntity();
+    // CreateDummyBot(Hero.Genji,Team.All,-1,pos + FacingDirectionOf() * 2,-FacingDirectionOf());
+    // dummy[CountOf(dummy)] = LastCreatedEntity();
+    // CreateDummyBot(Hero.Genji,Team.All,-1,pos + FacingDirectionOf() * 1,FacingDirectionOf());
+    // dummy[CountOf(dummy)] = LastCreatedEntity();
+    Wait(0.25);
+    pos = EyePosition();
+    pos2 = EyePosition();
+    dir = FacingDirectionOf();
+    ChaseVariableAtRate(dir,DirectionTowards(pos,EyePosition() + FacingDirectionOf() * 5),1,RateChaseReevaluation.DestinationAndRate);
+    ChaseVariableAtRate(pos,EyePosition() + FacingDirectionOf() * 5,10,RateChaseReevaluation.DestinationAndRate);
+    StartForcingPlayerPosition(dummy[0],pos+ Vector(0,-DistanceBetween(EyePosition(dummy[0]),PositionOf(dummy[0])),0) + FacingDirectionOf() * -0.5);
+    StartForcingPlayerPosition(dummy[1],pos + Vector(0,-DistanceBetween(EyePosition(dummy[0]),PositionOf(dummy[0])),0) + FacingDirectionOf() * 0.5);
+    //StartForcingPlayerPosition(dummy[2],pos+ Vector(0,-DistanceBetween(EyePosition(dummy[0]),PositionOf(dummy[0])),0)+ DirectionTowards(EyePosition(),EyePosition(dummy[2])) * 2);
+     //StartForcingPlayerPosition(dummy[2],pos +  WorldVectorOf(Vector(2,0,0),eventplayer)+ Vector(0,-DistanceBetween(EyePosition(dummy[0]),PositionOf(dummy[0])),0));
+    // StartForcingPlayerPosition(dummy[3],pos +  WorldVectorOf(Vector(-2,0,0),eventplayer)+ Vector(0,-DistanceBetween(EyePosition(dummy[0]),PositionOf(dummy[0])),0));
+
+    StartFacing(dummy[0],DirectionTowards(EyePosition(dummy[0]),EyePosition(dummy[1])),999999);
+    StartFacing(dummy[1],DirectionTowards(EyePosition(dummy[1]),EyePosition(dummy[0])),999999);
+    //StartFacing(dummy[2],DirectionTowards(EyePosition(dummy[2]),EyePosition()),999999);
+    // StartFacing(dummy[2],DirectionTowards(EyePosition(dummy[2]),EyePosition(dummy[3])),999999);
+    // StartFacing(dummy[3],DirectionTowards(EyePosition(dummy[3]),EyePosition(dummy[2])),999999);
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,pos,1);
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if (IsButtonHeld(eventplayer,Button.Interact))
+{
+    SetAllowedHeroes(eventplayer,RemoveFromArray(AllHeroes(),HeroOf()));
+    Wait(0.1);
+    SetAllowedHeroes(eventplayer,AllHeroes());
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if (IsDummyBot())
+{
+    SetProjectileSpeed(eventplayer,20);
+    PressButton(eventplayer,Button.Ability2);
+    Wait(0.016);
+    CancelPrimaryAction();
+    Loop()
+    // AbilityCooldown(eventplayer,Button.Ability1);
+    // SetAbilityCooldown(eventplayer,Button.Ability1,0);
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if (IsDummyBot() && HeroOf()!=Hero.Torbjorn)
+{
+    SetStatus(eventplayer,null,Status.PhasedOut,10000);
+    SetInvisible(eventplayer,InvisibleTo.All);
+    //SetProjectileSpeed(eventplayer,20);
+}
+
+rule: "Reset"
+Event.OnDeath
+if (IsDummyBot())
+{
+    Resurrect();
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(!IsDummyBot())
+{
+    SetProjectileSpeed(EventPlayer(),100);
+    SetUltimateCharge(EventPlayer(),100);
+    Wait(0.016);
+    Loop();
+}
+
+define eventplayer: EventPlayer();

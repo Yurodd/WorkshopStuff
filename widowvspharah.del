@@ -1,0 +1,709 @@
+playervar define g=0;
+playervar define h=0;
+playervar define f=0;
+playervar define parent=0;
+playervar define scandistance=2;
+// playervar define scandistancepyth=Pythag(scandistance,scandistance);
+playervar define radius=0.2;
+playervar define current=EmptyArray();
+playervar define open=0;
+playervar define test = EmptyArray();
+playervar define closed=0;
+playervar define facingdir=0;
+globalvar define masterstartfinding=false;
+playervar define startfinding=false;
+playervar define endnode = 0;
+playervar define min = -1;
+playervar define startime = 0;
+playervar define fintime = 0;
+playervar define pathstart = false;
+playervar define pathendnode = 0;
+playervar define pathendnodeparent = 0;
+playervar define pathlist = 0;
+playervar define startingnode = 0;
+playervar define reversepathfinished = false;
+playervar define reversepathlist = EmptyArray();
+playervar define chasepos = 0;
+playervar define goalcount=0;
+playervar define reroute=false;
+playervar define GlobalStart=false;
+playervar define dva;
+playervar define intelstart;
+playervar define textspawned=false;
+globalvar define myself;
+globalvar define nodes =
+  [
+Vector(11.42,8.01,-50.67),
+Vector(1.04,7.98,-53.86),
+Vector(-2.88,7.00,-54.72),
+Vector(-12.29,7.00,-44.74),
+Vector(-6.21,7.24,-38.75),
+Vector(6.55,6.89,-35.82),
+Vector(-0.51,7.38,-26.94),
+Vector(6.12,7.41,-20.81),
+Vector(-5.12,7,-22.5),
+Vector(-8.62,7.04,-24.96),
+Vector(-1.09,7.33,-32.73),
+Vector(9.82,7.28,-25.64),
+Vector(11.85,6.19,-19.87),
+Vector(17.88,6.02,-13.19),
+Vector(23.16,6.02,-14.84),
+Vector(1.30,6.76,-13.92),
+Vector(-2.72,7.05,-17.94),
+Vector(-15.02,6.36,-11.79),
+Vector(-2.08,5.66,-4.79),
+Vector(10.29,4.15,-4.18),
+Vector(10.36,4.14,5.30),
+Vector(2.09,5.30,6.73),
+Vector(1.37,6.63,13.33),
+Vector(-5.23,6.24,4.24),
+Vector(-12.51,7.27,-4.85),
+Vector(-12.52,7.27,3.73),
+Vector(-15.18,7.00,-7.82),
+Vector(-20.78,7.00,-6.09),
+Vector(-25.45,8.37,-5.99),
+Vector(-30.66,9.00,-5.97),
+Vector(-31.05,9.00,-0.05),
+Vector(-30.94,9.00,6.37),
+Vector(-14.93,6.85,10.54),
+Vector(-20.42,7.00,6.08),
+Vector(18.02,4.00,-4.22),
+Vector(17.97,4.00,4.29),
+Vector(17.99,6.01,17.13),
+Vector(22.91,6.01,16.85),
+Vector(23.05,8.71,8.85),
+Vector(22.90,9.00,0.21),
+Vector(23.01,9.00,-6.97),
+Vector(18.09,9.00,-6.08),
+Vector(17.83,9.00,-0.47),
+Vector(17.98,9.00,5.85),
+Vector(20.59,9.00,-3.43),
+Vector(20.71,9.00,3.37),
+Vector(16.79,12.01,17.04),
+Vector(14.00,11.81,19.49),
+Vector(17.81,11.81,24.05),
+Vector(11.39,11.81,17.16),
+Vector(6.86,11.32,21.55),
+Vector(1.90,11.63,25.34),
+Vector(9.76,12.00,11.58),
+Vector(4.30,12.00,11.84),
+Vector(-5.47,12.00,11.93),
+Vector(-5.98,12.00,0.69),
+Vector(-5.96,12.00,-11.66),
+Vector(0.84,12.00,-12.01),
+Vector(9.37,12.00,-12.16),
+Vector(-6.15,12.00,-4.20),
+Vector(-6.16,12.00,4.03),
+Vector(-15.17,12.00,9.47),
+Vector(-14.51,10.00,19.35),
+Vector(-7.72,6.86,17.09),
+Vector(-3.36,7.29,23.96),
+Vector(3.07,7.14,30.63),
+Vector(6.70,7.01,19.89),
+Vector(11.47,6.40,20.89),
+Vector(9.12,7.09,28.85),
+Vector(7.95,7.03,39.97),
+Vector(10.86,8.04,49.85),
+Vector(1.01,8.00,53.91),
+Vector(-3.29,7.00,54.23),
+Vector(-12.49,7.00,44.81),
+Vector(-6.10,7.27,38.32),
+Vector(-12.09,7.10,31.58),
+Vector(1.53,7.10,36.02),
+Vector(19.40,6.02,-17.44),
+Vector(3.43,7.03,-31.29),
+Vector(8.93,6.93,-31.17),
+Vector(13.83,11.81,-19.42),
+Vector(11.35,11.81,-17.08),
+Vector(1.60,11.63,-25.65),
+Vector(7.17,11.59,-21.12),
+Vector(17.86,12.00,-14.07),
+Vector(-14.87,12.00,-7.90),
+Vector(-10.81,12.00,-7.92),
+Vector(-10.47,12.00,0.22),
+Vector(-10.93,12.00,7.99),
+Vector(-19.16,12.00,-7.79),
+Vector(-13.87,10.00,-19.79),
+Vector(-11.37,8.30,-22.32),
+Vector(-10.84,7.20,-31.98),
+Vector(-0.70,7.17,-38.57),
+Vector(-9.3,6.99,-18.74),
+Vector(-10.19,7.48,-23.44),
+Vector(-10.75,7.87,-22.90),
+Vector(-12.24,8.90,-21.46),
+Vector(-12.92,9.38,-20.81),
+Vector(-14.50,10.00,-19.22),
+Vector(-15.14,10.00,-18.26),
+Vector(-15.28,10.53,-17.20),
+Vector(-15.34,11.09,-16.07),
+Vector(-15.35,11.56,-15.13),
+Vector(-15.34,12.00,-14.17),
+Vector(-15.24,12.00,-12.92),
+Vector(12.76,6.95,-34.82),
+Vector(14.02,7.13,-34.00),
+Vector(14.96,7.50,-33.38),
+Vector(15.80,7.97,-32.74),
+Vector(16.43,8.43,-32.01),
+Vector(16.97,8.93,-31.00),
+Vector(17.24,9.35,-29.86),
+Vector(17.27,9.73,-28.87),
+Vector(17.14,10.09,-27.78),
+Vector(17.02,10.43,-26.68),
+Vector(16.95,10.95,-25.33),
+Vector(16.82,11.81,-24.16),
+Vector(16.50,11.81,-22.75),
+Vector(17.97,9.37,-7.46),
+Vector(17.94,9.80,-8.32),
+Vector(17.93,10.28,-9.27),
+Vector(17.92,10.75,-10.22),
+Vector(17.90,11.23,-11.17),
+Vector(17.89,11.74,-12.20),
+Vector(18.14,9.63,7.98),
+Vector(18.13,10.19,9.10),
+Vector(18.11,10.71,10.13),
+Vector(18.08,11.23,11.17),
+Vector(18.03,11.92,12.55),
+Vector(18.00,11.30,24.54),
+Vector(18.11,10.89,25.54),
+Vector(18.24,10.54,26.53),
+Vector(18.14,10.23,27.54),
+Vector(17.82,9.88,28.59),
+Vector(17.49,9.47,29.63),
+Vector(17.13,9.06,30.75),
+Vector(16.48,8.49,31.90),
+Vector(15.55,7.87,32.80),
+Vector(14.52,7.35,33.49),
+Vector(23.23,6.20,13.88),
+Vector(23.22,6.68,12.93),
+Vector(23.21,7.11,12.07),
+Vector(23.19,7.58,11.12),
+Vector(23.16,8.15,10.00),
+Vector(23.11,9.00,7.99),
+Vector(22.86,8.90,-8.48),
+Vector(22.87,8.47,-9.34),
+Vector(22.88,8.04,-10.21),
+Vector(22.89,7.57,-11.15),
+Vector(22.90,7.09,-12.10),
+Vector(22.92,6.62,-13.05),
+Vector(18.16,6.00,-11.79),
+Vector(18.12,5.60,-10.91),
+Vector(18.08,5.12,-9.96),
+Vector(18.04,4.61,-8.93),
+Vector(18.00,4.09,-7.89),
+Vector(18.15,4.13,7.96),
+Vector(18.12,4.60,8.91),
+Vector(18.09,5.03,9.78),
+Vector(18.05,5.63,10.98),
+Vector(18.01,6.01,12.14),
+Vector(-9.24,7.04,24.40),
+Vector(-9.99,7.32,23.71),
+Vector(-10.62,7.75,23.11),
+Vector(-11.24,8.18,22.51),
+Vector(-12.50,9.05,21.32),
+Vector(-13.13,9.48,20.72),
+Vector(-14.57,10.00,19.34),
+Vector(-15.45,10.50,17.24),
+Vector(-15.46,10.98,16.29),
+Vector(-15.47,11.45,15.35),
+Vector(-15.45,12.00,13.27),
+Vector(-23.60,7.44,-6.15),
+Vector(-24.47,7.88,-6.12),
+Vector(-26.45,8.87,-6.03),
+Vector(-26.48,9.40,-0.11),
+Vector(-25.53,9.88,-0.07),
+Vector(-24.58,10.35,-0.04),
+Vector(-23.63,10.83,-0.03),
+Vector(-22.68,11.30,-0.03),
+Vector(-22.81,7.05,5.83),
+Vector(-23.76,7.52,5.89),
+Vector(-24.62,7.95,5.92),
+Vector(-25.57,8.43,5.95),
+Vector(-26.69,8.99,5.99),
+Vector(8.66,7.73,-42.60),
+Vector(-3.03,7.35,-30.11),
+Vector(-17.95,7.17,-0.2),
+Vector(24.64,3,-3.67),
+Vector(26.3,3,3.95),
+Vector(29.57,3,0),
+Vector(26.13,8.96,0.21),
+Vector(22.9,9,-2.71),
+Vector(-3.92,12,-10),
+Vector(-20.77,12,0.1),
+Vector(17.65,4,0),
+Vector(-19.35,12,7.64)
+  ];
+
+rule: "CreateBots"
+Event.OngoingGlobal
+{
+      Wait(1);
+      CreateDummyBot(Hero.Pharah,Team.All,-1,RandomValueInArray(nodes),Vector(0,0,0));
+      CreateHudText(FilteredArray(AllPlayers(),!masterstartfinding),"Press F to Start");
+      //CreateTextFancy("Yurodd",AllPlayers(),Vector(0,55,0),Vector(0,0,0),6,EffectRev.None);
+}
+  
+
+  
+
+
+
+rule: "Init"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact)&&masterstartfinding==false&&GlobalStart==false)
+{
+  
+    GlobalStart = true;
+    DestroyAllHudText();
+    Wait(0.25);
+    CreateHudText(EventPlayer(),ServerLoad());
+    CreateHudText(EventPlayer(),ServerLoadPeak());
+    if(!textspawned)
+    {
+      textspawned=true;
+    
+    
+     //CreateIcon(myself,ClosestPlayerTo(),Icon.ArrowDown,IconRev.VisibleToAndPosition,Color.Blue,true);
+    }
+    myself = EventPlayer();  
+    masterstartfinding=true;
+    
+}
+// rule: "dbg"
+// Event.OngoingPlayer
+// if (masterstartfinding == true & IsDummyBot(EventPlayer()) == true )
+// {
+//  // CreateHudText(myself,goalcount);
+//  // CreateHudText(myself,CountOf(reversepathlist),null,null,Location.Right);
+// }
+// rule: "reset"
+// Event.OngoingPlayer
+// if (IsButtonHeld(myself, Button.Crouch) )
+// {
+//   reversepathfinished = false;
+//         current=0;
+//         open=EmptyArray();
+//         closed=EmptyArray();
+//         startfinding=false;
+//         masterstartfinding = false;
+//         pathstart = false;
+//         pathendnode=0;
+//         reroute=false;
+//         reversepathlist = EmptyArray();
+//         pathlist = EmptyArray();
+//         masterstartfinding = false;
+// }
+
+// rule: "update"
+// Event.OngoingPlayer
+// if (startfinding == true || masterstartfinding == true & IsDummyBot(EventPlayer()) == false )
+// {
+//   startfinding = true;
+//   Wait(3);
+//   LoopIfConditionIsTrue();
+// }
+
+
+
+rule: "start"
+Event.OngoingPlayer
+if (masterstartfinding == true || startfinding == true && IsDummyBot(EventPlayer()) == true )
+{
+       
+        reversepathfinished = false;
+        current=0;
+        open=EmptyArray();
+        closed=EmptyArray();
+        startfinding=false;
+        masterstartfinding = false;
+        pathstart = false;
+        pathendnode=EmptyArray();
+        reversepathlist = EmptyArray();
+        pathlist = EmptyArray();
+        masterstartfinding = false;
+        //StopThrottleInDirection();
+       
+        
+    //Wait(RandomInteger(1,5));
+    // SmallMessage(myself,<"started">);
+     if(reroute == false)
+      endnode = FirstOf(SortedArray(nodes,DistanceBetween(myself,ArrayElement())));
+     //endnode=RandomValueInArray(nodes);
+    //   if(reroute == false)
+    // endnode=FirstOf(SortedArray(nodes,DistanceBetween(PositionOf(myself),ArrayElement())));
+    startingnode = FirstOf(SortedArray(FilteredArray(nodes, IsInLineOfSight(PositionOf()+Vector(0,1.5,0),ArrayElement())&&ArrayElement()!=endnode),DistanceBetween(PositionOf(),ArrayElement())));
+    open= Append(startingnode);
+    current = FirstOf(SortedArray(nodes,DistanceBetween(PositionOf(),ArrayElement())));
+    while(CountOf(open) != 0 )
+    {   
+        
+        current=FirstOf(SortedArray(open, DistanceBetween(endnode,ArrayElement())));
+        //CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, current[0], radius, EffectRev.None);
+            if(current[0] == endnode || CountOf(open) == 0)
+            {
+            pathendnode = current[4];
+            reversepathlist = Append(reversepathlist,current[0]);
+            reversepathlist = Append(reversepathlist,current[4]);
+            startfinding = false;
+            pathstart = true;
+            Abort();
+            }
+        define appendtoclosed = 0;
+        appendtoclosed[0][0]=current[0];
+        appendtoclosed[0][1]=current[4];
+        closed = Append(closed,appendtoclosed);
+        open=RemoveFromArray(open,current);
+
+       define successor = ArraySlice(SortedArray(nodes,DistanceBetween(current[0],ArrayElement())),0,20);
+          successor = FilteredArray(successor, ArrayContains(closed,ArrayContains(open,ArrayElement())==false&&ArrayElement())==false&&IsInLineOfSight(Vector(XOf(current[0]),Add(YOf(current[0]),1.5),ZOf(current[0])),Vector(XOf(ArrayElement()),Add(YOf(ArrayElement()),1.5),ZOf(ArrayElement()))) && YOf(ArrayElement()) <= Add(YOf(current[0]),DistanceBetween(EyePosition(),PositionOf())));
+          successor = ArraySlice(SortedArray(successor, DistanceBetween(endnode,ArrayElement())),0,2);
+          
+          foreach (define suc in successor)
+          {
+        
+                define neighbor=0;
+              // define newMovementCostToNeighbor = current[1] +DistanceBetween(current[0],suc);
+                neighbor[0][0]=suc; 
+              // neighbor[0][1]= current[1]+DistanceBetween(current[0],suc);
+              //neighbor[0][2] = DistanceBetween(endnode,suc);
+              // neighbor[0][3] = current[1]+DistanceBetween(current[0],suc) + DistanceBetween(endnode,suc);
+                //neighbor[0][3] = DistanceBetween(current[0],suc)+DistanceBetween(endnode,suc);
+                //neighbor[0][3] = DistanceBetween(endnode,suc);
+                neighbor[0][4] = current[0];
+                
+                open= Append(open,neighbor);
+                
+                //Wait(RandomReal(0,0.1));
+
+              
+            
+            
+            //CreateText("8==D",180,EventPlayer(),current,1,EffectRev.VisibleToPositionAndRadius,true);
+            
+          }
+    }
+}
+
+rule: "Retrace"
+Event.OngoingPlayer
+if(pathstart && IsDummyBot(EventPlayer()) == true)
+{
+  closed = RemoveFromArray(closed,0);
+  define foundnode = FirstOf(FilteredArray(closed,ArrayElement()[0] == pathendnode));
+  pathendnode = foundnode[1];
+  reversepathlist = Append(reversepathlist,pathendnode);
+  
+ if(pathendnode == startingnode )
+  {
+     StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),Vector(XOf(LastOf(reversepathlist)),0,ZOf(LastOf(reversepathlist)))),1);
+   // StartFacing(EventPlayer(),DirectionTowards(EventPlayer(),ClosestPlayerTo()),1000);
+    Wait(0.2);
+    reversepathfinished = true;
+    pathstart = false;
+    Abort();
+  }
+  else if(CountOf(reversepathlist) > 20)
+  {
+       reversepathfinished = false;
+      reroute = false;
+      masterstartfinding = false;
+      startfinding = true;
+      Abort();
+  }
+
+ 
+  MinWait();
+  LoopIfConditionIsTrue();
+}
+
+rule: "Heal"
+Event.OnFinalBlow
+{
+    Heal(EventPlayer(),null,9999);
+}
+
+rule: "pharah logic - Altitude"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true && intelstart )
+{
+  if(AltitudeOf(myself)> AltitudeOf()&&IsInAir(myself))
+            {
+                // define speed = RandomReal(6.5,8);
+                  define speed = 7.5;
+                PressButton(EventPlayer(),Button.Ability1);  
+                StartHoldingButton(EventPlayer(),Button.Jump);
+                Wait(RandomReal(0,0.5));
+                StopHoldingButton(EventPlayer(),Button.Jump);
+            }
+            else
+            {
+                define speed = RandomReal(7.5,13);
+            }
+
+ MinWait();
+ LoopIfConditionIsTrue();
+}
+
+rule: "pharah logic - Lead"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true && intelstart )
+{
+
+      // define speed = RandomReal(7.5,13);
+       define speed = 7.5;
+      define gravity = 18;
+      define player = myself;
+      define t;
+     define a = 35 * 35 - DotProduct(VelocityOf(myself),VelocityOf(myself));
+     define b = DotProduct(VelocityOf(myself),EyePosition(myself)-EyePosition());
+     define c = DotProduct(EyePosition(myself)-EyePosition(),EyePosition(myself)-EyePosition());
+
+     define d = b*b + a*c;
+
+    if (d >= 0)
+    {
+        t = (b + SquareRoot(d)) / a;
+        if (t < 0)
+            t = 0;
+    }
+
+
+         define leadpos = EyePosition(myself) + VelocityOf(myself) * t;
+      //define leadpos = Add(PositionOf(player),Multiply(Vector(Divide(SpeedOfInDirection(player,Left()),SpeedOf(player)),0.3,Divide(SpeedOfInDirection(player,Forward()),SpeedOf(player))),Divide(Add(DistanceBetween(EventPlayer(),player),SpeedOf(player)),speed)));
+     define randomchance=RandomInteger(0,2);
+     if (randomchance == 1)
+     SetFacing(EventPlayer(),DirectionTowards(EyePosition(),player));
+     else
+     SetFacing(EventPlayer(),DirectionTowards(EyePosition(),leadpos));
+     if(!IsDead(myself)&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),100)),AllPlayers(),EventPlayer()),EyePosition())>4)
+     if(HeroOf(myself)==Hero.Genji && IsUsingAbility2(myself))
+     {
+      
+     }
+     else
+     {
+       PressButton(EventPlayer(),Button.PrimaryFire);
+     }
+        else if(!IsDead(myself)&&DistanceBetween(RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),100)),AllPlayers(),EventPlayer()),EyePosition())<=4)
+        {
+            PressButton(EventPlayer(),Button.Ability2);  
+        }
+ MinWait();
+ LoopIfConditionIsTrue();
+}
+
+
+rule: "pharah logic - dodge"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true && intelstart )
+{
+ if (RayCastHitPlayer(EyePosition(myself),Add(EyePosition(myself),Multiply(FacingDirectionOf(myself),100)),AllPlayers(),myself)==EventPlayer() || DistanceBetween(RayCastHitPosition(EyePosition(myself),Add(EyePosition(myself),Multiply(FacingDirectionOf(myself),DistanceBetween(EventPlayer(),myself))),AllPlayers(),myself),EventPlayer())< 2 && !IsDead(myself))
+          {
+                define randomchance=RandomInteger(0,1);
+                if(randomchance==1)
+                {
+                  StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),Add(EyePosition(),Multiply(DirectionFromAngles(Add(HorizontalFacingAngleOf(myself),90),VerticalFacingAngleOf(myself)),1))),1);
+                  if(Hero.Widowmaker == HeroOf(myself))
+                  Wait(RandomReal(0.1,0.2));
+                  else
+                  Wait(RandomReal(0.1,0.5));
+                  StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),Add(EyePosition(),Multiply(DirectionFromAngles(Add(HorizontalFacingAngleOf(myself),-90),VerticalFacingAngleOf(myself)),1))),1);
+                }
+                else
+                {
+                 StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),Add(EyePosition(),Multiply(DirectionFromAngles(Add(HorizontalFacingAngleOf(myself),-90),VerticalFacingAngleOf(myself)),1))),1);
+                  if(Hero.Widowmaker == HeroOf(myself))
+                  Wait(RandomReal(0.1,0.2));
+                  else
+                  Wait(RandomReal(0.1,0.5));
+                StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),Add(EyePosition(),Multiply(DirectionFromAngles(Add(HorizontalFacingAngleOf(myself),90),VerticalFacingAngleOf(myself)),1))),1);  
+                }
+                  Wait(RandomReal(0,0.5));
+                  StartHoldingButton(EventPlayer(),Button.Crouch);
+                      Wait(0.05);
+                  StopHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.05);
+           }
+           else if(!IsDead(myself))
+           {
+             StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),myself),1);
+           }
+ MinWait();
+ LoopIfConditionIsTrue();
+}
+
+rule: "pharah logic - distance walk"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == true && intelstart )
+{
+     if(DistanceBetween(EventPlayer(),myself)>5)
+        {
+          if(IsAlive(myself))
+          StartThrottleInDirection(EventPlayer(),Add(DirectionTowards(EventPlayer(),myself),Vector(RandomReal(0,1),RandomReal(0,1),RandomReal(0,1))),1);
+          else
+          StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),myself),1);
+          
+          define randomchance=RandomInteger(0,3);
+          if(randomchance==1)
+          {
+            Wait(RandomReal(0,2));
+          PressButton(EventPlayer(),Button.Ability1);  
+          }
+        }
+          else if (DistanceBetween(EventPlayer(),myself)<2 && IsDead(myself))
+          {
+                  StopThrottleInDirection(EventPlayer());
+                  define randomchance=RandomInteger(0,30);
+                   if(randomchance==0)
+                  SmallMessage(AllPlayers(),<"destroyed">);
+                  else if(randomchance==1 )
+                  SmallMessage(AllPlayers(),<"dropped">);
+                   else if(randomchance==2 )
+                  SmallMessage(AllPlayers(),<"failure">);
+                  else if(randomchance==3 )
+                  SmallMessage(AllPlayers(),<"loser">);
+                  else if(randomchance==4 )
+                  SmallMessage(AllPlayers(),<"terrible">);
+                  else if(randomchance==4 )
+                  //SmallMessage(AllPlayers(),<"{0}: {1}">);
+                  StartHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                  StopHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                      StartHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                  StopHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                      StartHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                  StopHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                      StartHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                  StopHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                      StartHoldingButton(EventPlayer(),Button.Crouch);
+                  Wait(0.1);
+                  StopHoldingButton(EventPlayer(),Button.Crouch);
+                  
+              
+          }
+          else if (DistanceBetween(EventPlayer(),myself)<5 && !IsDead(myself))
+          {
+            
+              // StartThrottleInDirection(EventPlayer(),Vector(RandomReal(0,1),RandomReal(0,1),RandomReal(0,1)),1);
+              // Wait(RandomReal(0,1));
+              define randomchance=RandomInteger(0,3);
+              if(randomchance==1)
+              PressButton(EventPlayer(),Button.Ability1); 
+          }
+
+      if(SpeedOf(EventPlayer())<2)
+      {
+        PressButton(EventPlayer(),Button.Jump);
+      }
+
+       if(DistanceBetween(EventPlayer(),RayCastHitPosition(EventPlayer(),Add(EventPlayer(),Multiply(Vector(0,-1,0),3)))) ==3 && !IsButtonHeld(EventPlayer(),Button.Jump))
+      {
+      StartHoldingButton(EventPlayer(),Button.Jump);
+      Wait(RandomReal(0,0.5));
+      StopHoldingButton(EventPlayer(),Button.Jump);
+      PressButton(EventPlayer(),Button.Ability1);
+      }
+ MinWait();
+ LoopIfConditionIsTrue();
+}
+
+
+
+
+rule: "pharah logic"  
+Event.OngoingPlayer
+if (masterstartfinding == true || startfinding == true || reversepathfinished == true && IsDummyBot(EventPlayer()) == true )
+{
+  //SetFacing(EventPlayer(),DirectionTowards(EventPlayer(),myself));
+  
+       define speed = RandomReal(14,16);
+            define randomchance=RandomInteger(0,5);
+define t;
+     define a = 35 * 35 - DotProduct(VelocityOf(myself),VelocityOf(myself));
+     define b = DotProduct(VelocityOf(myself),EyePosition(myself)-EyePosition());
+     define c = DotProduct(EyePosition(myself)-EyePosition(),EyePosition(myself)-EyePosition());
+
+     define d = b*b + a*c;
+
+    if (d >= 0)
+    {
+        t = (b + SquareRoot(d)) / a;
+        if (t < 0)
+            t = 0;
+    }
+
+
+         define leadpos = EyePosition(myself) + VelocityOf(myself) * t;
+            //define leadpos = Add(PositionOf(myself),Multiply(Vector(Divide(SpeedOfInDirection(myself,Left()),SpeedOf(myself)),0.3,Divide(SpeedOfInDirection(myself,Forward()),SpeedOf(myself))),Divide(Add(DistanceBetween(EventPlayer(),myself),SpeedOf(myself)),speed)));
+        if(randomchance==1)
+        {
+            
+        }
+        else
+        leadpos = Vector(1000,-10000,1000);
+  
+  if(IsInLineOfSight(EyePosition(),myself) || IsInLineOfSight(EyePosition(),leadpos))
+  {
+     leadpos = EyePosition(myself) + VelocityOf(myself) * t;
+          intelstart=true; 
+  }
+  else if(reversepathfinished == true)
+        {
+           intelstart=false; 
+          StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),Vector(XOf(LastOf(reversepathlist)),0,ZOf(LastOf(reversepathlist)))),1);
+          //Wait(0.5);
+          if(!IsInLineOfSight(PositionOf()+Vector(0,1.5,0),Vector(XOf(LastOf(reversepathlist)),Add(YOf(LastOf(reversepathlist)),1.5),ZOf(LastOf(reversepathlist)))))
+            {
+                StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),myself),1);
+            // StartFacing(EventPlayer(),DirectionTowards(EventPlayer(),ClosestPlayerTo()),1000);
+                reversepathfinished = false;
+                reroute = true;
+                masterstartfinding = false;
+                startfinding = true;
+              // SmallMessage(myself,startfinding);
+                //Abort();
+              // Abort();
+            }
+        }
+    
+  MinWait();
+  Loop();
+}
+
+
+
+rule: "Start walking"
+Event.OngoingPlayer
+if(reversepathfinished && IsDummyBot(EventPlayer()) == true)
+{
+
+
+ 
+  if(DistanceBetween(PositionOf(),LastOf(reversepathlist))<0.2)
+  {
+    reversepathlist=RemoveFromArrayAtIndex(reversepathlist,CountOf(reversepathlist)-1);
+    if(CountOf(reversepathlist) == 0)
+    {
+
+       reversepathfinished = false;
+      reroute = false;
+      masterstartfinding = false;
+      startfinding = true;
+     //SmallMessage(myself,<"finished">);
+      Abort();
+    }
+  }
+
+ 
+
+  MinWait();
+LoopIfConditionIsTrue();
+ StopThrottleInDirection();
+}
+

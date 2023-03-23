@@ -1,0 +1,15 @@
+
+rule: "Pathfind to cursor." //Range board points
+Event.OngoingPlayer
+if (HasSpawned())
+{
+    CreateHudText(EventPlayer(),DistanceBetween(EventPlayer(),PlayersInSlot(0,Team.Team1)));
+}
+
+
+rule: "Pathfind to cursor." //Range board points
+Event.OngoingGlobal
+if (IsGameInProgress())
+{
+    
+}

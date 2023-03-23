@@ -1,0 +1,52 @@
+playervar define chase_pos;
+playervar define n;
+playervar define radius;
+playervar define u;
+playervar define cos_a;
+playervar define sin_b;
+playervar define straight_pos;
+playervar define started;
+playervar define still_eye;
+playervar define T1;
+
+rule: "Rule 1"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact) == true)
+{
+    still_eye = EyePosition(EventPlayer());
+    straight_pos = EyePosition(EventPlayer());
+    n = FacingDirectionOf(EventPlayer());
+    chase_pos = EyePosition(EventPlayer());
+    radius = 1;
+    u = CrossProduct(n, Normalize(WorldVectorOf(Left(), EventPlayer(), LocalVector.Rotation)));
+    T1 = 0;
+    started = true;
+}
+
+rule: "Rule 2"
+Event.OngoingPlayer
+if (T1 == 360)
+{
+    T1 = 0;
+}
+
+rule: "Rule 4"
+Event.OngoingPlayer
+if (started == true)
+{
+    cos_a = radius * CosineFromDegrees(T1) * Normalize(WorldVectorOf(Left(), EventPlayer(), LocalVector.Rotation));
+    sin_b = radius * SineFromDegrees(T1) * u;
+    straight_pos = straight_pos + n * 0.1;
+    chase_pos = cos_a + sin_b + straight_pos;
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "Rule 4"
+Event.OngoingPlayer
+if (started == true)
+{
+    ChaseVariableAtRate(T1, 360, 360, RateChaseReevaluation.DestinationAndRate);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.White, chase_pos, 1, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, still_eye, still_eye + n * 100, Color.White, EffectRev.VisibleToPositionAndRadius);
+}

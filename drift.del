@@ -1,0 +1,81 @@
+playervar define a_pos;
+playervar define b_pos;
+playervar define gain_speed = 1.2;
+playervar define driftpos;
+playervar define driftslow;
+playervar define was_speed=0;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned())
+{
+    Wait(1.5);
+    SetAimSpeed(EventPlayer(),70);
+    CreateHudText(EventPlayer(),gain_speed);
+    PressButton(EventPlayer(),Button.Ultimate);
+    StartCamera(EventPlayer(),Add(EyePosition()+Vector(0,1.5,0),Multiply(FacingDirectionOf(),-4)),Add(EyePosition(),Multiply(FacingDirectionOf(),3)),80);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsUsingUltimate())
+{
+    
+    
+    if(ZOf(ThrottleOf(EventPlayer()))>0&& SpeedOf()>0&&IsInLineOfSight(EyePosition(),Add(EyePosition(),Multiply(Vector(XOf(driftpos),0,ZOf(driftpos)),0.9))))
+    {
+    ChasePlayerVariableOverTime(EventPlayer(),gain_speed,1.6,3);
+    if(!IsInAir())
+    ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),Add(PositionOf(),Multiply(Vector(XOf(driftpos),-0.1,ZOf(driftpos)),1))),gain_speed+(DotProduct(FacingDirectionOf(),driftpos)-1)/2, Relative.ToWorld,ContraryMotion.Incorporate);
+    
+    //StartFacing(EventPlayer(),DirectionTowards(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),1))),100);
+    }
+    else
+    {
+    if(SpeedOf() > 3 && !IsInAir())
+    ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),Add(PositionOf(),Multiply(Vector(XOf(driftpos),-0.1,ZOf(driftpos)),1))),gain_speed/2, Relative.ToWorld,ContraryMotion.Incorporate);
+    was_speed = SpeedOf();
+    StopChasingPlayerVariable(EventPlayer(),driftpos);
+    ChasePlayerVariableOverTime(EventPlayer(),gain_speed,1,was_speed/50);   
+    }
+
+
+
+    // if(SpeedOf()>4)
+    // {
+    // StartFacing(EventPlayer(),DirectionTowards(PositionOf(),Add(PositionOf(),Multiply(Normalize(VelocityOf()),SpeedOf()))),100);
+    // ChasePlayerVariableOverTime(EventPlayer(),gain_speed,300,1.5);
+    // }
+    // else
+    // {
+    // StopFacing();
+    // //StopChasingPlayerVariable(EventPlayer(),gain_speed);
+    // gain_speed = 80;
+    // }
+
+    // if(IsInAir())
+    // {
+    // gain_speed = 80;
+    // SetMoveSpeed(EventPlayer(),gain_speed);
+    // //StopChasingPlayerVariable(EventPlayer(),gain_speed);
+    // }
+    // else
+    // {
+    // SetMoveSpeed(EventPlayer(),gain_speed);
+    // }
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (ZOf(ThrottleOf(EventPlayer()))>0 && !IsInAir()&& SpeedOf()>0)
+{
+    driftpos = FacingDirectionOf();
+    Wait(SpeedOf()/50);
+    SetMoveSpeed(EventPlayer(),10+DotProduct(FacingDirectionOf(),driftpos)*5);
+    ChasePlayerVariableOverTime(EventPlayer(),driftpos,FacingDirectionOf(),SpeedOf()/25);
+    Wait(SpeedOf()/25);
+    LoopIfConditionIsTrue();
+    SetMoveSpeed(EventPlayer(),10);
+}
+

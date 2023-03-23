@@ -1,0 +1,143 @@
+
+playervar define pos = EmptyArray();
+playervar define dummy;
+playervar define path_Calculate = false;
+playervar define show_path;
+playervar define closest_node = EmptyArray();
+playervar define prev_node;
+playervar define initialized = false;
+playervar define bad_pos = EmptyArray();
+playervar define test;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (path_Calculate)
+{
+    if (DistanceBetween(eventPlayer,closest_node) < 2)
+    {
+        if(CountOf(pos) < 10)
+        {
+            for(define num = 0; 128; 1)
+            {
+            define randopos = NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-10,10),0,RandomInteger(-10,10)),eventPlayer));
+            pos[num] = RayCastHitPosition(randopos, randopos + Vector(0,-10,0)) + Vector(0,1,0)
+            
+            }
+        }
+        pos = MappedArray(pos,NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-10,10),0,RandomInteger(-10,10)),eventPlayer)) + Vector(0,1,0));
+        
+        for(define x; CountOf(bad_pos);1)
+        {
+        pos = FilteredArray(pos,DistanceBetween(ArrayElement(),bad_pos[x]) > 2)
+        }
+        // for(define num = 0; 128; 1)
+        // {
+            
+        // pos[num] = NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-10,10),0,RandomInteger(-10,10)),eventPlayer)) + Vector(0,1,0)
+        // //   while(!IsInLineOfSight(pos[num],eventPlayer))
+        // //   {
+        // //       pos[num] = NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-32,32),0,RandomInteger(-32,32)),eventPlayer)) + Vector(0,1,0)
+        // //       Wait(0.016)
+        // //   }
+        // while(IsTrueForAny(bad_pos,DistanceBetween(ArrayElement(),pos[num])<2))
+        // {
+        // pos[num] = NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-32,32),0,RandomInteger(-32,32)),eventPlayer)) + Vector(0,1,0)
+        // PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Green,EyePosition() + FacingDirectionOf() *5,0.5);
+        // //CreateInWorldText(AllPlayers(),"posnum",pos[num],1,Clipping.ClipAgainstSurfaces,InworldTextRev.None);
+        // Wait(0.5);
+        // }
+
+
+        // //if(IsTrueForAny(bad_pos,DistanceBetween(ArrayElement(),pos[num])<2))
+        // // pos[num] = EyePosition() + Vector(RandomReal(-1,1),0,RandomReal(-1,1)) * 10;
+                
+        // }
+
+        //define temp_closest_node =  FirstOf(SortedArray(FilteredArray(pos,DistanceBetween(RayCastHitPosition(prev_node,ArrayElement()),prev_node) == DistanceBetween(prev_node,ArrayElement())),DistanceBetween(ArrayElement(),dummy)));
+        prev_node = closest_node;
+        closest_node = FirstOf(SortedArray(FilteredArray(pos,DistanceBetween(RayCastHitPosition(prev_node,ArrayElement()),prev_node) == DistanceBetween(prev_node,ArrayElement()) && !IsInLineOfSight(ArrayElement(),ArrayElement() + Vector(0,-10,0)) && ArrayElement() != 0),DistanceBetween(ArrayElement(),dummy) + DistanceBetween(eventPlayer,ArrayElement())));
+        if(closest_node != 0)
+        bad_pos[CountOf(bad_pos)] = closest_node;
+        //bad_pos = FilteredArray(bad_pos,IsInLineOfSight(eventPlayer,ArrayElement()));
+        //define filterbadpos = FilteredArray(pos,DistanceBetween(ArrayElement(),temp_closest_node) > 2);
+        //while(ArrayContains(clo))
+        // while(CountOf(FilteredArray(bad_pos,DistanceBetween(closest_node,ArrayElement()) < 5)) > 0)
+        // {
+        // pos = RemoveFromArray(pos,closest_node);
+        // closest_node = FirstOf(SortedArray(FilteredArray(pos,DistanceBetween(RayCastHitPosition(prev_node,ArrayElement()),prev_node) == DistanceBetween(prev_node,ArrayElement())),DistanceBetween(ArrayElement(),dummy)));
+        // Wait(0.016);
+        // }
+        // if(IsTrueForAny(pos,!IsInLineOfSight(eventPlayer,ArrayElement())))
+        // bad_pos = FilteredArray(bad_pos,!IsInLineOfSight(eventPlayer,ArrayElement()));
+       // SmallMessage(eventPlayer,closest_node);
+
+        // while(closest_node == Vector()||DistanceBetween(RayCastHitPosition(prev_node,closest_node),prev_node) == DistanceBetween(prev_node,closest_node))
+        // {
+        //     for(num = 0; 128; 1)
+        //     {
+                
+        //     pos[num] = NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-32,32),0,RandomInteger(-32,32)),eventPlayer)) + Vector(0,1,0)
+                    
+        //     }
+        // closest_node = FirstOf(SortedArray(FilteredArray(pos, DistanceBetween(RayCastHitPosition(prev_node,ArrayElement()),prev_node) == DistanceBetween(prev_node,ArrayElement())),DistanceBetween(ArrayElement(),dummy)));
+         Wait(0.1);
+        // }
+    // path_Calculate =false;
+    }
+    Wait(0.016);
+   LoopIfConditionIsTrue();
+
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&& !IsDummyBot() && HostPlayer() == eventPlayer)
+{
+    Wait(5);
+    SmallMessage(eventPlayer,"Damage");
+    CreateHudText(eventPlayer,ServerLoad());
+    CreateDummyBot(Hero.Ana,Team.Team1,-1,NearestWalkablePosition(WorldVectorOf(Vector(RandomInteger(-10,10),0,RandomInteger(-10,10)),eventPlayer)))
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,prev_node,closest_node);
+    CreateInWorldText(AllPlayers(),"prev_Pos",prev_node,1)
+    CreateInWorldText(AllPlayers(),"Closest_Pos",closest_node,1)
+    dummy = LastCreatedEntity();
+    for(define z = 0; 128; 1)
+    {
+        Damage(eventPlayer,EventPlayer(),z);
+        Wait(0.016);
+    }
+    for(define num = 0; 128; 1)
+        {
+            
+        pos[num] = NearestWalkablePosition(PositionOf() + WorldVectorOf(Vector(RandomInteger(-10,10),0,RandomInteger(-10,10)),eventPlayer)) + Vector(0,1,0)
+        
+        }
+    closest_node = EyePosition();
+    prev_node = closest_node;
+    path_Calculate = true;
+    initialized = true;
+}
+
+rule: "Pathfind to cursor." //
+Event.OnDamageDealt
+{
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,pos[EventDamage()],0.3);
+    Heal(eventPlayer,eventPlayer,10000);
+}
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (DistanceBetween(PositionOf(),closest_node) < 2)
+// {
+//   path_Calculate =true;
+// }
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (!IsInLineOfSight(closest_node,eventPlayer) && !path_Calculate)
+// {
+//   path_Calculate =true;
+// }
+
+
+
+define eventPlayer: EventPlayer();

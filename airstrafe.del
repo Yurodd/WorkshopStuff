@@ -1,0 +1,62 @@
+playervar define inair = false;
+playervar define addspeed;
+playervar define currentspeed;
+playervar define speed;
+playervar define velo;
+
+// rule: "Throttle Loop"
+// Event.OngoingPlayer
+// if(IsInAir())
+// {
+//     SetGravity(eventPlayer,0);
+// }
+rule: "Throttle Loop"
+Event.OngoingPlayer
+if(IsInAir())
+{
+    if(ThrottleOf() == Vector(1,0,0)|| ThrottleOf() == Vector(-1,0,0))
+    {
+     currentspeed = DotProduct(VelocityOf(),Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)));
+     addspeed = 30  - currentspeed;
+    addspeed = Max(Min(addspeed,30),0);
+     speed = SpeedOf();
+     velo = VelocityOf();
+    //ApplyImpulse(eventPlayer,Down(),17.5 * 0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+    //ApplyImpulse(eventPlayer,Normalize(VelocityOf() * Vector(1,0,1)) + Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)) ,SpeedOf() );
+    ApplyImpulse(eventPlayer, Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)),addspeed * 0.016  ,Relative.ToWorld,ContraryMotion.Incorporate);
+    //StartAccelerating(eventPlayer,VelocityOf() + Vector(0,-17.5 * 0.016,0) + Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)),currentspeed,1000)
+    }
+    
+    if(DistanceBetween(RayCastHitPosition(EyePosition(),EyePosition() + Down() * 100),PositionOf()) < 0.2 && IsButtonHeld(eventPlayer,Button.Jump))
+    {
+    ApplyImpulse(eventPlayer,Up(),5)
+    if(HorizontalSpeedOf()>0)
+    ApplyImpulse(eventPlayer, Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)),addspeed * 0.016  ,Relative.ToWorld,ContraryMotion.Incorporate);
+    }
+
+    Wait(0.016);
+     LoopIfConditionIsTrue()
+
+     StopAccelerating();
+
+}
+
+rule: "Throttle Loop"
+Event.OngoingPlayer
+if(HasSpawned())
+{
+    CreateHudText(eventPlayer,<"Speed:<0>",HorizontalSpeedOf()>)
+    CreateHudText(eventPlayer,<"Dot:<0>",currentspeed>)
+    CreateHudText(eventPlayer,<"AddSpeed:<0>",addspeed>)
+    CreateHudText(eventPlayer,DistanceBetween(RayCastHitPosition(EyePosition(),EyePosition() + Down() * 100),PositionOf()))
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,eventPlayer, eventPlayer + VelocityOf() * Vector(1,0,1) + Normalize(Normalize(WorldVectorOf(ThrottleOf(),eventPlayer))* FacingDirectionOf()) * addspeed)
+}
+
+// rule: "Throttle Loop"
+// Event.OngoingPlayer
+// if(inair)
+// {
+// SetGravity(eventPlayer,0);
+// }
+
+define eventPlayer : EventPlayer();

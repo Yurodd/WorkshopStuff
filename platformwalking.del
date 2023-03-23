@@ -1,0 +1,140 @@
+globalvar define eyepos;
+globalvar define dummy;
+globalvar define platform;
+playervar define length = WorkshopSettingReal("Dimensions", "Length", 5, 1, 100);
+playervar define width = WorkshopSettingReal("Dimensions", "Width", 5, 1, 100);
+playervar define inside;
+playervar define isGrounded;
+rule: "Place platform"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact))
+{
+    eyepos = EyePosition() + FacingDirectionOf() * 5;
+    platform[0] = eyepos + (WorldVectorOf(Forward(),eventPlayer) * length ) + (WorldVectorOf(Left(),eventPlayer) * width)
+    platform[1] = eyepos + (WorldVectorOf(Forward(),eventPlayer) * length ) + (WorldVectorOf(Right(),eventPlayer) * width)
+    platform[3] = eyepos +  (WorldVectorOf(Left(),eventPlayer) * width)
+    platform[2] = eyepos +  (WorldVectorOf(Right(),eventPlayer) * width)
+    platform[4] = (platform[0] + platform[2]) /2;
+
+}
+
+rule: "Initialize"
+Event.OngoingPlayer
+if (HasSpawned() && !IsDummyBot() && HostPlayer() == eventPlayer)
+{
+    CreateHudText(eventPlayer,ServerLoad());
+    CreateHudText(eventPlayer,DistanceBetween(eventPlayer,dummy) * 10000);
+    CreateEffect(FilteredArray(eventPlayer,!IsButtonHeld(eventPlayer,Button.Reload)),Effect.Sphere,Color.White,EyePosition() + FacingDirectionOf() * 5,0.3)
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,intersection,0.3)
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,platform[0],platform[1]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,platform[1],platform[2]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,platform[2],platform[3]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,platform[3],platform[0]);
+    CreateDummyBot(HeroOf(),Team.Team1,-1,EventPlayer())
+    dummy = LastCreatedEntity();
+    SetInvisible(dummy);
+    DisableMovementCollisionWithPlayers(dummy)
+    DisableMovementCollisionWithEnvironment(eventPlayer, false);
+    //StartForcingPlayerPosition(dummy,eventPlayer,false)
+    AttachPlayers(eventPlayer,dummy);
+    StartThrottleInDirection(dummy,Normalize(WorldVectorOf(ThrottleOf(leader),leader)),1 * ThrottleOf() != Vector());
+    StartFacing(dummy,FacingDirectionOf(eventPlayer),1000)
+}
+
+rule: "R for Camera"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Reload))
+{
+    StartCamera(eventPlayer,EyePosition() + -FacingDirectionOf() * Vector(-1,1,-1) * 5,eventPlayer,30)
+    while(IsButtonHeld(EventPlayer(), Button.Reload))
+    {
+        Wait(1);
+    }
+    StopCamera();
+}
+
+rule: "Jump"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Jump) && !IsDummyBot())
+{
+    PressButton(dummy,Button.Jump);
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Walking animator"
+Event.OngoingPlayer
+if (ThrottleOf() != Vector() && !IsDummyBot())
+{
+    Wait(0.1)
+    SetStatus(eventPlayer,null,Status.Rooted,0.001)
+    // Wait(0.016);
+    // StopForcingThrottle();
+    LoopIfConditionIsTrue()
+}
+
+rule: "Platform collision logic"
+Event.OngoingPlayer
+if (corner0 >= 0 && corner1 >= 0 && corner2 >= 0 && corner3 >= 0 && DistanceBetween(PositionOf(),intersection) <= 0.5 && IsDummyBot() && platform[4] !=0)
+{
+    inside = true;
+    
+        if(!isGrounded)
+        {
+        isGrounded = true;
+        //StopForcingPlayerPosition(dummy);
+        //Wait(1);
+        //AttachPlayers(leader,eventPlayer,Vector(0,2,0));
+        //DisableMovementCollisionWithEnvironment(eventPlayer, false);
+        //StartFacing(eventPlayer,FacingDirectionOf(leader),1000)
+        SetGravity(eventPlayer,0);
+        ApplyImpulse(eventPlayer, Up(), 0.001);
+        ApplyImpulse(eventPlayer, Down(), 0.001);
+            if(HorizontalSpeedOf()>0.01)
+            {
+                ApplyImpulse(eventPlayer, Left(), 0.001);
+                ApplyImpulse(eventPlayer, Right(), 0.001);
+                ApplyImpulse(eventPlayer, Forward(), 0.001);
+                ApplyImpulse(eventPlayer, Backward(), 0.001); 
+            }
+        }
+
+        
+         if(IsButtonHeld(leader,Button.Jump))
+                ApplyImpulse(eventPlayer, Up(), 5.5);
+
+            if(ThrottleOf(leader) != Vector(0,0,0))
+            {
+            ApplyImpulse(eventPlayer, CrossProduct(Up(),Normalize(WorldVectorOf(ThrottleOf(leader),leader)))  , 0.001);
+            ApplyImpulse(eventPlayer, CrossProduct(Down(),Normalize(WorldVectorOf(ThrottleOf(leader),leader))) , 0.001);
+            ApplyImpulse(eventPlayer, DirectionTowards(EyePosition(),EyePosition() + Normalize(WorldVectorOf(ThrottleOf(leader),leader)) * 1)  , 5.5);
+            }
+
+            if(ThrottleOf(leader) == Vector(0,0,0) && HorizontalSpeedOf()>0.01)
+                {
+                    ApplyImpulse(eventPlayer, Left(), 0.001);
+                    ApplyImpulse(eventPlayer, Right(), 0.001);
+                    ApplyImpulse(eventPlayer, Forward(), 0.001);
+                    ApplyImpulse(eventPlayer, Backward(), 0.001); 
+                }
+                ApplyImpulse(eventPlayer, Up(), 0.001);
+    
+    Wait(0.016);
+    LoopIfConditionIsTrue()
+    //EnableMovementCollisionWithEnvironment();
+     //DetachPlayers(leader)
+     Wait(0.016);
+    //StartForcingPlayerPosition(eventPlayer,leader,false)
+    isGrounded = false;
+    SetGravity(eventPlayer,100);
+    inside = false;
+
+}
+
+define eventPlayer: EventPlayer();
+define corner0: DotProduct(DirectionTowards(platform[0],platform[1]),DirectionTowards(platform[0],Vector(XOf(PositionOf()),YOf(eyepos),ZOf(PositionOf()))));
+define corner1: DotProduct(DirectionTowards(platform[1],platform[2]),DirectionTowards(platform[1],Vector(XOf(PositionOf()),YOf(eyepos),ZOf(PositionOf()))));
+define corner2: DotProduct(DirectionTowards(platform[2],platform[3]),DirectionTowards(platform[2],Vector(XOf(PositionOf()),YOf(eyepos),ZOf(PositionOf()))));
+define corner3: DotProduct(DirectionTowards(platform[3],platform[0]),DirectionTowards(platform[3],Vector(XOf(PositionOf()),YOf(eyepos),ZOf(PositionOf()))));
+define intersection: PositionOf() + Up() * DotProduct(platform[4] - PositionOf(),Up()) / DotProduct(Up(), Up());
+define leader: PlayersInSlot(0,Team.Team1);

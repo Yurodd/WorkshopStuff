@@ -1,0 +1,135 @@
+
+define globalvar started = false;
+define playervar bot;
+define playervar health;
+define playervar randomchar;
+rule: "spawn bots"
+Event.OngoingPlayer
+if (HasSpawned() & started==false)
+{
+    CreateDummyBot(RandomValueInArray(AllHeroes()),Team.Team1,1,EyePosition());
+    bot = PlayersInSlot(1,Team.Team1);
+    health = Add(MaxHealth(bot),MaxHealth(EventPlayer()));
+    SetMaxHealth(bot,health);
+    SetHealth(bot,health);
+    CreateHudText(EventPlayer(),Health(bot));
+    SetStatus(EventPlayer(),null,Status.PhasedOut,9999);
+    StartCamera(EventPlayer(),Add(Destination(EyePosition(),FacingDirectionOf(),-3.7),Vector(0,1,0)),RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),100))),0);
+    SetInvisible(EventPlayer(),InvisibleTo.All);
+    started = true; 
+}
+
+rule: "start"
+Event.OngoingPlayer
+if (started&IsAlive(EventPlayer()))
+{
+        if(SpeedOf(EventPlayer()) > 0.01)
+        {
+        //ApplyImpulse(bot,Add(PositionOf(bot),Vector(SpeedOfInDirection(bot,Left()),VerticalSpeedOf(bot),SpeedOfInDirection(bot,Forward()))),Multiply(SpeedOf(bot),-0.8));
+       // ApplyImpulse(bot,DirectionTowards(bot,Vector(XOf(EventPlayer()),Subtract(YOf(EventPlayer()),0.1),ZOf(EventPlayer()))),Multiply(DistanceBetween(bot,EventPlayer()),1));
+      
+        StartThrottleInDirection(bot,DirectionTowards(bot,EventPlayer()),1);
+        }
+        else
+        {
+        StopThrottleInDirection(bot);
+        }
+        
+       if(DistanceBetween(EventPlayer(),bot) > 0.05)
+       {
+        Teleport(bot,PositionOf()); 
+       }
+    //     if(DistanceBetween(EventPlayer(),bot) > 0.05)
+    //    {
+    //     ApplyImpulse(bot,DirectionTowards(bot,EventPlayer()),Multiply(DistanceBetween(bot,EventPlayer()),30)); 
+    //    }
+        SetFacing(bot,DirectionTowards(EyePosition(),RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),100)))));
+        MinWait();
+        LoopIfConditionIsTrue();
+}
+
+rule: "reset"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Crouch))
+{
+    started = false;
+    StopCamera();
+    DestroyAllDummyBots();
+    Wait(1);
+    CreateDummyBot(Hero.Reinhardt,Team.Team1,1,EyePosition());
+    bot = PlayersInSlot(1,Team.Team1);
+     SetInvisible(EventPlayer(),InvisibleTo.None);
+    started = true;
+
+}
+
+
+rule: "mimic button 1"
+Event.OngoingPlayer
+if (started&IsButtonHeld(EventPlayer(), Button.Ability1))
+{
+    PressButton(bot,Button.Ability1);
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "mimic button 2"
+Event.OngoingPlayer
+if (started&IsButtonHeld(EventPlayer(), Button.Ability2))
+{
+    PressButton(bot,Button.Ability2);
+      MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "mimic button crouch"
+Event.OngoingPlayer
+if (started&IsButtonHeld(EventPlayer(), Button.Crouch))
+{
+    PressButton(bot,Button.Crouch);
+      MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "mimic button primary"
+Event.OngoingPlayer
+if (started&IsButtonHeld(EventPlayer(), Button.PrimaryFire))
+{
+    PressButton(bot,Button.PrimaryFire);
+      MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "mimic button secondary"
+Event.OngoingPlayer
+if (started&IsButtonHeld(EventPlayer(), Button.SecondaryFire))
+{
+    PressButton(bot,Button.SecondaryFire);
+      MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "mimic button ult"
+Event.OngoingPlayer
+if (started&IsUsingUltimate(EventPlayer()))
+{
+    SetUltimateCharge(bot,100);
+    PressButton(bot,Button.Ultimate);
+}
+
+rule: "bot dies"
+Event.OngoingPlayer
+if (!IsAlive(bot))
+{
+    Kill(EventPlayer());
+    Respawn(EventPlayer());
+    Respawn(bot);
+    Wait(0.2);
+    randomchar = RandomValueInArray(AllHeroes());
+    ForcePlayerHero(EventPlayer(),randomchar);
+    StopForcingHero(EventPlayer());
+    randomchar = RandomValueInArray(AllHeroes());
+    ForcePlayerHero(bot,randomchar);
+    StopForcingHero(bot);
+   
+}

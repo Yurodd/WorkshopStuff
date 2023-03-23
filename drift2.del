@@ -1,0 +1,440 @@
+playervar define a_pos;
+playervar define b_pos;
+playervar define gain_speed = 3.5;
+playervar define driftpos;
+playervar define driftslow;
+playervar define was_speed=0;
+playervar define angledot;
+playervar define cloudid;
+playervar define FirstBeam = EmptyArray();
+playervar define SecondBeam = EmptyArray();
+playervar define interact = false;
+playervar define moving_forward = false;
+playervar define use_camera = true;
+globalvar define race_start = true;
+playervar define restarting=false;
+playervar define checkpoint=0;
+playervar define drift_boost=0;
+playervar define rankcount=0;
+playervar define counter=0;
+playervar define waypoint=0;
+playervar define speed = 1;
+playervar define rate = 3.5;
+playervar define time_sec =0;
+playervar define time_minute =0;
+playervar define totallapplace=0;
+globalvar define lap_place=EmptyArray();
+globalvar define min=0;
+globalvar define sec=0;
+globalvar define totallap=5;
+globalvar define endgame = false;
+globalvar define endtally = false;
+playervar define oasis_course_pos = [
+
+    Vector(97.38,0.85,300.26),
+    Vector(124.91,1.85,291.58),
+    Vector(136.66,4,268.84),
+    Vector(167.76,4,240.11),
+    Vector(198.93,0.85,211.28),
+    Vector(153.41,4,214.86),
+    Vector(129.3,4,232.06),
+    Vector(119.72,4,254.56),
+    Vector(90.43,0.88,274.61)
+
+    ];
+
+globalvar define oasis_startingarea = [
+    //Vector(61.746,4.729,300.436),
+    Vector(65.269,4.636,298.438),
+    Vector(68.445,4.484,296.423),
+    Vector(71.402,4.459,294.361),
+    Vector(74.607,4.309,291.529),
+    Vector(78.531,4.354,289.542),
+    Vector(82.801,4.447,288.352),
+    Vector(86.288,4.496,289.635),
+    Vector(88.516,4.322,291.262),
+    Vector(90.564,4.35,293.576),
+    Vector(92.196,4.342,295.244),
+    Vector(94.120,4.307,297.594),
+    Vector(97.6,0.85,299.76)
+    ];
+
+globalvar define oasis_directionarea = [
+    //Vector(61.746,4.729,300.436),
+    Vector(136.99,4,267.96), //left
+    Vector(128.73,4,262.44), //right
+    Vector(150.11,2,253.86), //up
+    Vector(137.92,2,241.9), //up
+    Vector(157.61,4,233.29), //right
+    Vector(149.63,4,226.94) //right
+
+    ];
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsGameInProgress())
+{
+checkpoint=0;
+rankcount=0;
+counter=0;
+waypoint=0;
+totallapplace=0;
+}
+
+    
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned())
+{
+
+    if(CurrentMap() == Map.Oasis_City_Center)
+    {
+    define start = RandomValueInArray(oasis_startingarea);
+    oasis_startingarea = RemoveFromArray(oasis_startingarea,start);
+    Teleport(EventPlayer(),start);
+    }
+    SetStatus(EventPlayer(),null,Status.Rooted,3.5);
+    drift_boost = 10;
+    if(!IsDummyBot()&& IsGameInProgress())
+    {
+        for (define i = 0; i<5;i++)
+        {
+        CreateDummyBot(Hero.Bastion,Team.All,-1,oasis_startingarea[i]);
+        }
+    }
+    Wait(3.5);
+    CreateIcon(FilteredArray(AllPlayers(),ArrayElement()!=EventPlayer()),PositionOf()+Vector(0,2,0),Icon.ArrowDown);
+    BigMessage(EventPlayer(),"Follow the green check point, 5 Laps GO!")
+    SetAimSpeed(EventPlayer(),70);
+    PressButton(EventPlayer(),Button.Ultimate);
+    StartCamera(EventPlayer(),RayCastHitPosition(EyePosition(),(EyePosition()+Vector(0,1.5,0))+(FacingDirectionOf()*-4)),EyePosition()+FacingDirectionOf()*3,80);
+    //StartCamera(EventPlayer(),Add(EyePosition()+Vector(0,1.5,0),Multiply(FacingDirectionOf(),-4)),Add(EyePosition(),Multiply(FacingDirectionOf(),3)),80);
+    driftpos = FacingDirectionOf();
+    ChaseVariableOverTime(gain_speed,speed,rate,TimeChaseReevaluation.DestinationAndDuration);
+    ChaseVariableOverTime(driftpos,FacingDirectionOf(),SpeedOf()/35,TimeChaseReevaluation.DestinationAndDuration);
+    ChaseVariableOverTime(time_sec,60,1,TimeChaseReevaluation.DestinationAndDuration);
+    
+
+}
+
+
+
+rule: "Pathfind to cursor." //
+Event.OnDeath
+{
+    if(checkpoint!=0)
+    Teleport(EventPlayer(),oasis_course_pos[checkpoint-1]);
+    else
+    Teleport(EventPlayer(),oasis_course_pos[0]);
+    Resurrect();
+    Wait(1);
+    PressButton(EventPlayer(),Button.Ultimate);
+}
+
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsUsingUltimate() && IsButtonHeld(EventPlayer(),Button.Interact))
+{
+use_camera=!use_camera;
+if(use_camera)
+StartCamera(EventPlayer(),RayCastHitPosition(EyePosition(),(EyePosition()+Vector(0,1.5,0))+(FacingDirectionOf()*-4)),EyePosition()+FacingDirectionOf()*3,80);
+else
+StopCamera();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsUsingUltimate() && ZOf(ThrottleOf(EventPlayer()))>0 &&IsInLineOfSight(EyePosition(),EyePosition()+Vector(XOf(driftpos),0,ZOf(driftpos))*0.9))
+{
+    speed = 3+(ServerLoad()/1000);
+    rate = 3.5-(ServerLoad()/100);
+    moving_forward = true;
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsUsingUltimate() && ZOf(ThrottleOf(EventPlayer()))<1 || !IsInLineOfSight(EyePosition(),EyePosition()+Vector(XOf(driftpos),0,ZOf(driftpos))*0.9) || IsDead())
+{
+    speed = 1;
+    rate = was_speed/50;
+    was_speed = SpeedOf();
+    //StopChasingPlayerVariable(EventPlayer(),driftpos);
+    moving_forward = false;
+}
+    
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (!moving_forward && SpeedOf() > 3 && !IsInAir())
+{
+    ChaseVariableOverTime(gain_speed,speed,rate,TimeChaseReevaluation.DestinationAndDuration);
+    ChaseVariableOverTime(driftpos,FacingDirectionOf(),SpeedOf()/25,TimeChaseReevaluation.DestinationAndDuration);
+    ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),PositionOf()+Vector(XOf(driftpos),-0.1,ZOf(driftpos))*1),gain_speed, Relative.ToWorld,ContraryMotion.Incorporate);
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (!restarting && moving_forward && IsUsingUltimate())
+{
+    ChaseVariableOverTime(gain_speed,speed,rate,TimeChaseReevaluation.DestinationAndDuration);
+    ChaseVariableOverTime(driftpos,FacingDirectionOf(),SpeedOf()/60,TimeChaseReevaluation.DestinationAndDuration);
+    angledot = DotProduct(FacingDirectionOf(),driftpos);
+    
+
+    if(!IsInAir())
+    ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),PositionOf()+Vector(XOf(driftpos),-0.1,ZOf(driftpos))*1),gain_speed+(angledot-1)*1.2, Relative.ToWorld,ContraryMotion.Incorporate);
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (moving_forward && !IsInAir())
+{
+    //driftpos = FacingDirectionOf();
+   // Wait(SpeedOf()/50);
+    SetMoveSpeed(EventPlayer(),10+DotProduct(FacingDirectionOf(),driftpos)*5);
+    MinWait();
+    //Wait(SpeedOf()/25);
+    LoopIfConditionIsTrue();
+    SetMoveSpeed(EventPlayer(),100);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (moving_forward && !IsInAir() && angledot < 0.7)
+{
+PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.LimeGreen,EventPlayer()+Vector(XOf(driftpos),0,ZOf(driftpos))*SpeedOf()/5,2);
+// CreateEffect(AllPlayers(),Effect.Cloud,Color.White,Add(EventPlayer()+Vector(0,0.5,0),Multiply(Vector(XOf(driftpos),0,ZOf(driftpos)),SpeedOf()/5)),1,EffectRev.None);
+// cloudid[CountOf(cloudid)] = LastCreatedEntity();
+drift_boost++;
+Wait(0.1);
+LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (!restarting && angledot > 0.7 && SpeedOf()>0 && IsUsingUltimate())
+{
+// DestroyEffect(LastOf(cloudid));
+// cloudid = RemoveFromArray(cloudid,LastOf(cloudid));
+    if(drift_boost > 0)
+    {
+    PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Aqua,EventPlayer()+Vector(XOf(driftpos),0,ZOf(driftpos))*SpeedOf()/5,0.2);
+    PlayEffect(AllPlayers(),PlayEffect.RingExplosionSound,Color.Aqua,EventPlayer(),drift_boost*20);
+    ApplyImpulse(EventPlayer(),DirectionTowards(PositionOf(),PositionOf()+Vector(XOf(driftpos),-0.1,ZOf(driftpos))*1),drift_boost/2, Relative.ToWorld,ContraryMotion.Incorporate);
+    drift_boost--;
+    }
+Wait(0.05);
+LoopIfConditionIsTrue();
+}
+
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (angledot > 0.7&& SpeedOf()>0)
+// {
+//     PlayEffect(AllPlayers(),PlayEffect.RingExplosionSound,Color.Aqua,EventPlayer(),drift_boost*20);
+// }
+
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsDummyBot()&&IsUsingUltimate()&&race_start)
+{
+StartFacing(EventPlayer(),DirectionTowards(EyePosition(),PlayersInSlot(0,Team.All)),100);
+ForceThrottle(EventPlayer(),1,1);
+// Wait(0.05);
+// LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (race_start)
+{
+CreateEffect(EventPlayer(),Effect.LightShaft,Color.Green,oasis_course_pos[checkpoint],5);
+}
+
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (race_start&&DistanceBetween(PositionOf(),oasis_course_pos[checkpoint]) < 5)
+{
+    if(checkpoint<8)
+    {
+    checkpoint++;
+    waypoint++;
+    }
+    else
+    {
+    checkpoint = 0;
+    }
+    if(checkpoint==1)
+    {
+        rankcount++;
+        if(rankcount==totallap)
+        {
+        endgame = true;
+        StopChasingVariable(time_sec);
+        }
+        else
+        BigMessage(EventPlayer(),<"Lap: <0>", rankcount>);
+        if(rankcount == totallap-1)
+        BigMessage(EventPlayer(),"LAST LAP!");
+        //SetPlayerScore(EventPlayer(),rankcount);
+        //waypoint=1;
+    }
+
+}
+
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (IsGameInProgress()&&race_start)
+// {
+//     SetPlayerScore(EventPlayer(),IndexOfArrayValue(lap_place,EventPlayer())+1);
+//     totallapplace = rankcount*100+waypoint*100+-DistanceBetween(oasis_course_pos[checkpoint], EventPlayer());
+//     Wait(0.5);
+//     LoopIfConditionIsTrue();
+// }
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingGlobal
+// if (IsGameInProgress()&&race_start)
+// {
+
+//     lap_place = SortedArray(FilteredArray(AllPlayers()),ArrayElement().totallapplace);
+//     Wait(1);
+//     LoopIfConditionIsTrue();
+// }
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (time_sec == 60)
+{
+    time_sec = 0;
+    time_minute++;
+}
+
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if (IsAssemblingHeroes())
+{
+    SetMatchTime(0);
+    ForceSpawnRoom()
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+{
+    CreateHudText(EventPlayer(),null,null,<"Lap Time: <0>:<1>",time_minute,time_sec>,Location.Left,0,Color.White,Color.Green,Color.Red);
+    CreateHudText(EventPlayer(),null,null,<"Speed: <0>",SpeedOf()*10>,Location.Top,1);
+    CreateHudText(EventPlayer(),null,<"Server Load: <0>",ServerLoad()>,null,Location.Right);
+    CreateHudText(AllPlayers(),null,null,<"<0>'s Lap: <1>",EventPlayer(),rankcount>,Location.Left,0,Color.White,Color.Green,Color.Turquoise);
+    CreateHudText(EventPlayer(),null,null,"Made By: Yurodd",Location.Right,0,Color.Aqua,Color.SkyBlue,Color.SkyBlue);
+    CreateHudText(EventPlayer(),null,null,"Toggle POV if 3rd person view is stuttery.",Location.Right,0,Color.Aqua,Color.Purple,Color.Turquoise);
+    CreateHudText(EventPlayer(),null,null,"DriftBoost will automatically be used upon exiting drifting.",Location.Right,0,Color.Aqua,Color.Purple,Color.Turquoise);
+    CreateHudText(EventPlayer(),null,null,"You will gain DriftBoost when you start drifting at certain angle.",Location.Right,0,Color.Aqua,Color.Purple,Color.Turquoise);
+    CreateHudText(EventPlayer(),null,null,"Press F to change POV.",Location.Right,0,Color.Aqua,Color.Purple,Color.Turquoise);
+    
+    //CreateHudText(EventPlayer(),PositionOf(),null,null,Location.Left);
+}
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+{
+    Wait(1);
+    //Asset.CreateTextFancy("hi",AllPlayers(),oasis_directionarea[0],0,1,);
+    //Asset.CreateText("w",FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[0])),oasis_directionarea[0],0,1,false);
+    CreateIcon(FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[0])),oasis_directionarea[0],Icon.ArrowLeft,IconRev.VisibleTo,Color.Yellow,false);
+    CreateIcon(FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[1])),oasis_directionarea[1],Icon.ArrowRight,IconRev.VisibleTo,Color.Yellow,false);
+    CreateIcon(FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[2])),oasis_directionarea[2],Icon.ArrowUp,IconRev.VisibleTo,Color.Yellow,false);
+    CreateIcon(FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[3])),oasis_directionarea[3],Icon.ArrowUp,IconRev.VisibleTo,Color.Yellow,false);
+    CreateIcon(FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[4])),oasis_directionarea[4],Icon.ArrowRight,IconRev.VisibleTo,Color.Yellow,false);
+    CreateIcon(FilteredArray(AllPlayers(),IsInLineOfSight(EyePosition(ArrayElement())+Vector(0,1.5,0),oasis_directionarea[5])),oasis_directionarea[5],Icon.ArrowRight,IconRev.VisibleTo,Color.Yellow,false);
+    
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if(endgame)
+{
+lap_place = SortedArray(FilteredArray(AllPlayers()),ArrayElement().rankcount*100+ArrayElement().waypoint*100+-DistanceBetween(ArrayElement().oasis_course_pos[ArrayElement().checkpoint], ArrayElement()));
+lap_place = RemoveFromArray(lap_place,0);
+Wait(0.25);
+ BigMessage(AllPlayers(),<"Winner: <0> || Lap Time: <1>:<2>",LastOf(lap_place),LastOf(lap_place).time_minute,LastOf(lap_place).time_sec>);
+endtally = true;
+    oasis_startingarea = EmptyArray();
+    oasis_startingarea = [
+    Vector(65.269,0.85,298.438),
+    Vector(68.445,0.85,296.423),
+    Vector(71.402,0.85,294.361),
+    Vector(74.607,0.85,291.529),
+    Vector(78.531,0.85,289.542),
+    Vector(82.801,0.85,288.352),
+    Vector(86.288,0.85,289.635),
+    Vector(88.516,0.85,291.262),
+    Vector(90.564,0.85,293.576),
+    Vector(92.196,0.85,295.244),
+    Vector(94.120,0.85,297.594),
+    Vector(97.6,0.85,299.76)
+    ];
+Wait(4);
+endtally = false;
+endgame = false;
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+if(endtally&&IsGameInProgress())
+{
+
+    SetPlayerScore(LastOf(lap_place),20);
+    //BigMessage(AllPlayers(),FirstOf(lap_place));
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if(endtally&&!IsGameInProgress())
+{
+   
+    checkpoint=0;
+    rankcount=0;
+    counter=0;
+    waypoint=0;
+    totallapplace=0;
+    gain_speed = 1;
+    SetSlowMotion(20);
+    Wait(1.2);
+    restarting = true;
+    SetSlowMotion(100);
+    ApplyImpulse(EventPlayer(),Vector(0,-1,0),0.01);
+    Wait(0.3);
+    SetStatus(EventPlayer(),null,Status.Rooted,3.5);
+    lap_place = EmptyArray();
+    SmallMessage(AllPlayers(),"Starting Game");
+    time_minute = 0;
+    time_sec = 0;
+    define start = RandomValueInArray(oasis_startingarea);
+    oasis_startingarea = RemoveFromArray(oasis_startingarea,start);
+    Teleport(EventPlayer(),start);
+    DisallowButton(EventPlayer(),Button.PrimaryFire);
+    Wait(3.5);
+    drift_boost = 10;
+    restarting=false;
+    SmallMessage(AllPlayers(),"GO!");
+    AllowButton(EventPlayer(),Button.PrimaryFire);
+    ChaseVariableAtRate(time_sec,60,1,RateChaseReevaluation.DestinationAndRate);
+    
+
+    
+}
+

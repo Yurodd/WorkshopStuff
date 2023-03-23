@@ -1,0 +1,98 @@
+playervar define pointingdir; //a
+playervar define facingdir; //b
+playervar define facingdirx100; //c
+playervar define hitpos; //d
+playervar define isshot; //e
+playervar define normal; //f
+playervar define bounces; //f
+playervar define slotcount = 1; //f
+playervar define savedchar; //f
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&NumberOfPlayers()<12&&!IsDummyBot())
+{
+    Teleport(EventPlayer(),Vector(-1.284,5.349,-61.246));
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Pharah,Team.All,-1,EventPlayer());
+    //CreateEffect(EventPlayer(),Effect.Sphere,Color.White,pointingdir,0.1);
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&IsDummyBot())
+{
+ SetInvisible(EventPlayer(),InvisibleTo.All);
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StartCamera(EventPlayer(),Add(pointingdir,Vector(0,1,0)),pointingdir);
+}
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (!IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StopCamera();
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.PrimaryFire)&&!IsDummyBot())
+{
+    bounces =0;
+    pointingdir = Add(EyePosition(),Multiply(FacingDirectionOf(),3));
+    facingdir = FacingDirectionOf();
+    facingdirx100 = Add(pointingdir,Multiply(facingdir,100));
+    hitpos = RayCastHitPosition(pointingdir,facingdirx100);
+    ChasePlayerVariableAtRate(EventPlayer(),pointingdir,hitpos,35);
+    isshot = true;
+    
+}
+
+
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (!IsDummyBot()&&DistanceBetween(pointingdir,hitpos) == 0 && bounces < 100)
+{
+    bounces++;
+    normal = RayCastHitNormal(Add(pointingdir,Multiply(facingdir,-0.001)),Add(pointingdir,Multiply(facingdir,0.001)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    //PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Red,pointingdir,1);
+    if(slotcount<11)
+    slotcount++;
+    else
+    slotcount=1;
+    Teleport(PlayersInSlot(slotcount,Team.All),Add(Subtract(pointingdir,Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)),Multiply(facingdir,0.1)));
+    //Teleport(PlayersInSlot(slotcount,Team.All),pointingdir);
+    Wait(0.05);
+    SetFacing(PlayersInSlot(slotcount,Team.All),DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos));
+    PressButton(PlayersInSlot(slotcount,Team.All),Button.PrimaryFire);
+    hitpos = RayCastHitPosition(hitpos,Add(hitpos,Multiply(facingdir,100)));
+    // MinWait();
+    // LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsFiringPrimary()&&IsDummyBot())
+{
+    Respawn(EventPlayer());
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsDead()&&IsDummyBot())
+{
+    Respawn(EventPlayer());
+}

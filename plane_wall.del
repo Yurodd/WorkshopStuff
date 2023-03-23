@@ -1,0 +1,56 @@
+playervar define structure;
+playervar define point_left;
+playervar define point_right;
+playervar define t;
+playervar define normal;
+playervar define center;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+     point_left = point_pos + WorldVectorOf(Vector(2.5,0,0),EventPlayer());
+     point_right = point_pos + WorldVectorOf(Vector(-2.5,0,0),EventPlayer());
+     center = point_pos;
+    structure[0] = RayCastHitPosition(point_left,point_left+Vector(0,-100,0));
+    structure[1] = RayCastHitPosition(point_right,point_right+Vector(0,-100,0));
+    
+    normal = RayCastHitNormal(EyePosition(),EyePosition() + FacingDirectionOf() * 5);
+
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,structure[0],structure[0]+Vector(0.001,5,0),Color.White,EffectRev.None);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,structure[1],structure[1]+Vector(0.001,5,0),Color.White,EffectRev.None);
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Aqua,Add(structure[0],Multiply(CrossProduct(DirectionTowards(point_left,point_right),DirectionTowards(point_left,EventPlayer())),0.01)),1,EffectRev.VisibleToPositionAndRadius);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.PrimaryFire))
+{
+    
+    //define normal = CrossProduct(DirectionTowards(structure[0],structure[1]),DirectionTowards(structure[0],structure[0]+Vector(0.0010,5,0)));
+    // define demon = DotProduct(FacingDirectionOf(),normal);
+    // define difference = center - EyePosition();
+    // t = DotProduct(difference, normal) / demon;
+
+     t = DotProduct(center - EyePosition(),normal) / DotProduct(FacingDirectionOf(), normal);
+
+    if(XOf(Add(EyePosition(),Multiply(FacingDirectionOf(),t))) > XOf(structure[0])&&XOf(Add(EyePosition(),Multiply(FacingDirectionOf(),t))) < XOf(structure[1]) && YOf(Add(EyePosition(),Multiply(FacingDirectionOf(),t))) < YOf(structure[1]+Vector(0.001,5,0))&& YOf(Add(EyePosition(),Multiply(FacingDirectionOf(),t))) > YOf(structure[1]))
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,EyePosition(),EyePosition() + FacingDirectionOf() * t,Color.Aqua,EffectRev.None);
+     //t = -(DotProduct(normal,EyePosition())+DistanceBetween(point_left,EyePosition())) / DotProduct(normal,FacingDirectionOf());
+    //PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Aqua,Add(EyePosition(),Multiply(FacingDirectionOf(),t)),0.1);
+    //PlayEffect(AllPlayers(),PlayEffect.BadExplosion,Color.Aqua,Add(EyePosition(),Multiply(FacingDirectionOf(),t)),0.1);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned())
+{
+    CreateHudText(EventPlayer(),t);
+    //CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),t)),Color.Aqua,EffectRev.VisibleToPositionAndRadius);
+}
+
+
+
+define Add(define a, define b): a + b;
+define Multiply(define a, define b): a * b;
+
+define point_pos: EyePosition() + FacingDirectionOf() * 5;

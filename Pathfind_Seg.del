@@ -1,0 +1,311 @@
+define playervar g=0;
+define playervar h=0;
+define playervar f=0;
+define playervar parent=0;
+define playervar scandistance=2;
+define playervar scandistancepyth=Pythag(scandistance,scandistance);
+define playervar radius=0.2;
+define playervar current=EmptyArray();
+define playervar open=0;
+define playervar test = EmptyArray();
+define playervar closed=0;
+define playervar facingdir=0;
+define playervar startfinding=false;
+define playervar endnode = 0;
+define playervar min = -1;
+define playervar startime = 0;
+define playervar fintime = 0;
+define playervar pathstart = false;
+define playervar pathendnode = 0;
+define playervar pathendnodeparent = 0;
+define playervar pathlist = 0;
+define playervar startingnode = 0;
+define playervar reversepathfinished = false;
+define playervar reversepathlist = EmptyArray();
+define playervar dva;
+define playervar parentnode = EmptyArray();
+
+define globalvar nodes =
+  [
+ Vector(11.440, 8.040, 50.270), Vector(7.160, 6.880, 37.480), Vector(-2.890, 7,
+		54.980), Vector(-12.460, 7, 44.540), Vector(-6.320, 7.270, 38.450), Vector(-12.590, 7.030, 31.170), Vector(14.260, 7.100,
+		34.520), Vector(11.820, 6.110, 19.140), Vector(2.790, 7.170, 30.550), Vector(-4.750, 7.010, 22.890), Vector(0.860, 7.130,
+		35.440), Vector(-8.010, 7.030, 25.770), Vector(18.770, 10.420, 27.140), Vector(14.110, 11.810, 19.190), Vector(11.580,
+		11.810, 17.120), Vector(1.840, 11.630, 25.280), Vector(18.350, 12, 15.510), Vector(18.040, 9, 5.640), Vector(18.080, 9,
+		-4.370), Vector(22.880, 9, -4.970), Vector(22.520, 9, 5.220), Vector(18.010, 12, -14.950), Vector(13.600, 11.810,
+		-19.310), Vector(11.460, 11.810, -17.550), Vector(2.180, 11.630, -25.410), Vector(9.550, 12, -11.790), Vector(-5.470, 12,
+		-11.870), Vector(-5.860, 12, -4.440), Vector(-5.920, 12, -0.320), Vector(-6.010, 12, 4.030), Vector(-6.080, 12, 11.600),
+		Vector(-14.920, 12, -11.970), Vector(-15.030, 12, -9.170), Vector(-18.840, 12, -7.630), Vector(-10.710, 12, -7.480),
+		Vector(-19.460, 12, -0.080), Vector(-19.290, 12, 7.590), Vector(-10.400, 12, -3.630), Vector(-10.420, 12, -0.460), Vector(
+		-10.440, 12, 3.960), Vector(-10.550, 12, 7.700), Vector(-15.390, 12, 9.540), Vector(-30.910, 9, -0.070), Vector(-31.070, 9,
+		6.060), Vector(-30.920, 9, -6.100), Vector(-15.290, 12, 12.110), Vector(9.540, 12, 12.150), Vector(-14.880, 10, 19.440),
+		Vector(0.980, 6.650, 13.370), Vector(6.940, 6.990, 19.960), Vector(-11.560, 6.400, 16.210), Vector(-14.840, 7, 9.690),
+		Vector(-19.070, 7, 6.080), Vector(-19.350, 7, -5.910), Vector(-13.360, 7.270, -4.500), Vector(-15.030, 6.940, -10.360),
+		Vector(-12.140, 7.190, 4.160), Vector(-6.750, 6.950, -17.510), Vector(-8.350, 7.040, -25.150), Vector(-3.570, 7.240,
+		-23.880), Vector(-12.420, 7.380, -32.630), Vector(1.260, 7.110, -35.190), Vector(-7.150, 7.080, -39.720), Vector(11.130,
+		8.010, -50.620), Vector(7.730, 6.980, -39.460), Vector(14.600, 7.130, -34.780), Vector(3.250, 7.100, -30.860), Vector(
+		8.530, 7, -29.290), Vector(17.700, 9.880, -28.540), Vector(12.460, 6.200, -20.440), Vector(7.050, 6.870, -19.560), Vector(
+		17.900, 6.020, -16.070), Vector(22.860, 6.020, -16.030), Vector(1.780, 6.480, -12.810), Vector(1.780, 5.400, -7.950),
+		Vector(11.550, 4.090, -6.750), Vector(10, 4.170, 6.950), Vector(-3.890, 5.890, 6.270), Vector(-4.170, 5.960, -4.070),
+		Vector(23.200, 6.010, 16.340), Vector(17.670, 6.010, 15.890), Vector(17.850, 4, 4.110), Vector(17.880, 4, 0.280), Vector(
+		17.870, 4, -3.790), Vector(8.470, 4.800, -0.100)
+
+  ];
+
+
+  define globalvar seg =
+  [
+
+ Vector(1, 0, 0), Vector(0, 2, 0), Vector(2, 3,
+		0), Vector(3, 4, 0), Vector(4, 5, 0), Vector(6, 1, 0), Vector(7, 1, 0), Vector(1, 8, 0), Vector(8, 9, 0), Vector(10, 1,
+		0), Vector(10, 8, 0), Vector(10, 4, 0), Vector(11, 5, 0), Vector(11, 10, 0), Vector(12, 6, 0), Vector(12, 13, 0),
+		Vector(14, 13, 0), Vector(15, 14, 0), Vector(13, 16, 0), Vector(16, 17, 0), Vector(20, 17, 0), Vector(20, 18, 0), Vector(
+		20, 19, 0), Vector(17, 18, 0), Vector(17, 19, 0), Vector(18, 19, 0), Vector(21, 18, 0), Vector(22, 21, 0), Vector(23, 22,
+		0), Vector(24, 23, 0), Vector(25, 23, 0), Vector(26, 25, 0), Vector(27, 26, 0), Vector(27, 28, 0), Vector(28, 29, 0),
+		Vector(29, 30, 0), Vector(31, 26, 0), Vector(34, 32, 0), Vector(31, 32, 0), Vector(32, 33, 0), Vector(33, 35, 0), Vector(
+		35, 36, 0), Vector(34, 37, 0), Vector(37, 38, 0), Vector(38, 39, 0), Vector(39, 40, 0), Vector(40, 41, 0), Vector(41, 36,
+		0), Vector(39, 29, 0), Vector(38, 28, 0), Vector(37, 27, 0), Vector(35, 42, 0), Vector(42, 43, 0), Vector(44, 42, 0),
+		Vector(45, 41, 0), Vector(45, 30, 0), Vector(30, 46, 0), Vector(46, 14, 0), Vector(47, 45, 0), Vector(47, 11, 0), Vector(
+		9, 48, 0), Vector(48, 7, 0), Vector(49, 48, 0), Vector(49, 7, 0), Vector(50, 9, 0), Vector(50, 48, 0), Vector(51, 50,
+		0), Vector(52, 43, 0), Vector(53, 44, 0), Vector(51, 52, 0), Vector(51, 56, 0), Vector(51, 54, 0), Vector(51, 55, 0),
+		Vector(51, 53, 0), Vector(52, 56, 0), Vector(52, 54, 0), Vector(52, 55, 0), Vector(52, 53, 0), Vector(56, 54, 0), Vector(
+		56, 55, 0), Vector(56, 53, 0), Vector(54, 55, 0), Vector(54, 53, 0), Vector(55, 53, 0), Vector(55, 57, 0), Vector(58, 57,
+		0), Vector(59, 57, 0), Vector(59, 58, 0), Vector(60, 58, 0), Vector(58, 61, 0), Vector(62, 60, 0), Vector(62, 61, 0),
+		Vector(64, 63, 0), Vector(64, 61, 0), Vector(64, 62, 0), Vector(65, 64, 0), Vector(66, 61, 0), Vector(66, 64, 0), Vector(
+		66, 65, 0), Vector(67, 66, 0), Vector(67, 65, 0), Vector(67, 64, 0), Vector(67, 61, 0), Vector(65, 68, 0), Vector(68, 22,
+		0), Vector(69, 70, 0), Vector(69, 67, 0), Vector(71, 69, 0), Vector(72, 71, 0), Vector(72, 69, 0), Vector(72, 19, 0),
+		Vector(73, 70, 0), Vector(73, 69, 0), Vector(73, 57, 0), Vector(73, 58, 0), Vector(73, 74, 0), Vector(74, 75, 0), Vector(
+		76, 77, 0), Vector(77, 78, 0), Vector(78, 74, 0), Vector(78, 54, 0), Vector(77, 56, 0), Vector(74, 77, 0), Vector(74, 76,
+		0), Vector(48, 77, 0), Vector(48, 76, 0), Vector(48, 75, 0), Vector(48, 78, 0), Vector(80, 7, 0), Vector(80, 79, 0),
+		Vector(79, 20, 0), Vector(80, 81, 0), Vector(81, 83, 0), Vector(82, 83, 0), Vector(83, 71, 0), Vector(81, 76, 0), Vector(
+		83, 75, 0), Vector(76, 75, 0), Vector(76, 84, 0), Vector(84, 75, 0), Vector(82, 84, 0), Vector(83, 84, 0), Vector(84, 81,
+		0)
+
+  ];
+
+
+
+rule: "Init"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact))
+{
+DestroyAllHudText();
+Wait(0.2);
+CreateDummyBot(Hero.Dva,Team.All,-1,NearestWalkablePosition(Add(EyePosition(EventPlayer()),Multiply(FacingDirectionOf(EventPlayer()),30))),Vector(0,0,0));
+dva = LastCreatedEntity();
+Wait(1);
+endnode=FirstOf(SortedArray(nodes,DistanceBetween(PositionOf(),ArrayElement())));
+startingnode = FirstOf(SortedArray(FilteredArray(nodes, IsInLineOfSight(dva,ArrayElement())),DistanceBetween(PositionOf(dva),ArrayElement())));
+open= Append(startingnode);
+facingdir=Vector(XOf(FacingDirectionOf(EventPlayer())),0,ZOf(FacingDirectionOf(EventPlayer())));
+CreateHudText(EventPlayer(),ServerLoad());
+CreateHudText(EventPlayer(),ServerLoadPeak());
+CreateHudText(EventPlayer(),CountOf(open));
+current = FirstOf(SortedArray(nodes,DistanceBetween(PositionOf(dva),ArrayElement())));
+Wait(0.2);
+startime = TotalTimeElapsed();
+//CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, Vector(XOf(current),YOf(EyePosition(endnode)),ZOf(current)), radius, EffectRev.VisibleToPositionAndRadius);
+startfinding=true;
+
+}
+
+rule: "Start PathFinding"
+Event.OngoingPlayer
+if(startfinding)
+{
+  current=FirstOf(SortedArray(open,DistanceBetween(current,ArrayElement())+ DistanceBetween(endnode,ArrayElement())));
+
+//   if(CountOf(open) == 0)
+//   {
+//   SmallMessage(EventPlayer(),<"stop">);
+//   Abort();
+//   }
+
+//    if(CountOf(open) > 20)
+//   {
+//  open = FilteredArray(open,ArrayElement()[1] >= current[3]);
+//   }
+
+  //CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, Vector(XOf(current[0][0]),YOf(EyePosition(endnode)),ZOf(current[0][0])), radius, EffectRev.None);
+  CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, current, radius, EffectRev.None);
+  // if(IsInLineOfSight(current[0],endnode,BarrierLOS.AllBarriersBlock)&&DistanceBetween(current[0],endnode)!=0)
+  // {
+    //if(!IsInLineOfSight(current[0],EventPlayer(),BarrierLOS.AllBarriersBlock)&&DistanceBetween(current[0],EventPlayer())!=0)
+  //{
+
+     if(current == endnode || CountOf(open) ==0)
+    {
+
+    fintime = TotalTimeElapsed();
+   // DestroyAllEffects();
+    Wait(0.2);
+    CreateHudText(EventPlayer(),fintime-startime);
+   // CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, current, radius, EffectRev.None);
+    SmallMessage(EventPlayer(),<"Finished">);
+    pathendnode = parentnode;
+    //CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,current[0],Vector(XOf(current[4]),YOf(EyePosition(EventPlayer())),ZOf(current[4])),Color.Red,EffectRev.None);
+    CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,current,parentnode,Color.Red,EffectRev.None);
+    reversepathlist = Append(reversepathlist,current);
+    reversepathlist = Append(reversepathlist,parentnode);
+    pathstart = true;
+    startfinding = false;
+    
+    Abort();
+    }
+  define appendtoclosed = 0;
+  //appendtoclosed[0][0]=open[min][0];
+  //appendtoclosed[0][1]=open[min][3];
+  appendtoclosed[0][0]=current;
+  appendtoclosed[0][1]=parentnode;
+  closed = Append(closed,appendtoclosed);
+  //closed = Append(closed,open[min][4]);
+  open=RemoveFromArray(open,current);
+
+//   define successor = ArraySlice(SortedArray(nodes,DistanceBetween(current[0],ArrayElement())),0,20);
+//           successor = FilteredArray(successor, ArrayContains(closed,ArrayContains(open,ArrayElement())==false&&ArrayElement())==false&&IsInLineOfSight(Vector(XOf(current[0]),Add(YOf(current[0]),1.5),ZOf(current[0])),Vector(XOf(ArrayElement()),Add(YOf(ArrayElement()),1.5),ZOf(ArrayElement()))) && YOf(ArrayElement()) <= Add(YOf(current[0]),DistanceBetween(EyePosition(),PositionOf())));
+//           successor = ArraySlice(SortedArray(successor,DistanceBetween(current[0],ArrayElement())+DistanceBetween(endnode,ArrayElement())),0,2);
+define currentindex = IndexOfArrayValue(nodes,current);
+define nextseg = FilteredArray(seg,XOf(ArrayElement()) == currentindex);
+nextseg = FilteredArray(nextseg,!ArrayContains(open,YOf(ArrayElement()))&& !ArrayContains(closed,YOf(ArrayElement())));
+//define successor = SortedArray(successor,DistanceBetween(current[0],ArrayElement())+DistanceBetween(endnode,ArrayElement()));
+
+  foreach (define suc in nextseg)
+  {
+
+        define neighbor=0;
+
+        neighbor=ValueInArray(nodes,YOf(suc)); 
+       // neighbor[0][1]= current[1]+DistanceBetween(current[0],suc);
+       //neighbor[0][2] = DistanceBetween(endnode,suc);
+       // neighbor[0][3] = current[1]+DistanceBetween(current[0],suc) + DistanceBetween(endnode,suc);
+        //neighbor[0][3] = DistanceBetween(current[0],suc)+DistanceBetween(endnode,suc);
+        //neighbor[0][3] = DistanceBetween(endnode,suc);
+        parentnode = current;
+        open= Append(open,neighbor);
+        
+       
+    //CreateText("8==D",180,EventPlayer(),current,1,EffectRev.VisibleToPositionAndRadius,true);
+    
+  }
+
+
+ 
+ LoopIfConditionIsTrue();
+ 
+}
+
+
+rule: "Reset"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Crouch))
+{
+  DestroyAllHudText();
+  DestroyAllEffects();
+  DestroyAllDummyBots();
+  reversepathfinished = false;
+  radius=0.2;
+  current=0;
+  open=EmptyArray();
+  closed=EmptyArray();
+  facingdir=0;
+  startfinding=false;
+  pathstart = false;
+  parent = EmptyArray();
+  pathendnode=0;
+  reversepathlist = EmptyArray();
+  pathlist = EmptyArray();
+  min=-1;
+  StopThrottleInDirection(endnode);
+  //define eyepos = EyePosition(EventPlayer());
+  //CreateText("8==D",0,EventPlayer(),eyepos,1,EffectRev.VisibleToPositionAndRadius,true);
+}
+
+rule: "Retrace"
+Event.OngoingPlayer
+if(pathstart)
+{
+
+  define foundnode = FirstOf(FilteredArray(closed,ArrayElement()[0] == pathendnode));
+
+    //CreateEffect(AllPlayers(), Effect.Sphere, Color.Red, Vector(XOf(pathendnode),YOf(EyePosition(EventPlayer())),ZOf(pathendnode)), radius, EffectRev.None);
+  pathendnode = foundnode[1];
+  reversepathlist = Append(reversepathlist,pathendnode);
+  CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,Vector(XOf(foundnode[0]),Add(YOf(foundnode[0]),1),ZOf(foundnode[0])),Vector(XOf(foundnode[1]),Add(YOf(foundnode[1]),1),ZOf(foundnode[1])),Color.Red,EffectRev.None);
+  
+ if(pathendnode == startingnode )
+  {
+    reversepathfinished = true;
+    SmallMessage(EventPlayer(),<"hello">);
+    pathstart = false;
+    Abort();
+  }
+  
+  MinWait();
+  LoopIfConditionIsTrue();
+}
+
+
+rule: "Start walking"
+Event.OngoingPlayer
+if(reversepathfinished)
+{
+  StartThrottleInDirection(dva,DirectionTowards(dva,Vector(XOf(LastOf(reversepathlist)),0,ZOf(LastOf(reversepathlist)))),1);
+  // ForceThrottle(endnode,1,1,0,0,0,0);
+   StartFacing(dva,DirectionTowards(dva,LastOf(reversepathlist)),1000);
+  // ChaseVariable(chasepos,FirstOf(reversepathlist),10);
+  // Teleport(endnode,chasepos);
+
+  if(!IsInLineOfSight(PositionOf(dva)+Vector(0,1.5,0),Vector(XOf(LastOf(reversepathlist)),Add(YOf(LastOf(reversepathlist)),1.5),ZOf(LastOf(reversepathlist)))))
+  {
+    StopForcingThrottle();
+      StopFacing();
+      StopThrottleInDirection();
+     reversepathfinished = false;
+  radius=0.2;
+  current=0;
+  open=EmptyArray();
+  closed=EmptyArray();
+  facingdir=0;
+  startfinding=false;
+  pathstart = false;
+  pathendnode=0;
+  parentnode= EmptyArray();
+  reversepathlist = EmptyArray();
+  pathlist = EmptyArray();
+    startingnode = FirstOf(SortedArray(FilteredArray(nodes, IsInLineOfSight(dva,ArrayElement())),DistanceBetween(PositionOf(dva),ArrayElement())));
+    open= Append(startingnode);
+    current = FirstOf(SortedArray(nodes,DistanceBetween(PositionOf(dva),ArrayElement())));
+      reversepathfinished = false;
+      
+      startfinding = true;
+      Abort();
+     // Abort();
+  }
+
+ if(SpeedOf(dva)<3)
+ PressButton(dva,Button.Jump);
+ if(IsHeroBeingPlayed(Hero.Dva,Team.All) &&DistanceBetween(dva,RayCastHitPosition(dva,Add(dva,Multiply(Vector(0,-1,0),2)))) ==2 && !IsButtonHeld(dva,Button.Jump))
+ {
+ PressButton(dva,Button.Jump);
+ Wait(0.1);
+ PressButton(dva,Button.Ability1);
+ }
+  if(DistanceBetween(PositionOf(dva),LastOf(reversepathlist))<0.2)
+  {
+
+    reversepathlist=RemoveFromArrayAtIndex(reversepathlist,CountOf(reversepathlist)-1);
+  
+    SmallMessage(EventPlayer(),<"danger">);
+    if(CountOf(reversepathlist) == 0)
+    {
+      reversepathfinished = false;
+      StopForcingThrottle(dva);
+      StopFacing(dva);
+      StopThrottleInDirection(dva);
+      //Abort();
+    }
+  }
+  MinWait();
+LoopIfConditionIsTrue();
+ StopThrottleInDirection(dva);
+}

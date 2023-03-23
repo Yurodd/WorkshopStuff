@@ -1,0 +1,286 @@
+define playervar pointingdir; //a
+define playervar facingdir; //b
+define playervar facingdirx100; //c
+define playervar hitpos; //d
+define playervar stillaim; //e
+define playervar normal; //f
+define playervar bounces; //f
+define playervar slotcount = 0; //f
+define playervar savedchar; //f
+define playervar angle = -45; //f
+define playervar stillpos; //f
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&NumberOfPlayers()<12&&!IsDummyBot())
+{
+    Teleport(EventPlayer(),Vector(-1.284,5.349,-61.246));
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    CreateDummyBot(Hero.Zarya,Team.All,-1,EventPlayer());
+    //CreateEffect(EventPlayer(),Effect.Sphere,Color.White,pointingdir,0.1);
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&IsDummyBot())
+{
+ SetInvisible(EventPlayer(),InvisibleTo.All);
+ //SetStatus(EventPlayer(),null,Status.PhasedOut,9999);
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HeroOf(EventPlayer())!=HeroOf(PlayersInSlot(0,Team.All))&&IsDummyBot())
+{
+ ForcePlayerHero(EventPlayer(),HeroOf(PlayersInSlot(0,Team.All)));
+ Wait(0.2);
+ LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StartCamera(EventPlayer(),Add(pointingdir,Vector(0,1,0)),pointingdir);
+}
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (!IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StopCamera();
+}
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot())
+{
+    stillpos=FacingDirectionOf();
+    Wait(0.016);
+    if(IsFiringPrimary()||stillpos == FacingDirectionOf()&&!stillaim)
+    {
+    pointingdir = Add(EyePosition(),Multiply(FacingDirectionOf(),1));
+    facingdir = FacingDirectionOf();
+    facingdirx100 = Add(pointingdir,Multiply(facingdir,100));
+    define count =0;
+    hitpos[count]= RayCastHitPosition(pointingdir,facingdirx100);
+    normal = RayCastHitNormal(pointingdir,facingdirx100);
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+    // Teleport(PlayersInSlot(count,Team.All),hitpos[0]);
+    // SetFacing(PlayersInSlot(count,Team.All),DirectionTowards(EyePosition(PlayersInSlot(count,Team.All)),));
+    
+    hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+    hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+        hitpos[count]= RayCastHitPosition(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    normal = RayCastHitNormal(hitpos[count-1],Add(hitpos[count-1],Multiply(facingdir,100)));
+    facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    count++;
+
+    Teleport(PlayersInSlot(1,Team.All),Subtract(hitpos[0],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(1,Team.All),DirectionTowards(EyePosition(PlayersInSlot(1,Team.All)),hitpos[1]));
+    
+        Teleport(PlayersInSlot(2,Team.All),Subtract(hitpos[1],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(2,Team.All),DirectionTowards(EyePosition(PlayersInSlot(2,Team.All)),hitpos[2]));
+
+        Teleport(PlayersInSlot(3,Team.All),Subtract(hitpos[2],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(3,Team.All),DirectionTowards(EyePosition(PlayersInSlot(3,Team.All)),hitpos[3]));
+
+        Teleport(PlayersInSlot(4,Team.All),Subtract(hitpos[3],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(4,Team.All),DirectionTowards(EyePosition(PlayersInSlot(4,Team.All)),hitpos[4]));
+
+        Teleport(PlayersInSlot(5,Team.All),Subtract(hitpos[4],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(5,Team.All),DirectionTowards(EyePosition(PlayersInSlot(5,Team.All)),hitpos[5]));
+
+        Teleport(PlayersInSlot(6,Team.All),Subtract(hitpos[5],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(6,Team.All),DirectionTowards(EyePosition(PlayersInSlot(6,Team.All)),hitpos[6]));
+
+        Teleport(PlayersInSlot(7,Team.All),Subtract(hitpos[6],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(7,Team.All),DirectionTowards(EyePosition(PlayersInSlot(7,Team.All)),hitpos[7]));
+
+        Teleport(PlayersInSlot(8,Team.All),Subtract(hitpos[7],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(8,Team.All),DirectionTowards(EyePosition(PlayersInSlot(8,Team.All)),hitpos[8]));
+
+        Teleport(PlayersInSlot(9,Team.All),Subtract(hitpos[8],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(9,Team.All),DirectionTowards(EyePosition(PlayersInSlot(9,Team.All)),hitpos[9]));
+
+        Teleport(PlayersInSlot(10,Team.All),Subtract(hitpos[9],Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)));
+    SetFacing(PlayersInSlot(10,Team.All),DirectionTowards(EyePosition(PlayersInSlot(10,Team.All)),hitpos[10]));
+
+    
+    // foreach(define dir in FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())))
+    // {
+    // count ++;
+    // hitpos[count]= RayCastHitPosition(hitpos[count-1],facingdirx100);
+    // normal = RayCastHitPosition(pointingdir,facingdirx100);
+    // facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+    // }
+    
+    stillaim = true;
+    }
+    else
+    {
+    stillaim = false;
+    }
+
+
+
+    Loop();
+    // StopChasingPlayerVariable(EventPlayer(),pointingdir);
+    // bounces =0;
+    // angle = -45;
+    // slotcount =0;
+    // pointingdir = Add(EyePosition(),Multiply(FacingDirectionOf(),3));
+    // facingdir = FacingDirectionOf();
+    // facingdirx100 = Add(pointingdir,Multiply(facingdir,100));
+    // hitpos = RayCastHitPosition(pointingdir,facingdirx100);
+    // ChasePlayerVariableAtRate(EventPlayer(),pointingdir,hitpos,35);
+    //stillaim = true;
+    
+}
+
+// rule: "Pathfind to cursor." //Release Bow
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(),Button.PrimaryFire)&&!IsDummyBot())
+// {
+// StartHoldingButton(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Button.PrimaryFire);
+// MinWait();
+// LoopIfConditionIsTrue();
+// StopHoldingButton(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Button.PrimaryFire);
+// }
+
+// rule: "Pathfind to cursor." //Release Bow
+// Event.OngoingPlayer
+// if (IsUsingAbility2()&&!IsDummyBot())
+// {
+// PressButton(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Button.Ability2);
+// }
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OnDamageTaken
+{
+    PressButton(EventPlayer(),Button.Ability1);
+    Heal(EventPlayer(),null,999);
+}
+
+
+
+
+
+// rule: "Pathfind to cursor." //Release Bow
+// Event.OngoingPlayer
+// if (!IsDummyBot()&&stillaim)
+// {
+//     // bounces++;
+//     // normal = RayCastHitNormal(Add(pointingdir,Multiply(facingdir,-0.001)),Add(pointingdir,Multiply(facingdir,0.001)));
+//     // facingdir = Subtract(facingdir,Multiply(Multiply(2,DotProduct(facingdir,normal)),normal));
+//     // //PlayEffect(AllPlayers(),PlayEffect.GoodExplosion,Color.Red,pointingdir,1);
+//     // Teleport(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Add(Subtract(pointingdir,Vector(0,DistanceBetween(EyePosition(),PositionOf()),0)),Multiply(facingdir,0.1)));
+//     // //Teleport(PlayersInSlot(slotcount,Team.All),pointingdir);
+//     // //Wait(0.05);
+//     // hitpos = RayCastHitPosition(hitpos,Add(hitpos,Multiply(facingdir,100)));
+//     // StopChasingPlayerVariable(EventPlayer(),pointingdir);
+//     // foreach(define dir in FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())))
+//     // {
+        
+//     //  SetFacing(dir,DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(dir),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(dir),hitpos))));
+//     //  angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     //  PressButton(dir,Button.PrimaryFire);
+//     // }
+//     // Teleport(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),ObjectivePosition());
+//     // angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+//     //     angle = angle + (90/CountOf(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement()))));
+//     // slotcount++;
+//     // SetFacing(PlayersInSlot(slotcount,Team.All),DirectionFromAngles(Add(HorizontalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos)),angle),VerticalAngleFromDirection(DirectionTowards(EyePosition(PlayersInSlot(slotcount,Team.All)),hitpos))));
+    
+//     //PressButton(FilteredArray(AllPlayers(),IsDummyBot(ArrayElement())),Button.PrimaryFire);
+//     // MinWait();
+//     // LoopIfConditionIsTrue();
+// }
+
+// rule: "Pathfind to cursor." //Release Bow
+// Event.OngoingPlayer
+// if (IsFiringPrimary()&&IsDummyBot())
+// {
+//     Respawn(EventPlayer());
+// }
+
+rule: "Pathfind to cursor." //Release Bow
+Event.OngoingPlayer
+if (IsDead()&&IsDummyBot())
+{
+    Respawn(EventPlayer());
+}

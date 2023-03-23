@@ -1,0 +1,129 @@
+playervar define dummy;
+
+
+// rule: "Pathfind to cursor." //Range board points
+// Event.OngoingPlayer
+// if (HasSpawned())
+// {
+//     CreateHudText(EventPlayer(),PositionOf());
+// }
+playervar define eyepos;
+playervar define cursor;
+playervar define facingdir;
+playervar define prev_dir;
+playervar define samedir = true;
+playervar define delta_dir;
+playervar define startturning = false;
+playervar define multiplier = 80;
+rule: "Pathfind to cursor." //Range board points
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    CreateHudText(EventPlayer(),prev_dir);
+    CreateHudText(EventPlayer(),FacingDirectionOf());
+    CreateHudText(EventPlayer(),eyepos);
+    CreateHudText(EventPlayer(),XOf(delta_dir));
+    define height = Vector(0,10,0);
+    eyepos = EyePosition();
+    //cursor = EyePosition();
+    //ChasePlayerVariableAtRate(EventPlayer(),cursor,eyepos,100,RateChaseReevaluation.DestinationAndRate);
+    StartCamera(EventPlayer(),eyepos+Vector(0,10,0), eyepos,100);
+    prev_dir = FacingDirectionOf();
+    SetAimSpeed(EventPlayer(),0.01);
+    //SetFacing(EventPlayer(),DirectionTowards(EyePosition(),eyepos));
+    //StartFacing(EventPlayer(),DirectionTowards(EyePosition(),eyepos),10);
+    
+}
+
+rule: "Pathfind to cursor." //Range board points
+Event.OngoingPlayer
+if (prev_dir!=FacingDirectionOf() && eyepos != 0 )
+{
+    //samedir = false;
+    //Wait(0.1);
+    //Wait(0.016);
+    //Wait(0.016);
+    //facingdir = FacingDirectionOf();
+    delta_dir = FacingDirectionOf() - prev_dir;
+    //Wait(0.016);
+    if(XOf(delta_dir)<0)
+    eyepos = eyepos + Vector(-0.5,0,0);
+    if(XOf(delta_dir)>0)
+    eyepos = eyepos + Vector(0.5,0,0);
+    if(YOf(delta_dir)<0)
+    eyepos = eyepos + Vector(0,0,-0.5);
+    if(YOf(delta_dir)>0)
+    eyepos = eyepos + Vector(0,0,0.5);
+    
+    //eyepos = eyepos + Vector(XOf(delta_dir)*multiplier,0,YOf(delta_dir)*multiplier);
+    //SetFacing(EventPlayer(),prev_dir);
+    SetFacing(EventPlayer(),DirectionTowards(EyePosition(),eyepos));
+    //LoopIfConditionIsTrue();
+    //SetFacing(EventPlayer(),DirectionTowards(EyePosition(),eyepos));
+    Wait(0.016);
+    //Wait(0.1);
+    //samedir = true;
+}
+
+
+rule: "Pathfind to cursor." //Range board points
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    //SetFacing(EventPlayer(),DirectionTowards(EyePosition(),eyepos));
+    eyepos = EyePosition();
+}
+
+
+// rule: "Pathfind to cursor." //Range board points
+// Event.OngoingPlayer
+// if (XOf(FacingDirectionOf()) <= XOf(prev_dir)-0.01 && eyepos != 0)
+// {
+//     eyepos = eyepos + Vector(-0.5,0,0);
+//     prev_dir = FacingDirectionOf();
+//     //SetFacing(EventPlayer(),Vector(XOf(prev_dir)+0.01,YOf(prev_dir),ZOf(prev_dir)));
+    
+//     // MinWait();
+//     // LoopIfConditionIsTrue();
+    
+// }
+
+// rule: "Pathfind to cursor." //Range board points
+// Event.OngoingPlayer
+// if (XOf(FacingDirectionOf()) >= XOf(prev_dir)+0.01 && eyepos != 0)
+// {
+//     eyepos = eyepos + Vector(0.5,0,0);
+//     prev_dir = FacingDirectionOf();
+//     //SetFacing(EventPlayer(),Vector(XOf(prev_dir)-0.01,YOf(prev_dir),ZOf(prev_dir)));
+//     //SetFacing(EventPlayer(),prev_dir);
+//     // MinWait();
+//     // LoopIfConditionIsTrue();
+    
+// }
+
+
+// rule: "Pathfind to cursor." //Range board points
+// Event.OngoingPlayer
+// if (YOf(FacingDirectionOf()) <= YOf(prev_dir)-0.01 && eyepos != 0)
+// {
+//     eyepos = eyepos + Vector(0,0,-0.5);
+//     prev_dir = FacingDirectionOf();
+//     //SetFacing(EventPlayer(),Vector(XOf(prev_dir)+0.01,YOf(prev_dir),ZOf(prev_dir)));
+    
+//     // MinWait();
+//     // LoopIfConditionIsTrue();
+    
+// }
+
+/* rule: "Pathfind to cursor." //Range board points
+Event.OngoingPlayer
+if (YOf(FacingDirectionOf()) >= YOf(prev_dir)+0.01 && eyepos != 0)
+{
+    eyepos = eyepos + Vector(0,0,0.5);
+    prev_dir = FacingDirectionOf();
+    //SetFacing(EventPlayer(),Vector(XOf(prev_dir)-0.01,YOf(prev_dir),ZOf(prev_dir)));
+    //SetFacing(EventPlayer(),prev_dir);
+    // MinWait();
+    // LoopIfConditionIsTrue();
+    
+} */

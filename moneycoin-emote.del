@@ -1,0 +1,278 @@
+define playervar g=0;
+define playervar h=0;
+define playervar f=0;
+define playervar parent=0;
+define playervar scandistance=3;
+define playervar scandistancepyth=Pythag(scandistance,scandistance);
+define playervar radius=0.2;
+define playervar current=EmptyArray();
+define playervar open=0;
+define playervar test = EmptyArray();
+define playervar closed=0;
+define playervar facingdir=0;
+define playervar startfinding=false;
+define playervar endnode = 0;
+define playervar min = -1;
+define playervar startime = 0;
+define playervar fintime = 0;
+define playervar pathstart = false;
+define playervar pathendnode = 0;
+define playervar pathendnodeparent = 0;
+define playervar pathlist = 0;
+define playervar startingnode = 0;
+define playervar reversepathfinished = false;
+define playervar reversepathlist = EmptyArray();
+define playervar chasepos = 0;
+define playervar straightpath = false;
+define playervar straightnode = false;
+rule: "Init"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact))
+{
+DestroyAllHudText();
+Wait(0.2);
+CreateDummyBot(Hero.Dva,Team.Team2,-1,NearestWalkablePosition(Add(EyePosition(EventPlayer()),Multiply(FacingDirectionOf(EventPlayer()),30))),Vector(0,0,0));
+endnode=PlayersInSlot(0,Team.Team2);
+startingnode = Vector(XOf(EyePosition(EventPlayer())),YOf(EyePosition()),ZOf(EyePosition(EventPlayer())));
+open= Append(startingnode);
+facingdir=Vector(XOf(DirectionTowards(EventPlayer(),endnode)),0,ZOf(DirectionTowards(EventPlayer(),endnode)));
+
+CreateHudText(EventPlayer(),ServerLoad());
+CreateHudText(EventPlayer(),ServerLoadPeak());
+CreateHudText(EventPlayer(),CountOf(open));
+  
+current = EyePosition(EventPlayer());
+Wait(0.2);
+startime = TotalTimeElapsed();
+//CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, Vector(XOf(current),YOf(EyePosition(endnode)),ZOf(current)), radius, EffectRev.VisibleToPositionAndRadius);
+startfinding=true;
+
+}
+
+rule: "Start PathFinding"
+Event.OngoingPlayer
+if(startfinding)
+{
+  if(straightpath == false)
+  {
+    if(straightnode == false)
+    {
+    Wait(0.2);
+    open = EmptyArray();
+    closed = EmptyArray();
+    StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),endnode),1);
+    
+    straightpath = true;
+    straightnode = true;
+    }
+
+  }
+ 
+MinWait();
+ LoopIfConditionIsTrue();
+}
+
+rule: "Start PathFinding"
+Event.OngoingPlayer
+if(startfinding==true&straightpath== true)
+{
+
+    if(IsInLineOfSight(EventPlayer(),Add(EyePosition(),Multiply(DirectionTowards(EventPlayer(),endnode),10))) == false)
+    {
+      //StopThrottleInDirection();
+      if(CountOf(open) == 0)
+      {
+        Wait(0.2);
+        startingnode = Add(Add(EyePosition(),Multiply(DirectionTowards(EventPlayer(),endnode),10)),Multiply(DirectionTowards(endnode,EventPlayer()),2));
+        facingdir = Vector(XOf(DirectionTowards(EventPlayer(),endnode)),0,ZOf(DirectionTowards(EventPlayer(),endnode)));
+        //startingnode = EyePosition();
+         open = Append(startingnode);
+         SmallMessage(EventPlayer(),CountOf(open));
+      
+      }
+      current=FirstOf(SortedArray(open,ArrayElement()[3]));
+
+      CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, Vector(XOf(current[0][0]),YOf(EyePosition(endnode)),ZOf(current[0][0])), radius, EffectRev.None);
+      if(!IsInLineOfSight(current[0],EventPlayer(),BarrierLOS.AllBarriersBlock)&DistanceBetween(current[0],endnode)!=0)
+      {
+        
+        fintime = TotalTimeElapsed();
+        DestroyAllEffects();
+        Wait(0.2);
+        //CreateHudText(EventPlayer(),fintime-startime);
+        CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, current, radius, EffectRev.None);
+        SmallMessage(EventPlayer(),<"Finished">);
+        pathendnode = current[4];
+        CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,current[0],Vector(XOf(current[4]),YOf(EyePosition(EventPlayer())),ZOf(current[4])),Color.Red,EffectRev.None);
+        reversepathlist = Append(reversepathlist,current[0]);
+        pathstart = true;
+        chasepos = PositionOf(endnode);
+        Abort();
+        
+      }
+      define appendtoclosed = 0;
+      //appendtoclosed[0][0]=open[min][0];
+      //appendtoclosed[0][1]=open[min][3];
+      appendtoclosed[0][0]=current[0];
+      appendtoclosed[0][1]=current[4];
+      closed = Append(closed,appendtoclosed);
+      //closed = Append(closed,open[min][4]);
+      open=RemoveFromArray(open,current);
+    // open=RemoveFromArray(open,open[min][1]);
+    // open=RemoveFromArray(open,open[min][2]);
+    // open=RemoveFromArray(open,open[min][3]);
+
+
+    
+      define successor =
+      [
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),0),VerticalAngleFromDirection(facingdir)),scandistance)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),45),VerticalAngleFromDirection(facingdir)),scandistancepyth)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),-45),VerticalAngleFromDirection(facingdir)),scandistancepyth)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),90),VerticalAngleFromDirection(facingdir)),scandistance)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),-90),VerticalAngleFromDirection(facingdir)),scandistance)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),135),VerticalAngleFromDirection(facingdir)),scandistancepyth)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),-135),VerticalAngleFromDirection(facingdir)),scandistancepyth)),
+        Add(current[0],Multiply(DirectionFromAngles(Add(HorizontalAngleFromDirection(facingdir),180),VerticalAngleFromDirection(facingdir)),scandistance))
+      ];
+      
+
+      foreach 5 (define suc in successor)
+      {
+
+        if(ArrayContains(closed,suc)==false&IsInLineOfSight(current[0],suc)==true&DistanceBetween(RayCastHitPosition(suc,Add(suc,Multiply(Vector(0,-1,0),10))),suc)!=10)
+        {
+            define neighbor=0;
+            define newMovementCostToNeighbor = current[1] +DistanceBetween(current[0],suc);
+            if(ArrayContains(open,suc)==false)
+            {
+            neighbor[0][0]=suc; 
+            neighbor[0][1]= current[1]+DistanceBetween(current[0],suc);
+          //neighbor[0][2] = DistanceBetween(endnode,suc);
+           // neighbor[0][3] = current[1]+DistanceBetween(current[0],suc) + DistanceBetween(endnode,suc);
+            neighbor[0][3] = DistanceBetween(current[0],suc)+DistanceBetween(endnode,suc);
+            neighbor[0][4] = current[0];
+            }
+            else if(newMovementCostToNeighbor < FirstOf(FilteredArray(open,ArrayElement()[0]==suc))[1])
+            {
+                open[IndexOfArrayValue(open,FirstOf(FilteredArray(open,ArrayElement()[0]==suc))[0])][1]=newMovementCostToNeighbor;
+                
+                open[IndexOfArrayValue(open,FirstOf(FilteredArray(open,ArrayElement()[0]==suc))[0])][4]=current[0];
+
+            }
+
+
+            //test = neighbor;
+            if(ArrayContains(open,suc)==false)
+            {
+            open= Append(open,neighbor);
+            }
+            
+          // open = InsertValueInArray(open,CountOf(open),neighbor);
+            //CreateHudText(EventPlayer(),open[min][3]);
+          //open = InsertValueInArray(open,IndexOfArrayValue(suc),);
+          //CreateEffect(AllPlayers(), Effect.Sphere, Color.Red, suc, radius, EffectRev.None);
+          //CreateEffect(AllPlayers(), Effect.Sphere, Color.Red, suc, radius, EffectRev.VisibleTo);
+          //CreateInWorldText(EventPlayer(),open[5],current,1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString);
+          
+        }
+        
+        //CreateText("8==D",180,EventPlayer(),current,1,EffectRev.VisibleToPositionAndRadius,true);
+        
+      }
+
+    }
+  
+
+ 
+ LoopIfConditionIsTrue();
+ 
+}
+
+
+rule: "Reset"
+Event.OngoingPlayer
+if(startfinding)
+if (IsButtonHeld(EventPlayer(), Button.Crouch))
+{
+   reversepathfinished = false;
+  radius=0.2;
+  current=0;
+  open=EmptyArray();
+  closed=EmptyArray();
+  facingdir=0;
+  startfinding=false;
+  pathstart = false;
+  pathendnode=EmptyArray();
+  reversepathlist = EmptyArray();
+  pathlist = EmptyArray();
+  min=-1;
+  straightnode = false;
+  straightpath = false;
+  current=EmptyArray();
+  StopThrottleInDirection();
+  DestroyAllHudText();
+DestroyAllEffects();
+DestroyAllDummyBots();
+Wait(0.2);
+   
+  //define eyepos = EyePosition(EventPlayer());
+  //CreateText("8==D",0,EventPlayer(),eyepos,1,EffectRev.VisibleToPositionAndRadius,true);
+  LoopIfConditionIsTrue();
+}
+
+rule: "Retrace"
+Event.OngoingPlayer
+if(pathstart)
+{
+
+    define foundnode = FirstOf(FilteredArray(closed,ArrayElement()[0] == pathendnode));
+
+    //CreateEffect(AllPlayers(), Effect.Sphere, Color.Red, Vector(XOf(pathendnode),YOf(EyePosition(EventPlayer())),ZOf(pathendnode)), radius, EffectRev.None);
+  pathendnode = foundnode[1];
+  reversepathlist = Append(reversepathlist,pathendnode);
+  CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,Vector(XOf(foundnode[0]),YOf(EyePosition(EventPlayer())),ZOf(foundnode[0])),Vector(XOf(foundnode[1]),YOf(EyePosition(EventPlayer())),ZOf(foundnode[1])),Color.Red,EffectRev.None);
+  if(pathendnode == startingnode)
+  {
+   reversepathfinished = true;
+   SmallMessage(EventPlayer(),<"hello">);
+   pathstart = false;
+   Abort();
+  }
+  
+  MinWait();
+  LoopIfConditionIsTrue();
+}
+
+
+
+
+rule: "Start walking"
+Event.OngoingPlayer
+if(reversepathfinished)
+{
+  StartThrottleInDirection(EventPlayer(),DirectionTowards(EventPlayer(),Vector(XOf(LastOf(reversepathlist)),0,ZOf(LastOf(reversepathlist)))),1);
+  if(SpeedOf(EventPlayer())<2)
+  PressButton(EventPlayer(),Button.Jump);
+    if(DistanceBetween(EventPlayer(),Vector(XOf(LastOf(reversepathlist)),YOf(PositionOf(EventPlayer())),ZOf(LastOf(reversepathlist))))<0.7)
+    {
+      reversepathlist=RemoveFromArrayAtIndex(reversepathlist,CountOf(reversepathlist)-1);
+    
+    
+      if(CountOf(reversepathlist) == 0)
+      {
+        SmallMessage(EventPlayer(),<"danger">);
+        straightpath = false;
+        straightnode = false;
+        reversepathlist = EmptyArray();
+        reversepathfinished = false;
+        StopFacing(endnode);
+        StopThrottleInDirection(EventPlayer());
+        Abort();
+      }
+    }
+  MinWait();
+LoopIfConditionIsTrue();
+}
+
+

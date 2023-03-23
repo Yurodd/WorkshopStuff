@@ -1,0 +1,2023 @@
+globalvar define _arrayBuilder;
+globalvar define AllPos;
+globalvar define AllDir;
+globalvar define firstpos;
+globalvar define secondpos;
+globalvar define firstpoint2;
+globalvar define secondpoint2;
+globalvar define second;
+globalvar define z;
+globalvar define Wall_ID;
+globalvar define showwalls;
+globalvar define beam_ID;
+globalvar define g_beamType;
+globalvar define initialized;
+globalvar define x;
+playervar define filterpos;
+playervar define lastsavedpos;
+playervar define closestbodypos;
+playervar define fullbodypos;
+playervar define prevpos_intersection;
+playervar define active_wall;
+playervar define closestwall;
+playervar define addspeed;
+playervar define currentspeed;
+playervar define is_Grounded;
+playervar define prev_throttledir;
+playervar define prev_facingdir;
+playervar define accel_speed;
+playervar define decel_speed;
+playervar define p_x;
+playervar define intersection_length;
+playervar define thickness;
+playervar define intersection_length_0;
+playervar define intersection_length_1;
+playervar define thickness_0;
+playervar define horizontal_intersection;
+playervar define intersection_length_2;
+playervar define velocitySlope;
+// playervar define downwardslope;
+// playervar define velocitySlope_0;
+// playervar define side_velocitySlope;
+// playervar define aim_velocitySlope;
+// playervar define velo;
+playervar define netspeed;
+playervar define velo_0;
+playervar define current_Slope_Dir;
+playervar define messages_sent;
+playervar define hide_messages_sent;
+playervar define sec;
+playervar define minute;
+playervar define rampspeed;
+playervar define teleporting;
+playervar define startend_platform;
+playervar define max_horizontal_speed;
+globalvar define platform;
+globalvar define start_platform;
+globalvar define last_platform;
+globalvar define sphereRadius;
+playervar define platformCounter;
+playervar define finished;
+playervar define Current_Wall_ID;
+playervar define Current_Wall_Pos;
+globalvar define best_time;
+globalvar define best_timePlayer;
+playervar define  personal_bestTime;
+
+globalvar define best_time_Ramp;
+globalvar define best_timePlayer_Ramp;
+playervar define  personal_bestTime_Ramp;
+playervar define startcam;
+globalvar define camPoints;
+globalvar define currentPoint;
+globalvar define cameraSpeed;
+playervar define startlogging;
+playervar define ghostPos;
+playervar define Best_ghostPos;
+playervar define ghostDummy;
+playervar define timeStep;
+playervar define startGhostPos;
+playervar define ghostDisplay;
+playervar define inEraser;
+playervar define hitRamp;
+playervar define prev_SlopedRamp;
+playervar define myBoss;
+globalvar define goal;
+globalvar define timeLimit;
+globalvar define version = 1.69;
+globalvar define teleportPos;
+globalvar define teleportDirection;
+globalvar define teleport_effect_ID;
+
+
+disabled rule: ".................................................................ow_Surf & Map Editor made by Yurodd of Grandeur Hammers"
+{
+}
+
+disabled rule: ".................................................................Visit GrandeurHammers.com/Discord to join the ow_Surf community"
+{
+}
+
+disabled rule: "..................................................................ow_Surf_Lighthouse map by @andygmb1"
+{
+}
+
+disabled rule: ".................................................................Please don't remove credit comments!"
+{
+}
+
+rule: "Initial Global Variables"
+{
+    AllPos = [];
+    AllDir = [];
+    firstpos = [];
+    secondpos = [];
+    firstpoint2 = [];
+    secondpoint2 = [];
+    second = [];
+    z = [];
+    Wall_ID = [];
+    beam_ID = [];
+    g_beamType = [];
+    initialized = false;
+    CreateInWorldText(AllPlayers(Team.All), "ow_Surf made by Yurodd", Vector(287.736, 10, -171.284), 3, Clipping.ClipAgainstSurfaces, InworldTextRev.VisibleToPositionAndString, Color.Red, Spectators.DefaultVisibility);
+}
+
+rule: "Initial Player Variables"
+Event.OngoingPlayer
+{
+    filterpos = 0;
+    lastsavedpos = 0;
+    closestbodypos = 0;
+    fullbodypos = PositionOf(EventPlayer());
+    prevpos_intersection = PositionOf(EventPlayer());
+    active_wall = [];
+    is_Grounded = false;
+    accel_speed = 1;
+    decel_speed = 2;
+    rampspeed = 0.1;
+     //cameraSpeed = WorkshopSettingReal("Camera", "Camera Track Speed", 20, 20, 10000,0);
+    messages_sent = false;
+    teleporting = false;
+    DisableGameModeHud(EventPlayer());
+    DisableHeroHud(EventPlayer());
+}
+
+rule:"Movement"
+Event.OngoingPlayer
+if(!IsDummyBot())
+{
+     prev_throttledir = Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation));
+     prev_facingdir = FacingDirectionOf();
+     Wait(0.016);
+     if(IsTrueForAll(is_Grounded,ArrayElement() == false) && IsOnGround() == false && teleporting == false)
+    {
+        if(SpeedOfInDirection(eventPlayer,Normalize(WorldVectorOf(Vector(0,0,1),eventPlayer))) > 1)
+        {
+
+        if (ZOf(ThrottleOf(EventPlayer())) <= 0.5 && XOf(ThrottleOf(EventPlayer())) != 0 && DotProduct(prev_throttledir * Vector(1,0,1), FacingDirectionOf() * Vector(1, 0, 1)) > 0)
+        {
+             netspeed = SpeedOf(EventPlayer()) - HorizontalSpeedOf(EventPlayer());
+            // currentspeed = DotProduct(VelocityOf(EventPlayer()), Normalize(Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation)) + FacingDirectionOf(EventPlayer()) * Vector(1, [], 1)));
+             currentspeed = DotProduct(VelocityOf(EventPlayer())* Vector(1,0,1), prev_throttledir * Vector(1,0,1));
+            addspeed = accel_speed - currentspeed;
+            addspeed = Max(Min(addspeed, accel_speed* 0.016), 0);
+            max_horizontal_speed = max_horizontal_speed + addspeed ;
+            ApplyImpulse(EventPlayer(), FacingDirectionOf() * Vector(1,0,1), max_horizontal_speed, Relative.ToWorld, ContraryMotion.Cancel);
+            ApplyImpulse(EventPlayer(), CrossProduct(Vector(0,XOf(ThrottleOf()),0), FacingDirectionOf() * Vector(1,0,1)), 0.001, Relative.ToWorld, ContraryMotion.Cancel);
+        }
+        else if((ThrottleOf(EventPlayer()) == Vector(0, 0, 0) || ZOf(ThrottleOf(EventPlayer())) > 0.5) )
+        {
+            currentspeed = DotProduct(VelocityOf(EventPlayer())* Vector(1,0,1), prev_throttledir * Vector(1,0,1));
+            addspeed = accel_speed - currentspeed;
+            addspeed = Max(Min(addspeed, accel_speed* 0.016), 0);
+            max_horizontal_speed = Max(max_horizontal_speed - accel_speed* 0.016,5.5);
+            ApplyImpulse(EventPlayer(),Normalize(VelocityOf()) * Vector(1,0,1),max_horizontal_speed);
+        }
+        else if(XOf(ThrottleOf(EventPlayer())) != 0 && DotProduct(prev_throttledir * Vector(1,0,1), FacingDirectionOf() * Vector(1, 0, 1)) < 0 )
+        {
+            currentspeed = DotProduct(VelocityOf(EventPlayer())* Vector(1,0,1), prev_throttledir * Vector(1,0,1));
+            addspeed = accel_speed - currentspeed;
+            addspeed = Max(Min(addspeed, accel_speed* 0.016), 0);
+            max_horizontal_speed = Max(max_horizontal_speed - accel_speed* 0.016,5.5);
+            ApplyImpulse(EventPlayer(),(VelocityOf() + (Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer())) + FacingDirectionOf())) * Vector(1,0,1) ,max_horizontal_speed);
+        }
+        else if(XOf(ThrottleOf(EventPlayer())) != 0 && DotProduct(prev_throttledir * Vector(1,0,1), FacingDirectionOf() * Vector(1, 0, 1)) == 0 &&
+                DotProduct(current_Slope_Dir * Vector(1,0,1),Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer()))* Vector(1,0,1)) < 0)
+        {
+             ApplyImpulse(EventPlayer(),FacingDirectionOf() * Vector(1,0,1) ,max_horizontal_speed);
+            ApplyImpulse(EventPlayer(), CrossProduct(Vector(0,XOf(ThrottleOf()),0), FacingDirectionOf() * Vector(1,0,1)), 0.001, Relative.ToWorld, ContraryMotion.Cancel);
+            
+        }
+
+        // else if(ThrottleOf(EventPlayer()) == Vector(0, 0, 0))
+        // {
+        //      ApplyImpulse(EventPlayer(), Normalize(VelocityOf()) * Vector(1,0,1), max_horizontal_speed, Relative.ToWorld, ContraryMotion.Cancel);
+            
+        // }
+        
+
+            if(DistanceBetween(RayCastHitPosition(EyePosition(),EyePosition() + Down() * 100),PositionOf()) < 0.3 && IsButtonHeld(eventPlayer,Button.Jump)
+            && IsTrueForAll(inEraser,ArrayElement() == false))
+            {
+                //ApplyImpulse(eventPlayer, Up(), 17.5 * 0.016  ,Relative.ToWorld,ContraryMotion.Incorporate)
+                ApplyImpulse(eventPlayer,Up(),5);
+                // if(HorizontalSpeedOf()>0)
+                // {
+                // ApplyImpulse(eventPlayer,FacingDirectionOf() * Vector(1,0,1),HorizontalSpeedOf());
+                // //SmallMessage(eventPlayer,"hoppiny");
+                // }
+            }
+
+            if(DistanceBetween(RayCastHitPosition(EyePosition(),EyePosition() + (VelocityOf() * 0.016) ), EyePosition()) < (SpeedOf() * 0.016) &&
+            IsTrueForAll(inEraser,ArrayElement() == false) && !IsInLineOfSight(EyePosition(),EyePosition() + (VelocityOf() * 0.016)))
+            {
+                ApplyImpulse(eventPlayer,RayCastHitNormal(EyePosition(),EyePosition() + (VelocityOf() * 0.016)),2);
+                max_horizontal_speed = 5.5;
+                //SmallMessage(eventPlayer,"Collision with environment detected");
+            }
+        }
+    }
+    else
+    {
+    max_horizontal_speed = SpeedOf();
+    StopAccelerating(EventPlayer());
+    }
+ Loop();
+}
+
+rule: "On Death"
+Event.OnDeath
+{
+    teleporting = true;
+}
+rule: "Respawn"
+Event.OngoingPlayer
+if(IsAlive())
+{
+    teleporting = false;
+}
+
+rule: "Collision Logic"
+Event.OngoingPlayer
+if (initialized && IsDummyBot() == false && teleporting == false && IsAlive())
+{
+        lastsavedpos = Midpoint(EyePosition(),PositionOf());
+        // prev_throttledir = Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation));
+        // prev_facingdir = FacingDirectionOf();
+
+    MinWait();   
+        //closestwall = AllPos;
+        /* closestwall = FilteredArray(AllPos,
+            (walldot1 >= 0 && walldot2 >= 0 && walldot3 >= 0 && walldot4 >= 0 && DistanceBetween(eventPlayer + AllDir[CurrentArrayIndex()] * DotProduct(ArrayElement() - eventPlayer,AllDir[CurrentArrayIndex()]) / DotProduct(AllDir[CurrentArrayIndex()], AllDir[CurrentArrayIndex()]),eventPlayer) < 1.5) 
+             || active_wall[CurrentArrayIndex()] == 1
+             ); */
+              closestwall = FilteredArray(AllPos,
+             DistanceBetween(AllPos[CurrentArrayIndex()],eventPlayer) <= DistanceBetween(AllPos[CurrentArrayIndex()],firstpos[CurrentArrayIndex()])
+             || active_wall[CurrentArrayIndex()] == 1
+             ); 
+
+             /* closestwall = FilteredArray(AllPos,
+             DistanceBetween(eventPlayer + AllDir[CurrentArrayIndex()] * DotProduct(ArrayElement() - eventPlayer,AllDir[CurrentArrayIndex()]) / DotProduct(AllDir[CurrentArrayIndex()], AllDir[CurrentArrayIndex()]),eventPlayer) < 1.5
+             || active_wall[CurrentArrayIndex()] == 1
+             || Wall_ID[CurrentArrayIndex()] == 6 || Wall_ID[CurrentArrayIndex()] == 5); */
+
+            for(  x =0; CountOf(closestwall);1)
+            {
+                z = IndexOfArrayValue(AllPos,closestwall[x]);
+                if(Wall_ID[z] == 1 || Wall_ID[z] == 3|| Wall_ID[z] == 5) //all vertical walls. 1 vertical, 3 bouncy, 5 vertical eraser
+                {
+                if(YOf(firstpos[z]) >= YOf(PositionOf()) && YOf(firstpos[z]) <= YOf(EyePosition()+Vector(0,0.2,0)))
+                {
+                    closestbodypos = firstpos[z];
+                }
+                else if(YOf(secondpos[z]) >= YOf(PositionOf()) && YOf(secondpos[z]) <= YOf(EyePosition()+Vector(0,0.2,0)))
+                {
+                    closestbodypos = secondpos[z];
+                }
+                else
+                {
+                    closestbodypos = PositionOf();
+                }
+
+                //closestbodypos = FirstOf(SortedArray(allbodypos,DistanceBetween(ArrayElement(),AllPos[z])));
+                fullbodypos = Vector(XOf(EyePosition()),YOf(closestbodypos),ZOf(EyePosition()));
+                filterpos = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+                
+                if(Wall_ID[z] != 5)
+                    {
+                        if((DotProduct(DirectionTowards(AllPos[z],lastsavedpos),AllDir[z]) > 0) != (DotProduct(DirectionTowards(AllPos[z],fullbodypos),AllDir[z]) > 0))
+                        {
+                            intersection_length = DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(DirectionTowards(lastsavedpos,fullbodypos) , AllDir[z]);
+                            prevpos_intersection = fullbodypos + (DirectionTowards(lastsavedpos,fullbodypos)* Vector(1,0,1)) * intersection_length;
+                            if(fttr_prev_pos >= 0 && ftbl_prev_pos >= 0 && sttr_prev_pos >= 0 && stbl_prev_pos >= 0)
+                            {
+                            //Teleport(eventPlayer, lastsavedpos + DirectionTowards(fullbodypos,lastsavedpos)*Vector(1,0,1) * (DistanceBetween(lastsavedpos,prevpos_intersection) - 2));
+                            CancelPrimaryAction();
+                            ApplyImpulse(eventPlayer, DirectionTowards(prevpos_intersection,lastsavedpos)* Vector(1,0,1) , 0.001);
+                            Teleport(eventPlayer,prevpos_intersection + DirectionTowards(prevpos_intersection,lastsavedpos) * 1.001);
+                            max_horizontal_speed = 5.5;
+                            }
+                        }  
+                    }
+
+                        
+                    if(Wall_ID[z] ==5)
+                    thickness = 6;
+                    else
+                    thickness = 1;
+                    if(DistanceBetween(fullbodypos,filterpos)<=thickness&&fttr >= 0 && ftbl >= 0 && sttr >= 0 && stbl >= 0)
+                    {
+                        Current_Wall_ID = Wall_ID[z];
+                        Current_Wall_Pos = AllPos[z];
+                            if(active_wall[z] == false)
+                            {
+                                active_wall[z] = 1;
+                                if(Wall_ID[z] == 5)
+                                DisableMovementCollisionWithEnvironment();
+                            }
+                            if(IsTrueForAny(is_Grounded,ArrayElement() == true))
+                            SetGravity(eventPlayer,100);
+                            
+                            if(Wall_ID[z] == 1)
+                            {
+                                
+                                if(DistanceBetween(fullbodypos,filterpos)<=0.8)
+                                {
+                                //Teleport(eventPlayer,PositionOf() + DirectionTowards(Vector(XOf(filterpos),YOf(PositionOf()),ZOf(filterpos)),PositionOf()) * (1.00000001-DistanceBetween(PositionOf(),Vector(XOf(filterpos),YOf(PositionOf()),ZOf(filterpos)))));
+                                //ApplyImpulse(eventPlayer, DirectionTowards(filterpos,fullbodypos + Normalize(WorldVectorOf(-ThrottleOf(),eventPlayer)) * 5) * Vector(1,0,1), 0.001);
+                                 intersection_length = DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) , AllDir[z]);
+                                prevpos_intersection = fullbodypos + (Normalize(WorldVectorOf(ThrottleOf(),eventPlayer))* Vector(1,0,1)) * intersection_length;
+                                ApplyImpulse(eventPlayer, DirectionTowards(prevpos_intersection,lastsavedpos)* Vector(1,0,1) , 0.001);
+                                }
+                                //StartThrottleInDirection(eventPlayer,null,false,Relative.ToWorld,ThrottleBehavior.AddToExistingThrottle,ThrottleRev.None);
+                                ApplyImpulse(eventPlayer, DirectionTowards(filterpos,fullbodypos) * Vector(1,0,1), 0.001);
+                                max_horizontal_speed = 5.5;
+                                //StartThrottleInDirection(eventPlayer,null,false,Relative.ToWorld,ThrottleBehavior.AddToExistingThrottle,ThrottleRev.None);
+                                
+                            }
+                            else if(Wall_ID[z] == 3)
+                            {
+                            ApplyImpulse(eventPlayer, DirectionTowards(filterpos,fullbodypos), max_horizontal_speed/2);
+                            max_horizontal_speed = Max(max_horizontal_speed - (HorizontalSpeedOf() * 0.1),5.5);
+                            }
+                            else if(Wall_ID[z] == 5)
+                            {
+                                inEraser[z] = true;
+                            }
+                        
+                        //ApplyImpulse(eventPlayer, DirectionTowards(filterpos,EyePosition()) * Vector(1,0,1),SpeedOf() * 0.001);
+                    }
+                    else
+                    {
+                        active_wall[z] = 0;
+                        inEraser[z] = false;
+                        //lastsavedpos = PositionOf();   
+                    }
+                
+                }
+                else if(Wall_ID[z] == 2 || Wall_ID[z] == 6 || Wall_ID[z] == 7) // 2 = horizontal, 6 = horizontal erasor 7 = slidey horizontal
+                {
+                    
+                    if(YOf(firstpos[z]) >= YOf(PositionOf()) && YOf(firstpos[z]) <= YOf(EyePosition()+Vector(0,0.2,0)))
+                    {
+                        closestbodypos = firstpos[z];
+                    }
+                    else if(YOf(firstpos[z]) <= YOf(PositionOf()))
+                    {
+                        closestbodypos = PositionOf();
+                    }
+                    else if(YOf(firstpos[z]) >= YOf(EyePosition()))
+                    {
+                        closestbodypos = EyePosition();
+                    }
+                     
+                    fullbodypos = Vector(XOf(EyePosition()),YOf(closestbodypos),ZOf(EyePosition()));
+                    filterpos = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+
+                    if(Wall_ID[z] == 2 || Wall_ID[z] == 7)
+                    {
+
+                        if((DotProduct(DirectionTowards(AllPos[z],lastsavedpos),AllDir[z]) > 0) != (DotProduct(DirectionTowards(AllPos[z],fullbodypos),AllDir[z]) > 0))
+                        {
+                            intersection_length = DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(DirectionTowards(lastsavedpos,fullbodypos) , AllDir[z]);
+                                prevpos_intersection = fullbodypos + (DirectionTowards(lastsavedpos,fullbodypos)* Vector(0,1,0)) * intersection_length;
+                            if(DotProduct(Down(),DirectionTowards(lastsavedpos,prevpos_intersection))>0)
+                            {
+                                if(fttr2_prev_pos >= 0 && ftbl2_prev_pos >= 0 && sttr2_prev_pos >= 0 && stbl2_prev_pos >= 0)
+                                {
+                                CancelPrimaryAction();
+                                //Teleport(eventPlayer,prevpos_intersection + DirectionTowards(prevpos_intersection,lastsavedpos) * Vector(0,1,0) * 1);
+
+
+                                        if(HeroOf(eventPlayer) == Hero.WreckingBall)
+                                        {
+                                        Teleport(eventPlayer, NearestWalkablePosition(prevpos_intersection));
+                                        Wait(0.016);
+                                        Teleport(eventPlayer, prevpos_intersection + Up() * 1);
+                                        }
+                                        else
+                                        Teleport(eventPlayer,prevpos_intersection + Up() * 1);
+                                        SmallMessage(eventPlayer,"horizontal");
+                                
+                                }
+                            }
+                        
+                        }            
+                        
+                    }
+
+                        if(Wall_ID[z] ==6)
+                        thickness = 6;
+                        else
+                        thickness = 0.5;
+                        
+                    if(DistanceBetween(filterpos,fullbodypos)<=thickness && fttr2 >= 0 && ftbl2 >= 0 && sttr2 >= 0 && stbl2 >= 0)
+                    {
+                             Current_Wall_ID = Wall_ID[z];
+                             Current_Wall_Pos = AllPos[z];
+                            if(Wall_ID[z] == 2)
+                            {
+                                if(DotProduct(Down(),DirectionTowards(fullbodypos,filterpos))>0)
+                                {
+                                    if(Wall_ID[z] == 2)
+                                    is_Grounded[z] = true;
+                                    if(active_wall[z] == false)
+                                    {
+                                       startend_platform = z;
+                                       platformCounter[z] = true;
+                                       max_horizontal_speed = 5.5;
+                                        SetGravity(eventPlayer,0);
+                                        active_wall[z] = 1;
+                                        ApplyImpulse(eventPlayer, Up(), 0.001);
+                                        ApplyImpulse(eventPlayer, Down(), 0.001);
+                                        if(HorizontalSpeedOf()>0.01)
+                                        {
+                                            ApplyImpulse(eventPlayer, Left(), 0.001);
+                                            ApplyImpulse(eventPlayer, Right(), 0.001);
+                                            ApplyImpulse(eventPlayer, Forward(), 0.001);
+                                            ApplyImpulse(eventPlayer, Backward(), 0.001); 
+                                        }
+                                    }
+
+                                        // if(!IsUsingAbility1()||!IsUsingAbility2()||!IsFiringSecondary()&&SpeedOf()<0.01)
+                                        // SetMoveSpeed(eventPlayer,1000);
+                                        // else
+                                        // SetMoveSpeed(eventPlayer,100);
+
+                                    // if(closestbodypos == firstpos[z])
+                                    // {
+                                    //  horizontal_intersection = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+                                    // ApplyImpulse(eventPlayer, DirectionTowards(horizontal_intersection,fullbodypos) * Vector(1,0,1), 0.001);
+                                    // }
+ 
+
+                                     if(IsButtonHeld(eventPlayer,Button.Jump))
+                                     ApplyImpulse(eventPlayer, Up(), 5.5);
+
+                                    if(ThrottleOf() != Vector(0,0,0))
+                                    {
+                                    ApplyImpulse(eventPlayer, CrossProduct(Up(),Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)))  , 0.001);
+                                    ApplyImpulse(eventPlayer, CrossProduct(Down(),Normalize(WorldVectorOf(ThrottleOf(),eventPlayer))) , 0.001);
+                                    ApplyImpulse(eventPlayer, DirectionTowards(EyePosition(),EyePosition() + Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) * 1)  , 3);
+                                    }
+
+                                    if(ThrottleOf() == Vector(0,0,0) && HorizontalSpeedOf()>0.01)
+                                        {
+                                            ApplyImpulse(eventPlayer, Left(), 0.001);
+                                            ApplyImpulse(eventPlayer, Right(), 0.001);
+                                            ApplyImpulse(eventPlayer, Forward(), 0.001);
+                                            ApplyImpulse(eventPlayer, Backward(), 0.001); 
+                                        }
+
+                                }
+                                else 
+                                {
+                                    ApplyImpulse(eventPlayer, Down(), 0.001);
+                                }
+
+                                //StartThrottleInDirection(eventPlayer,null,false,Relative.ToWorld,ThrottleBehavior.AddToExistingThrottle,ThrottleRev.None);
+                            }
+                            else if(Wall_ID[z] == 6)
+                            {
+                                 if(active_wall[z] == false)
+                                    {
+                                        active_wall[z] = 1;
+                                        DisableMovementCollisionWithEnvironment(eventPlayer,true);
+                                    }
+                                inEraser[z] = true;
+                            }
+                            else if(Wall_ID[z] == 7)
+                            {
+                                if(DotProduct(Down(),DirectionTowards(fullbodypos,filterpos))>=0)
+                                {
+                                    //  if(IsButtonHeld(eventPlayer,Button.Jump))
+                                    //  ApplyImpulse(eventPlayer, Up(), 5.5);
+                                    if(active_wall[z] == false)
+                                    {
+                                        active_wall[z] = 1;
+                                        SetGravity(eventPlayer,0);
+                                    }
+                                      ApplyImpulse(eventPlayer, Up(), 0.001);
+                                }
+                                else
+                                {
+                                    ApplyImpulse(eventPlayer, Down(), 0.001);
+                                }
+                            }
+                        
+                    }
+                    else
+                    {
+                        active_wall[z] = 0;
+                        if(Wall_ID[z] == 2)
+                        is_Grounded[z] = false;
+                        if(Wall_ID[z] == 6)
+                        {
+                        EnableMovementCollisionWithEnvironment();
+                        DisableMovementCollisionWithEnvironment(eventPlayer,false);
+                        }
+
+                        inEraser[z] = false;
+                    }
+                }
+                else if(Wall_ID[z] == 4 || Wall_ID[z] == 8) //sloped wall
+                {
+                    
+                     closestbodypos = PositionOf()+Vector(0,0.5,0);
+                    fullbodypos = Vector(XOf(EyePosition()),YOf(closestbodypos),ZOf(EyePosition()));
+                    filterpos = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+
+
+                        if((DotProduct(DirectionTowards(AllPos[z],lastsavedpos),AllDir[z]) > 0) != (DotProduct(DirectionTowards(AllPos[z],fullbodypos),AllDir[z]) > 0))
+                        {
+
+                             intersection_length = DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(DirectionTowards(lastsavedpos,fullbodypos) , AllDir[z]);
+                               prevpos_intersection = RayCastHitPosition(fullbodypos,fullbodypos + (DirectionTowards(lastsavedpos,fullbodypos)) * intersection_length);
+                                    if(fttr2_prev_pos >= 0 && ftbl2_prev_pos >= 0 && sttr2_prev_pos >= 0 && stbl2_prev_pos >= 0)
+                                    {
+                                    velocitySlope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                                    Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + DirectionTowards(prevpos_intersection,lastsavedpos) * Vector(1,0,1) * 1));
+                                    ApplyImpulse(eventPlayer,AllDir[z],0.001,Relative.ToWorld,ContraryMotion.CancelXYZ);
+                                    if(HeroOf(eventPlayer) == Hero.Doomfist && IsUsingAbility2())
+                                    {
+                                        Teleport(eventPlayer, NearestWalkablePosition(prevpos_intersection));
+                                        Wait(0.016);
+                                        Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + Up() * 1));
+                                        CancelPrimaryAction();
+                                    }
+                                    else if(HeroOf(eventPlayer) == Hero.WreckingBall)
+                                    {
+                                        CancelPrimaryAction();
+                                        Teleport(eventPlayer, NearestWalkablePosition(prevpos_intersection));
+                                        Wait(0.016);
+                                        Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + Up() * 1));
+                                    }
+                                    //SetFacing(eventPlayer,prev_facingdir);
+                                    //SetStatus(eventPlayer,null,Status.Stunned,0.001);
+                                    // define downwardslope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(Down(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                                    //define velocitySlope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                                    //ApplyImpulse(eventPlayer,AllDir[z],0.001);
+                                    //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                                    //SmallMessage(eventPlayer,"gravity");
+
+                                    }
+                            
+                        }
+
+
+
+
+
+
+
+                    if(DistanceBetween(filterpos,fullbodypos)<=1 &&fttr2 >= 0 && ftbl2 >= 0 && sttr2 >= 0 && stbl2 >= 0)
+                    {
+ 
+                             
+                                //ApplyImpulse(eventPlayer, Left(), 0.001);
+                               //ApplyImpulse(eventPlayer, Right(), 0.001);
+                              //ApplyImpulse(eventPlayer, Forward(), 0.001);
+                             //ApplyImpulse(eventPlayer, Backward(), 0.001);d
+                            //ApplyImpulse(eventPlayer, Up(), 0.001);
+                           // ApplyImpulse(eventPlayer, DirectionTowards(firstpos[z],secondpoint2[z]), 1);
+                           //ApplyImpulse(eventPlayer, Up(), 0.001);
+
+                            Current_Wall_ID = Wall_ID[z];
+                            Current_Wall_Pos = AllPos[z];
+
+                            if(DotProduct(Up(),DirectionTowards(filterpos,closestbodypos))>0)
+                               {
+                                
+                                if(active_wall[z] == false)
+                                    {
+                                        if(prev_SlopedRamp != AllPos[z])
+                                        {
+                                        hitRamp += 1;
+                                        prev_SlopedRamp = AllPos[z];
+                                        }
+                                        active_wall[z] = true;
+                                    }
+ 
+                                // downwardslope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(Down(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                                //  velocitySlope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                               // side_velocitySlope = DirectionTowards(firstpos[z],firstpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],firstpoint2[z]));
+                                //  //aim_velocitySlope =  DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(FacingDirectionOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+
+                                //                 //ForceThrottle(eventPlayer,0,0,0,0,0,0);
+                                //                 SetGravity(eventPlayer,0);
+                                               
+                                //                // ApplyImpulse(eventPlayer,-VelocityOf(),0.001);
+                                //                 active_wall[z] = 1;
+                                //     }
+                            
+
+                                //ApplyImpulse(eventPlayer,Up(),0.001);
+                                ApplyImpulse(eventPlayer,AllDir[z],0.001,Relative.ToWorld,ContraryMotion.CancelXYZ);
+                                 //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                                if(Wall_ID[z] == 4)
+                                max_horizontal_speed = max_horizontal_speed + rampspeed * 0.016;
+                                else
+                                max_horizontal_speed = max_horizontal_speed + SpeedOfInDirection(eventPlayer,Down()) * 0.016;
+
+                               current_Slope_Dir = AllDir[z];
+                               
+                                //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),max_horizontal_speed);
+
+                               // if(DotProduct(AllDir[z] * Vector(1,0,1),Normalize(WorldVectorOf(ThrottleOf(),eventPlayer))) < 0 )
+                               // {
+                                    
+                                //ApplyImpulse(eventPlayer,side_velocitySlope,SpeedOf());
+                                //ApplyImpulse(eventPlayer,aim_velocitySlope,SpeedOf() / 5);
+                                //StartAccelerating(eventPlayer,aim_velocitySlope,100,1000,Relative.ToWorld,AccelerateRev.None)
+                                //max_horizontal_speed = max_horizontal_speed - (decel_speed * 0.016);
+                                //ApplyImpulse(eventPlayer,Vector(XOf(side_velocitySlope),YOf(velocitySlope),ZOf(side_velocitySlope)),SpeedOf());
+                               // }
+
+
+                            
+                                // else
+                                // {
+                                // ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),HorizontalSpeedOf());
+                                // //StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[z])),1000,Relative.ToWorld,AccelerateRev.None)
+                                // }
+                                // // else if(DotProduct(AllDir[z] * Vector(1,0,1),Normalize(WorldVectorOf(ThrottleOf(),eventPlayer))) > 0 )
+                                // // {
+                                // // ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(downwardslope),ZOf(VelocityOf())),HorizontalSpeedOf());
+                                // // StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[z])),1000,Relative.ToWorld,AccelerateRev.None)
+                                // // }
+                                // else
+                                // {
+                                //     if(DotProduct(VelocityOf(),downwardslope)>=0) //going down
+                                //     {
+                                //     //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                                //     ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                                //     StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[z])),1000,Relative.ToWorld,AccelerateRev.None)
+                                //     }
+                                //     if(DotProduct(VelocityOf(),downwardslope)<0) //going up
+                                //     {
+                                //     ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),0,ZOf(VelocityOf())) ,SpeedOf());
+                                //     //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),HorizontalSpeedOf());
+                                //     //ApplyImpulse(eventPlayer, downwardslope,(SpeedOf()+(70*SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[0]))))*0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                                //     StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[z])),1000,Relative.ToWorld,AccelerateRev.None)
+                                //     }
+                                // }
+                                // if(ThrottleOf() != Vector(0,0,0))
+                                // {
+                                // if(SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[z])) > 10)
+                                //  ApplyImpulse(eventPlayer, downwardslope,(SpeedOf() * SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[z])))*0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                                //  else
+                                //  ApplyImpulse(eventPlayer, downwardslope,SpeedOf() * 0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                                // }
+
+                              }
+                              else
+                              {
+                                     ApplyImpulse(eventPlayer,DirectionTowards(filterpos,fullbodypos),0.001);
+                              }
+
+                    }
+                    else
+                    {
+                    active_wall[z] = 0;
+                    }
+                }
+
+                                else if(Wall_ID[z] == 9) //Sphere
+                {
+                     define dir = DirectionTowards(AllPos[z] + DirectionTowards(AllPos[z],eventPlayer) * sphereRadius[z],eventPlayer) ;
+                     if((DotProduct(DirectionTowards(AllPos[z],lastsavedpos),dir) > 0) != (DotProduct(DirectionTowards(AllPos[z],eventPlayer),dir) > 0))
+                        {
+                             intersection_length = DotProduct(AllPos[z] - eventPlayer,dir) / DotProduct(DirectionTowards(lastsavedpos,eventPlayer) , dir);
+                               prevpos_intersection = RayCastHitPosition(eventPlayer,eventPlayer + (DirectionTowards(lastsavedpos,eventPlayer)) * intersection_length);
+ 
+                                    Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + DirectionTowards(prevpos_intersection,lastsavedpos) * 1));
+                                   
+                                    ApplyImpulse(eventPlayer,dir,0.001,Relative.ToWorld,ContraryMotion.CancelXYZ);
+
+                                    
+                            
+                        }
+
+                    if(DistanceBetween(eventPlayer,AllPos[z] + DirectionTowards(AllPos[z],eventPlayer) * sphereRadius[z])<1)
+                    {
+                         
+                         
+                        // define downwardslope = CrossProduct(CrossProduct(Up(),dir),dir) * DotProduct(Down(),CrossProduct(CrossProduct(Up(),dir),dir));
+                        // define velocitySlope = CrossProduct(CrossProduct(Up(),dir),dir) * DotProduct(VelocityOf(),CrossProduct(CrossProduct(Up(),dir),dir));
+
+                                    // if(CountOf(FilteredArray(active_wall,ArrayElement() == 1)) == 0)
+                                    // {
+                                    //             //ForceThrottle(eventPlayer,0,0,0,0,0,0);
+                                    //             SetGravity(eventPlayer,0);
+                                    //             //ApplyImpulse(eventPlayer,dir,0.001);
+                                    //            // ApplyImpulse(eventPlayer,-VelocityOf(),0.001);
+                                    //             active_wall[z] = 1;
+                                    // }
+                               ApplyImpulse(eventPlayer,dir,1,Relative.ToWorld,ContraryMotion.CancelXYZ);
+                               //ApplyImpulse(eventPlayer,Up(),0.001);
+                            //    ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                            //     StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-1  * Dir)),1000,Relative.ToWorld,AccelerateRev.None)
+                            //     ApplyImpulse(eventPlayer, downwardslope,(SpeedOf() * SineFromDegrees(AngleBetweenVectors(Down(),-1  * Dir)))*0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                                //ApplyImpulse(eventPlayer,Up(),0.001);
+                                 //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                               
+                                // if(DotProduct(VelocityOf(),downwardslope)>=0)
+                                // {
+                                // //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                                // ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),SpeedOf());
+                                // StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-1  * Dir)),1000,Relative.ToWorld,AccelerateRev.None)
+                                // }
+                                // else if(DotProduct(VelocityOf(),downwardslope)<0 && ThrottleOf()!=Vector())
+                                // {
+                                // ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())) ,SpeedOf());
+                                // //ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),HorizontalSpeedOf());
+                                // //ApplyImpulse(eventPlayer, downwardslope,(SpeedOf()+(70*SineFromDegrees(AngleBetweenVectors(Down(),-AllDir[0]))))*0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                                // StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-1  * Dir)),1000,Relative.ToWorld,AccelerateRev.None)
+                                // }
+                                // else if(DotProduct(VelocityOf(),downwardslope)<0 && ThrottleOf()==Vector())
+                                // {
+                                // ApplyImpulse(eventPlayer,Vector(XOf(VelocityOf()),YOf(velocitySlope),ZOf(VelocityOf())),HorizontalSpeedOf());
+                                // StartAccelerating(eventPlayer,downwardslope,17.5*SineFromDegrees(AngleBetweenVectors(Down(),-1  * Dir)),1000,Relative.ToWorld,AccelerateRev.None)
+                                // }
+                                //  ApplyImpulse(eventPlayer, downwardslope,(SpeedOf() * SineFromDegrees(AngleBetweenVectors(Down(),-1  * Dir)))*0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                    }
+                    else
+                    {
+                    active_wall[z] = 0;
+                    }
+                }
+
+
+                // else if(Wall_ID[z] == 8) //sloped wall
+                // {
+                    
+                //      closestbodypos = PositionOf()+Vector(0,0.5,0);
+                //     fullbodypos = Vector(XOf(EyePosition()),YOf(closestbodypos),ZOf(EyePosition()));
+                //     filterpos = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+
+
+                //         if((DotProduct(DirectionTowards(AllPos[z],lastsavedpos),AllDir[z]) > 0) != (DotProduct(DirectionTowards(AllPos[z],fullbodypos),AllDir[z]) > 0))
+                //         {
+
+                //              intersection_length = DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(DirectionTowards(lastsavedpos,fullbodypos) , AllDir[z]);
+                //                prevpos_intersection = RayCastHitPosition(fullbodypos,fullbodypos + (DirectionTowards(lastsavedpos,fullbodypos)) * intersection_length);
+                //                     if(fttr2_prev_pos >= 0 && ftbl2_prev_pos >= 0 && sttr2_prev_pos >= 0 && stbl2_prev_pos >= 0)
+                //                     {
+
+                //                     Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + DirectionTowards(prevpos_intersection,lastsavedpos) * Vector(1,0,1) * 1));
+                //                     if(HeroOf(eventPlayer) == Hero.Doomfist && IsUsingAbility2())
+                //                     {
+                //                         Teleport(eventPlayer, NearestWalkablePosition(prevpos_intersection));
+                //                         Wait(0.016);
+                //                         Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + Up() * 1));
+                //                         CancelPrimaryAction();
+                //                     }
+                //                     else if(HeroOf(eventPlayer) == Hero.WreckingBall)
+                //                     {
+                //                         CancelPrimaryAction();
+                //                         Teleport(eventPlayer, NearestWalkablePosition(prevpos_intersection));
+                //                         Wait(0.016);
+                //                         Teleport(eventPlayer, RayCastHitPosition(prevpos_intersection,prevpos_intersection + Up() * 1));
+                //                     }
+                //                     ApplyImpulse(eventPlayer,AllDir[z],0.001);
+
+                //                     }
+                            
+                //         }
+
+                //     if(DistanceBetween(filterpos,fullbodypos)<=1 &&fttr2 >= 0 && ftbl2 >= 0 && sttr2 >= 0 && stbl2 >= 0)
+                //     {
+ 
+                //             if(DotProduct(Up(),DirectionTowards(filterpos,closestbodypos))>0)
+                //                {
+                                
+ 
+                //                 downwardslope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(Down(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                //                  velocitySlope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                                 
+                //                 if(DistanceBetween(firstpos[z],firstpoint2[z]) > DistanceBetween(firstpos[z],secondpoint2[z]))
+                //                   side_velocitySlope = DirectionTowards(firstpos[z],firstpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],firstpoint2[z]));
+                //                  else
+                //                   side_velocitySlope = DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(VelocityOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                //                  //aim_velocitySlope =  DirectionTowards(firstpos[z],secondpoint2[z]) * DotProduct(FacingDirectionOf(),DirectionTowards(firstpos[z],secondpoint2[z]));
+                //                     if(active_wall[z] == false)
+                //                     {
+                //                                 //ForceThrottle(eventPlayer,0,0,0,0,0,0);
+                //                         SetGravity(eventPlayer,0);
+                //                         active_wall[z] = 1;
+                //                     }
+                //                     max_horizontal_speed = SpeedOf();
+                //                     if(DotProduct(VelocityOf() * Vector(1,0,1),AllDir[z])<0)
+                //                      {
+                //                     ApplyImpulse(eventPlayer,Up(),0.001);
+                //                     ApplyImpulse(eventPlayer,side_velocitySlope,max_horizontal_speed);
+                //                      }
+                //                      else if(DotProduct(VelocityOf() * Vector(1,0,1),AllDir[z])>0)
+                //                      {
+                //                          //max_horizontal_speed += 2
+                //                     ApplyImpulse(eventPlayer,AllDir[z],0.001);
+                //                     ApplyImpulse(eventPlayer,side_velocitySlope,max_horizontal_speed);
+                //                      ApplyImpulse(eventPlayer, side_velocitySlope,max_horizontal_speed * 0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                //                      }
+
+
+                //               }
+                //               else
+                //               {
+                //                      ApplyImpulse(eventPlayer,DirectionTowards(filterpos,fullbodypos),0.001);
+                //               }
+
+                //     }
+                //     else
+                //     {
+                //     active_wall[z] = 0;
+                //     }
+
+                // }
+
+
+                //   projectile_intersection =  EyePosition() + FacingDirectionOf() * DotProduct(AllPos[z] - EyePosition(),AllDir[z]) / DotProduct(FacingDirectionOf() , AllDir[z]);
+                // if(HeroOf() == Hero.Pharah && IsFiringPrimary())
+                // {
+                // //     projectile_intersection =  EyePosition() + FacingDirectionOf() * DotProduct(AllPos[z] - EyePosition(),AllDir[z]) / DotProduct(FacingDirectionOf() , AllDir[z]);
+                //  if(ftbl2_projectile >= -0.1 && fttr2_projectile >= -0.1 && stbl2_projectile >= -0.1 && sttr2_projectile >= -0.1 && DistanceBetween(projectile_intersection,EyePosition())< 100)
+                //      {
+                //           projectile_intersection2 =  projectile_intersection  + Vector(0,-3,0) + FacingDirectionOf() * 3;
+                //          if(Wall_ID[z] == 2 || Wall_ID[z] == 7)
+                //         projectile_intersection2 =  projectile_intersection + Vector(0,-3,0) + FacingDirectionOf() * 2;
+                //         StartForcingPlayerPosition(my_Bot,projectile_intersection2);
+                //      }
+    
+                //  }
+
+            } 
+
+                // if(is_Grounded == false && IsOnGround() == false && teleporting == false)
+                // {
+                //     // if(ThrottleOf() == Vector(1,0,0)|| ThrottleOf() == Vector(-1,0,0))
+                //     //     {
+                //         // currentspeed = DotProduct(VelocityOf(),Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)));
+                //         // addspeed = 30  - currentspeed;
+                //         // addspeed = Max(Min(addspeed,30),0);
+                //         //ApplyImpulse(eventPlayer,Down(),17.5 * 0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                //         //ApplyImpulse(eventPlayer,Normalize(VelocityOf() * Vector(1,0,1)) + Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)) ,SpeedOf() );
+                //         //ApplyImpulse(eventPlayer, FacingDirectionOf() * Vector(1,0,1),(SpeedOf() + addspeed) * 0.016  ,Relative.ToWorld,ContraryMotion.Incorporate);
+                //         //ApplyImpulse(eventPlayer, VelocityOf() * Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)) * addspeed,(SpeedOf() + addspeed) * 0.016  ,Relative.ToWorld,ContraryMotion.Incorporate);
+                //         //StartAccelerating(eventPlayer,VelocityOf() + Vector(0,-17.5 * 0.016,0) + Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + (FacingDirectionOf() * Vector(1,0,1)),currentspeed,1000)
+                //         //  define velo = VelocityOf();
+                //         //  define netspeed = SpeedOf() - HorizontalSpeedOf();
+                //         //  define wishdir = Normalize(Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)) + FacingDirectionOf()*Vector(1,0,1))
+                //         //   currentspeed = DotProduct(VelocityOf(),wishdir);
+                //         //  addspeed = accel_speed - currentspeed;
+                //         //  addspeed = Max(Min(addspeed,accel_speed * 0.016),0);
+                //         //  speed += addspeed;
+                //         //Accelerate();
+                //          //ApplyImpulse(eventPlayer,CrossProduct(Down(),FacingDirectionOf() * Vector(1,0,1)),0.001);
+                //          //ApplyImpulse(eventPlayer,CrossProduct(Up(),FacingDirectionOf() * Vector(1,0,1)),0.001);
+                         
+                //         // ApplyImpulse(eventPlayer,FacingDirectionOf() * Vector(1,0,1),SpeedOf() + addspeed * 0.016,Relative.ToWorld,ContraryMotion.Incorporate);
+                //          //AirMove();
+                //         // }
+                //         // else
+                //         // {
+                //         //     max_horizontal_speed = HorizontalSpeedOf();
+                //         //     speed = 5.5;
+                //         // }
+                //         // if(ThrottleOf() == Vector(0,0,0) || ThrottleOf() == Vector(0,0,1)|| ThrottleOf() == Vector(0,0,-1) || DotProduct(Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)),prev_throttledir * Vector(1,0,1)) >= 0)
+                //         // {
+                //         //  ApplyImpulse(eventPlayer,CrossProduct(Down(),Normalize(VelocityOf()) * Vector(1,0,1)),0.001);
+                //         //  ApplyImpulse(eventPlayer,CrossProduct(Up(),Normalize(VelocityOf()) * Vector(1,0,1)),0.001);
+                //         //  ApplyImpulse(eventPlayer,Normalize(VelocityOf() * Vector(1,0,1)),max_horizontal_speed);
+                //         // }
+
+                //      if (XOf(ThrottleOf(EventPlayer())) != 0 && DotProduct(prev_throttledir, FacingDirectionOf() * Vector(1, [], 1)) > 0 && SpeedOfInDirection(eventPlayer,Normalize(WorldVectorOf(Vector(0,0,1),eventPlayer))) > 1)
+                //     {
+                //         netspeed = SpeedOf(EventPlayer()) - HorizontalSpeedOf(EventPlayer());
+                //         currentspeed = DotProduct(VelocityOf(EventPlayer()), Normalize(Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation)) + FacingDirectionOf(EventPlayer()) * Vector(1, [], 1)));
+                //         addspeed = accel_speed - currentspeed;
+                //         addspeed = Max(Min(addspeed, accel_speed* 0.016), 0);
+                //         max_horizontal_speed = max_horizontal_speed + addspeed + netspeed / 100;
+                //         //StartAccelerating(eventPlayer,FacingDirectionOf() * Vector(1, [], 1),(HorizontalSpeedOf() + addspeed + netspeed / 100)* 62.5,10000)
+                //         ApplyImpulse(EventPlayer(), CrossProduct(Down(), FacingDirectionOf() * Vector(1,0,1)), 0.001, Relative.ToWorld, ContraryMotion.Cancel);
+                //         ApplyImpulse(EventPlayer(), CrossProduct(Up(), FacingDirectionOf() * Vector(1,0,1)), 0.001, Relative.ToWorld, ContraryMotion.Cancel);
+                //         ApplyImpulse(EventPlayer(), FacingDirectionOf() * Vector(1,0,1), max_horizontal_speed, Relative.ToWorld, ContraryMotion.Cancel);
+                //         //SmallMessage(eventPlayer,"Samedir");
+                //         //SmallMessage(eventPlayer,"1");                    
+                //     }
+                //         // else
+                //         // {
+                //         //     max_horizontal_speed = HorizontalSpeedOf();
+                //         //     //speed = 5.5;
+                //         // }
+                //         // if(ThrottleOf() == Vector(0,0,0) || ThrottleOf() == Vector(0,0,1)|| ThrottleOf() == Vector(0,0,-1) || DotProduct(Normalize(WorldVectorOf(ThrottleOf(),eventPlayer)),prev_throttledir * Vector(1,0,1)) >= 0 && SpeedOfInDirection(eventPlayer,Normalize(WorldVectorOf(Vector(0,0,1),eventPlayer))) > 0)
+                //         // {
+                //         //  ApplyImpulse(eventPlayer,CrossProduct(Down(),Normalize(VelocityOf()) * Vector(1,0,1)),0.001);
+                //         //  ApplyImpulse(eventPlayer,CrossProduct(Up(),Normalize(VelocityOf()) * Vector(1,0,1)),0.001);
+                //         //  ApplyImpulse(eventPlayer,Normalize(VelocityOf() * Vector(1,0,1)),max_horizontal_speed);
+                //         // }
+
+                //     else if (ThrottleOf(EventPlayer()) == Vector([], [], []) || ZOf(ThrottleOf(EventPlayer())) != 0 || DotProduct(prev_throttledir, FacingDirectionOf() * Vector(1, [], 1)) < 0 && SpeedOfInDirection(eventPlayer,Normalize(WorldVectorOf(Vector(0,0,1),eventPlayer))) > 1)
+                //     {
+                //         netspeed = SpeedOf(EventPlayer()) - HorizontalSpeedOf(EventPlayer());
+                //         currentspeed = DotProduct(VelocityOf(EventPlayer()), Normalize(Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation)) + FacingDirectionOf(EventPlayer()) * Vector(1, [], 1)));
+                //         addspeed = decel_speed - currentspeed;
+                //         addspeed = Max(Min(addspeed, decel_speed * 0.016), 0);
+                //         max_horizontal_speed = max_horizontal_speed - addspeed - netspeed / 100;
+                //         ApplyImpulse(EventPlayer(), (Normalize(VelocityOf()) + Normalize(Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation)) + FacingDirectionOf(EventPlayer()) * accel_speed* Vector(1, [], 1))) * Vector(1, [], 1), max_horizontal_speed, Relative.ToWorld, ContraryMotion.Cancel);
+                //         //StartAccelerating(eventPlayer,(Normalize(VelocityOf()) + Normalize(Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation)) + FacingDirectionOf(EventPlayer()) * accel_speed* Vector(1, [], 1))) * Vector(1, [], 1),(HorizontalSpeedOf() - addspeed - netspeed / 4) * 62.5,10000)
+                //         //ApplyImpulse(EventPlayer(), CrossProduct(Down(), FacingDirectionOf() * Vector(1, [], 1)), 0.001, Relative.ToWorld, ContraryMotion.Cancel);
+                //         //ApplyImpulse(EventPlayer(), CrossProduct(Up(), FacingDirectionOf() * Vector(1, [], 1)), 0.001, Relative.ToWorld, ContraryMotion.Cancel);
+                //         //ApplyImpulse(EventPlayer(), (Normalize(VelocityOf()) + Normalize(Normalize(WorldVectorOf(ThrottleOf(EventPlayer()), EventPlayer(), LocalVector.Rotation)) + FacingDirectionOf(EventPlayer()) * accel_speed* Vector(1, [], 1))) * Vector(1, [], 1), HorizontalSpeedOf(EventPlayer()) - addspeed - netspeed / 100, Relative.ToWorld, ContraryMotion.Cancel);
+                //     //SmallMessage(eventPlayer,SpeedOfInDirection(eventPlayer,Normalize(WorldVectorOf(Vector(0,0,1),eventPlayer))));
+                //     }
+                    
+                //         if(DistanceBetween(RayCastHitPosition(EyePosition(),EyePosition() + Down() * 100),PositionOf()) < 0.3 && IsButtonHeld(eventPlayer,Button.Jump))
+                //         {
+                //             //ApplyImpulse(eventPlayer, Up(), 17.5 * 0.016  ,Relative.ToWorld,ContraryMotion.Incorporate)
+                //             ApplyImpulse(eventPlayer,Up(),5);
+                //             if(HorizontalSpeedOf()>0)
+                //             {
+                //             ApplyImpulse(eventPlayer,FacingDirectionOf() * Vector(1,0,1),HorizontalSpeedOf());
+                //             //SmallMessage(eventPlayer,"hoppiny");
+                //             }
+                //         }
+                // }
+                // else
+                // {
+                //     max_horizontal_speed = SpeedOf();
+                // StopAccelerating(EventPlayer());
+                // }
+ 
+    Loop();
+
+}
+
+
+rule: "Teleport"
+Event.OngoingPlayer
+if(CountOf(teleportPos) > 0 && IsTrueForAny(teleportPos,DistanceBetween(eventPlayer,ArrayElement()) < 4))
+{
+    define closestTeleporter = FirstOf(SortedArray(teleportPos,DistanceBetween(eventPlayer,ArrayElement())));
+    define teleporterIndex = IndexOfArrayValue(teleportPos,closestTeleporter);
+    define prev_Tele_Speed = SpeedOf();
+    if(teleporterIndex == 0 || Modulo(teleporterIndex,2) == 0) //even
+    {
+        teleporting = true;
+        Wait(0.016);
+        Teleport(eventPlayer,teleportPos[teleporterIndex + 1]);
+        ApplyImpulse(eventPlayer, VelocityOf() * -1, 0.001,Relative.ToWorld,ContraryMotion.CancelXYZ);
+        ApplyImpulse(eventPlayer, teleportDirection[teleporterIndex + 1], prev_Tele_Speed,Relative.ToWorld,ContraryMotion.CancelXYZ);
+        SetFacing(eventPlayer,Vector(XOf(teleportDirection[teleporterIndex + 1]),YOf(FacingDirectionOf()),ZOf(teleportDirection[teleporterIndex + 1])));
+        //CreateBeamEffect(eventPlayer,BeamType.GoodBeam,teleportPos[teleporterIndex + 1],teleportPos[teleporterIndex + 1] + teleportDirection[teleporterIndex + 1] * 5);
+        teleporting = false;
+        lastsavedpos = PositionOf();
+
+    }
+    else if(Modulo(teleporterIndex,2) == 1) //odd
+    {
+         teleporting = true;
+        Wait(0.016);
+        Teleport(eventPlayer,teleportPos[teleporterIndex - 1]);
+        ApplyImpulse(eventPlayer, VelocityOf() * -1, 0.001,Relative.ToWorld,ContraryMotion.CancelXYZ);
+        ApplyImpulse(eventPlayer, teleportDirection[teleporterIndex - 1], prev_Tele_Speed,Relative.ToWorld,ContraryMotion.CancelXYZ);
+        SetFacing(eventPlayer,Vector(XOf(teleportDirection[teleporterIndex - 1]),YOf(FacingDirectionOf()),ZOf(teleportDirection[teleporterIndex - 1])));
+        //CreateBeamEffect(eventPlayer,BeamType.GoodBeam,teleportPos[teleporterIndex - 1],teleportPos[teleporterIndex - 1] + teleportDirection[teleporterIndex - 1] * 5);
+        teleporting = false;
+        lastsavedpos = PositionOf();
+
+    }
+}
+
+
+rule: "Reset"
+Event.OngoingPlayer
+if (IsTrueForAny(active_wall,ArrayElement()) == false)
+{
+    SetGravity(EventPlayer(), 100);
+    StopForcingThrottle(EventPlayer());
+    StopAccelerating(EventPlayer());
+}
+
+rule: "Press Interact to start"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact) == true && startcam == false)
+{
+    finished = false;
+    max_horizontal_speed = 0;
+    teleporting = true;
+    hitRamp = 0;
+    // ApplyImpulse(eventPlayer, Left(), 0.001);
+    // ApplyImpulse(eventPlayer, Right(), 0.001);
+    // ApplyImpulse(eventPlayer, Forward(), 0.001);
+    // ApplyImpulse(eventPlayer, Backward(), 0.001);
+    Wait(0.016);
+     if(CurrentMap() == Map.Watchpoint_Gibraltar)
+    Teleport(eventPlayer,Vector(32,191.797,-28)); //lighthouse
+    else if(CurrentMap() == Map.Blizzard_World)
+    Teleport(eventPlayer,Vector(-60.26,96.52,260.77)); //blizworld
+    else
+    Teleport(eventPlayer,start_platform + Vector(0,1,0));
+    SetFacing(eventPlayer,DirectionTowards(EyePosition(),camPoints[1]) * Vector(1,0,1));
+   // Teleport(eventPlayer,Vector(6.42,977,261)); //myown
+    //Teleport(AllPlayers(), Vector(29.366, 143, -16.286));
+    ApplyImpulse(eventPlayer, VelocityOf() * -1, 0.001,Relative.ToWorld,ContraryMotion.CancelXYZ);
+    lastsavedpos = PositionOf();
+    //StartForcingPlayerPosition(eventPlayer,Vector(32, 191.797, -28));
+    Wait(0.016);
+     DisableMovementCollisionWithEnvironment(EventPlayer(), false);
+     DisableMovementCollisionWithPlayers(EventPlayer());
+    Wait(0.016);
+    teleporting = false;
+    ghostPos = EmptyArray();
+    
+}
+
+// rule: "Throttle Loop"
+// Event.OngoingPlayer
+// if (IsTrueForAny(active_wall, ArrayElement()) == true)
+// {
+//     StartThrottleInDirection(EventPlayer(), null, false, Relative.ToWorld, ThrottleBehavior.AddToExistingThrottle, ThrottleRev.None);
+//     MinWait();
+//     LoopIfConditionIsTrue();
+// }
+
+// rule: "Fix for Loop Bug"
+// Event.OngoingPlayer
+// {
+//     MinWait();
+//     LoopIfConditionIsTrue();
+// }
+
+rule: "Timer"
+Event.OngoingPlayer
+if(!IsDummyBot())
+{
+
+    if(IsTrueForAll(is_Grounded,ArrayElement() == false) && sec == 0)
+    {
+         ChaseVariableAtRate(sec,99999,1,RateChaseReevaluation.DestinationAndRate);
+    }
+
+    else if(IsTrueForAny(is_Grounded,ArrayElement() == true) && Current_Wall_Pos == last_platform && platformCounter[IndexOfArrayValue(AllPos,last_platform)] == true && 
+    platformCounter[IndexOfArrayValue(AllPos,start_platform)] == true)
+    {
+        //sec =0;
+       // minute =0;
+       platformCounter = EmptyArray();
+        StopChasingVariable(sec);
+        finished = true;
+        ghostDisplay = true;
+        BigMessage(AllPlayers(),<"<0> finished in: <1> sec",eventPlayer,sec>);
+        if(sec < best_time)
+        {
+
+            best_time = sec;
+            best_timePlayer = <"<0>",eventPlayer>;
+            
+        }
+
+        if(sec < best_time_Ramp && hitRamp >= goal)
+        {
+
+            best_time_Ramp = sec;
+            best_timePlayer_Ramp = <"<0>",eventPlayer>;
+            
+        }
+
+        if( sec < personal_bestTime)
+        {
+            personal_bestTime = sec;
+            Best_ghostPos = ghostPos;
+            ghostPos = EmptyArray();
+        }
+
+        if( sec < personal_bestTime_Ramp && hitRamp >= goal)
+        {
+            personal_bestTime_Ramp = sec;
+        }
+
+    }
+    else if(IsTrueForAny(is_Grounded,ArrayElement() == true) && startend_platform == IndexOfArrayValue(AllPos,start_platform))
+    {
+        sec =0;
+        hitRamp = 0;
+        prev_SlopedRamp = null;
+        finished = false;
+        ghostPos = EmptyArray();
+        StopChasingVariable(sec);
+    }
+    else if(IsOnGround())
+    {
+        Wait(0.016);
+        if(IsTrueForAll(is_Grounded,ArrayElement() == false))
+        {
+        if(platformCounter[IndexOfArrayValue(AllPos,start_platform)] == true)
+        SmallMessage(eventPlayer,"You are NOT allowed to touch the Ground. Press F to Restart");
+        ghostPos = EmptyArray();
+        platformCounter = EmptyArray();
+        }
+    }
+
+    // if(sec >= 60)
+    // {
+    //     sec =0;
+    //     minute ++;
+    // }
+
+    if(IsTrueForAll(is_Grounded,ArrayElement() == false) && !IsOnGround())
+    {
+         if(TotalTimeElapsed() >= timeStep + 0.25)
+         {
+         ghostPos[CountOf(ghostPos)] = PositionOf();
+         timeStep = TotalTimeElapsed();
+         }
+    }
+     Wait(0.016);
+     Loop();
+}
+
+
+// rule: "Fix for Loop Bug"
+// Event.OngoingPlayer
+// {
+//     MinWait();
+//     LoopIfConditionIsTrue();
+// }
+
+rule: "HUD Text"
+Event.OngoingPlayer
+if (HasSpawned(EventPlayer()) && IsDummyBot(EventPlayer()) == false)
+{
+
+    if(CountOf(camPoints) > 0)
+    {
+    startcam = true;
+    WaitUntil(!startcam,9999);
+    }
+   personal_bestTime = 6969;
+   personal_bestTime_Ramp = 6969;//
+    //CreateHudText(EventPlayer(), <"start: <0>", inEraser>, null, null, Location.Left, 10, Color.Red, Color.Red, Color.Red, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility); 
+    //CreateHudText(EventPlayer(), <"horspeed: <0>",IsTrueForAll(inEraser,ArrayElement() == false)>, null, null, Location.Left, 10, Color.Red, Color.Red, Color.Red, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+
+    CreateHudText(FilteredArray(eventPlayer,!ghostDisplay),null,<" \n-DONT hold W\n-Always hold A/D against the slope\n-In air, hold A/D along with the direction you're turning">,null,Location.Left,10,Color.Aqua,Color.Green);
+    CreateHudText(FilteredArray(eventPlayer,!ghostDisplay),null,<"-Turn towards the slope to go up the slope">,null,Location.Left,11,Color.Aqua,Color.Green);
+    CreateHudText(FilteredArray(eventPlayer,ghostDisplay),null,<" \n-<0> + <1> + <2> to Enable Ghost Mode",InputBindingString(Button.Crouch),InputBindingString(Button.PrimaryFire),InputBindingString(Button.SecondaryFire)>,null,Location.Left,11,Color.Aqua,Color.Green);
+    CreateHudText(FilteredArray(eventPlayer,ghostDisplay),null,<"-Ghost Mode allows you to play against\na copy of yourself doing your best time">,null,Location.Left,12,Color.Aqua,Color.Green);
+    CreateHudText(FilteredArray(eventPlayer,ghostDisplay),null,<"-You can also Hold <0> to start to jump start the ghost",InputBindingString(Button.Ultimate)>,null,Location.Left,13,Color.Aqua,Color.Green); 
+    CreateHudText(eventPlayer, null, <" \n\n How to Surf:">, null, Location.Left, 10, null, CustomColor(127.5 * (true + CosineFromDegrees(180 * SineFromRadians(TotalTimeElapsed()))), 127.5 * (true + CosineFromDegrees(180 * SineFromRadians(2.094 + TotalTimeElapsed()))), 127.5 * (true + CosineFromDegrees(180 * SineFromRadians(1.05 + TotalTimeElapsed()))), 255), null, HudTextRev.VisibleToAndColor, Spectators.VisibleAlways);
+   // CreateHudText(eventPlayer,null,<" \n\n How to Surf:">,null,Location.Left,10,Color.Aqua,CustomColor(RandomInteger(0,150) + TotalTimeElapsed(),RandomInteger(0,150)+ TotalTimeElapsed(),RandomInteger(0,150)+ TotalTimeElapsed(),255),Color.Aqua,HudTextRev.VisibleToAndColor);
+    CreateHudText(eventPlayer,null,<"Personal Best Time Ramp Count\n                           <0> sec",personal_bestTime_Ramp>,null,Location.Right,10,Color.Aqua,Color.Green);
+    CreateHudText(eventPlayer,null,<" \n\nPersonal Best Time Free Style\n                     <0> sec",personal_bestTime>,null,Location.Right,10,Color.Aqua,Color.Green);
+    //CreateHudText(eventPlayer,null,<" \n\nPersonal Best Competitive Time \n    <0> min <1> sec",personal_bestTime[1],personal_bestTime[2]>,null,Location.Right,10,Color.Aqua,Color.Green);
+    CreateHudText(EventPlayer(), null, null, <" \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHorizontal Speed: <0>", HorizontalSpeedOf(EventPlayer())>, Location.Top, 100, Color.Green, Color.Green, Color.Green, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(EventPlayer(), null, null, <" \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nServer Load: <0>", ServerLoad()>, Location.Left, 101, Color.White, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(EventPlayer(), null, null, <"Version: <0>", version>, Location.Left, 102, Color.White, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(EventPlayer(), null, "ow_surf & map editor By: Yurodd\n               Grandeur Hammers\nGrandeurHammers.com/discord\n                    Code:EXOTC", null, Location.Top, 0, Color.Orange, Color.Orange, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(EventPlayer(), null, null, <" \nTimer: <0>",sec>, Location.Top, 10, Color.Red, Color.Red, finished? Color.Green : Color.Red, HudTextRev.StringAndColor, Spectators.DefaultVisibility);
+    CreateHudText(EventPlayer(), null, null, <"Ramp Count: <0> : <1>",hitRamp,goal>, Location.Top, 11, Color.Red, Color.Red, hitRamp>=goal? Color.Green : Color.Red, HudTextRev.StringAndColor, Spectators.DefaultVisibility);
+    //CreateHudText(EventPlayer(),<"ActiveWall: <0>", CountOf(FilteredArray(active_wall, ArrayElement() == true))>, null, null, Location.Left, 10, Color.Red, Color.Red, Color.Red, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    //CreateHudText(EventPlayer(), <"ClosestWall: <0>",CountOf(closestwall)>, null, null, Location.Left, 10, Color.Red, Color.Red, Color.Red, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    //CreateHudText(EventPlayer(), null, <"Platform:<0>",startend_platform>, null, Location.Top, 10, Color.Red, Color.Red, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Record Cam"
+Event.OngoingPlayer
+if (IsButtonHeld(eventPlayer,Button.Crouch) && IsButtonHeld(eventPlayer,Button.Ultimate) && IsButtonHeld(eventPlayer,Button.Interact) && HostPlayer() == eventPlayer)
+{
+
+        define tempPos;
+        SmallMessage(eventPlayer,"Recording Positions");
+        while(!finished)
+        {
+            if(tempPos != Current_Wall_Pos)
+            {
+            camPoints[CountOf(camPoints)] =Current_Wall_Pos;
+            tempPos = Current_Wall_Pos;
+            }
+        WaitUntil(tempPos != Current_Wall_Pos || IsButtonHeld(eventPlayer,Button.Interact),9999);
+            if(IsButtonHeld(eventPlayer,Button.Interact))
+            {
+                WaitUntil(!IsButtonHeld(eventPlayer,Button.Interact),999);
+                Wait(1);
+                SmallMessage(eventPlayer,"Restarted");
+                camPoints = EmptyArray();
+                tempPos = EmptyArray();
+            }
+        }
+        camPoints[CountOf(camPoints)] =last_platform;
+        SmallMessage(eventPlayer,"Finished and Compiled");
+        EnableInspectorRecording();
+        camPoints = camPoints;
+        DisableInspectorRecording();
+    
+}
+
+rule: "Cam"
+Event.OngoingPlayer
+if (startcam && initialized)
+{
+    
+        define tempAllPos;
+        define currentFourPoint;
+        define tempindex;
+        define tempT=0;
+        define tempbezLastPos;
+        define currentTrack;
+        define prevTrack;
+       /*  StartCamera(eventPlayer,BezierPathCalculation(currentFourPoint[0],currentFourPoint[1],currentFourPoint[2],currentFourPoint[3],tempT),BezierPathCalculation(currentFourPoint[0],currentFourPoint[1],currentFourPoint[2],currentFourPoint[3],AbsoluteValue(tempT - 0.25)),1);
+        //StartCamera(eventPlayer,SmoothStep(currentFourPoint[0],currentFourPoint[1],tempT),currentFourPoint[0],2);
+        
+        tempAllPos = camPoints;
+        tempbezLastPos = FirstOf(ArraySlice(tempAllPos,CountOf(tempAllPos)-4,4));
+        while(CountOf(tempAllPos) > 0 && tempT != 1)
+        {
+           for(define tempCounter = 0; 4; 1)
+           {
+               if(tempCounter == 4)
+                if(currentFourPoint[tempCounter-1] == 0)
+                currentFourPoint[tempCounter-1] = BezierPathCalculation(currentFourPoint[0],currentFourPoint[1],currentFourPoint[2],tempbezLastPos,0.9);
+                else
+                currentFourPoint[tempCounter-1] = BezierPathCalculation(currentFourPoint[0],currentFourPoint[1],currentFourPoint[2],currentFourPoint[3],0.9);
+               else
+                if(LastOf(tempAllPos)!=0)
+                {
+                currentFourPoint[tempCounter] = LastOf(tempAllPos);
+                tempAllPos = RemoveFromArrayAtIndex(tempAllPos,CountOf(tempAllPos)-1);
+                }
+                else
+                {
+                    currentFourPoint[tempCounter] = camPoints[0];
+                }
+           }
+        // currentFourPoint = ArraySlice(tempAllPos,CountOf(tempAllPos) -4,4);
+        // tempAllPos = ArraySlice(tempAllPos,0,CountOf(tempAllPos) - 4);
+        ChaseVariableOverTime(tempT,1,4,TimeChaseReevaluation.DestinationAndDuration);
+        WaitUntil(tempT == 1,999);
+        tempT = 0;
+        }
+        startcam = false; */
+        define tempHUD;
+        CreateHudText(eventPlayer,null," \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPress Jump/Interact to skip",null,Location.Top,1,Color.Red,Color.Orange);
+        tempHUD = LastTextID();
+        teleporting = true;
+         Wait(0.016);
+        Teleport(eventPlayer,start_platform + Vector(0,1,0));
+        Wait(0.016);
+         DisableMovementCollisionWithEnvironment(EventPlayer(), false);
+         DisableMovementCollisionWithPlayers(EventPlayer());
+        SetFacing(eventPlayer,DirectionTowards(EyePosition(),camPoints[1]) * Vector(1,0,1));
+        teleporting = false;
+        StartCamera(eventPlayer,currentTrack,prevTrack,4);
+        //StartCamera(eventPlayer,SmoothStep(currentFourPoint[0],currentFourPoint[1],tempT),currentFourPoint[0],2);
+        tempAllPos = camPoints;
+        currentTrack = LastOf(tempAllPos);
+        Wait(0.1);
+        while(CountOf(tempAllPos) > 0)
+        {
+            currentTrack = LastOf(tempAllPos);
+            prevTrack = currentTrack;
+            // currentFourPoint = ArraySlice(tempAllPos,CountOf(tempAllPos) -4,4);
+            tempAllPos = RemoveFromArrayAtIndex(tempAllPos,CountOf(tempAllPos)-1);
+            if(LastOf(tempAllPos) != 0)
+            {
+            ChaseVariableAtRate(currentTrack,LastOf(tempAllPos),cameraSpeed,RateChaseReevaluation.DestinationAndRate);
+            WaitUntil(currentTrack == LastOf(tempAllPos) || IsButtonHeld(eventPlayer,Button.Jump) || IsButtonHeld(eventPlayer,Button.Interact),999);
+            }
+            else
+            {
+            prevTrack = EyePosition() + WorldVectorOf(Vector(0,0,2),eventPlayer);
+            ChaseVariableAtRate(currentTrack,EyePosition() + WorldVectorOf(Vector(0,0,1),eventPlayer),cameraSpeed,RateChaseReevaluation.DestinationAndRate);
+            WaitUntil(currentTrack == EyePosition() + WorldVectorOf(Vector(0,0,1),eventPlayer)|| IsButtonHeld(eventPlayer,Button.Jump)|| IsButtonHeld(eventPlayer,Button.Interact),999);
+            }
+
+            if(IsButtonHeld(eventPlayer,Button.Jump)|| IsButtonHeld(eventPlayer,Button.Interact))
+            break;
+            
+            
+            
+        
+        
+        }
+        WaitUntil(IsButtonHeld(eventPlayer,Button.Jump)|| IsButtonHeld(eventPlayer,Button.Interact),2.7);
+        DestroyHudText(tempHUD);
+        startcam = false;
+        StopCamera();
+ 
+}
+
+rule: "Effect Creation"
+{
+    DisableInspectorRecording();
+    Wait(5, WaitBehavior.IgnoreCondition);
+      platform = FilteredArray(AllPos,Wall_ID[CurrentArrayIndex()] == 2);
+     start_platform = FirstOf(platform);
+     last_platform = LastOf(platform);
+     timeLimit = WorkshopSettingInteger("Time Limit", "Seconds (3600 = 1hr)",3600,0,99999,10);
+     SetMatchTime(timeLimit);
+     goal = RoundToInteger(CountOf(FilteredArray(AllPos,Wall_ID[CurrentArrayIndex()] == 4 || Wall_ID[CurrentArrayIndex()] == 8)) / 2,Rounding.Nearest);
+     CreateIcon(AllPlayers(),last_platform,Icon.Flag,IconRev.VisibleTo,Color.Green);
+     best_time = 6969.69;
+     best_timePlayer = "Barry";
+     best_time_Ramp = 6969.69;
+     best_timePlayer_Ramp = "Allen";
+     CreateHudText(FilteredArray(AllPlayers(),!ArrayElement().startcam),null,<"        Best Time Ramp Count \n               <0>: <1> sec",best_timePlayer_Ramp,best_time_Ramp>,null,Location.Right,1,Color.Aqua,Color.Green);
+     CreateHudText(FilteredArray(AllPlayers(),!ArrayElement().startcam),null,<"        Best Time Freestyle \n         <0>: <1> sec",best_timePlayer,best_time>,null,Location.Right,1,Color.Aqua,Color.Green);
+     //CreateHudText(FilteredArray(AllPlayers(),!ArrayElement().startcam),null,<"               Best Competiive Time \n<0>: <1> min <2> sec",best_timePlayer,best_time[1],best_time[2]>,null,Location.Right,1,Color.Aqua,Color.Green);
+    if (showwalls)
+    {
+        for (x = 0; CountOf(AllPos); 1)
+        {
+            if (Wall_ID[x] == 1 || Wall_ID[x] == 3 || Wall_ID[x] == 5)
+            {
+                if (Wall_ID[x] == 5)
+                {
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x], Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x] + Vector(0.001, [], []), Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                }
+                else if(Wall_ID[x] == 1) 
+                {
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x], Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x] + Vector(0.001, [], []), Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                }
+                else
+                {
+                    Skip([50, 0, 17, 34][IndexOfArrayValue([1, 2, 3], g_beamType[x]) + 1]);
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, firstpos[x], Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, firstpos[x] + Vector(0.001, [], []), Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    Skip(33);
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x], Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x] + Vector(0.001, [], []), Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    Skip(16);
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, firstpos[x], Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, Vector(XOf(secondpos[x]), YOf(firstpos[x]), ZOf(secondpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, firstpos[x] + Vector(0.001, [], []), Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, Vector(XOf(firstpos[x]), YOf(secondpos[x]), ZOf(firstpos[x])), secondpos[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                }
+            }
+            else if (Wall_ID[x] == 2 || Wall_ID[x] == 4 || Wall_ID[x] == 6 || Wall_ID[x] == 7 || Wall_ID[x] == 8)
+            {
+                if (Wall_ID[x] == 6)
+                {
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x], firstpoint2[x] + Vector([], [], 0.001), Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpoint2[x] + Vector([], [], 0.001), secondpos[x], Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, secondpos[x], secondpoint2[x] + Vector([], [], 0.001), Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, secondpoint2[x] + Vector([], [], 0.001), firstpos[x], Color.Green, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                }
+                 else if(Wall_ID[x] == 7) 
+                {
+                     CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x], firstpoint2[x] + Vector([], [], 0.001), Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpoint2[x] + Vector([], [], 0.001), secondpos[x], Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, secondpos[x], secondpoint2[x] + Vector([], [], 0.001), Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, secondpoint2[x] + Vector([], [], 0.001), firstpos[x], Color.Red, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                }
+                else
+                {
+                    Skip([50, 0, 17, 34][IndexOfArrayValue([1, 2, 3], g_beamType[x]) + 1]);
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, firstpos[x], firstpoint2[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, firstpoint2[x] + Vector([], [], 0.001), secondpos[x], Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, secondpos[x], secondpoint2[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, secondpoint2[x] + Vector([], [], 0.001), firstpos[x], Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    Skip(33);
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpos[x], firstpoint2[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, firstpoint2[x] + Vector([], [], 0.001), secondpos[x], Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, secondpos[x], secondpoint2[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.GoodBeam, secondpoint2[x] + Vector([], [], 0.001), firstpos[x], Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    Skip(16);
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, firstpos[x], firstpoint2[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID)];
+                    _arrayBuilder[0] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID)] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, firstpoint2[x] + Vector([], [], 0.001), secondpos[x], Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[1] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, secondpos[x], secondpoint2[x] + Vector([], [], 0.001), Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[2] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, secondpoint2[x] + Vector([], [], 0.001), firstpos[x], Color.Orange, EffectRev.VisibleTo);
+                    _arrayBuilder = beam_ID[CountOf(beam_ID) - 1];
+                    _arrayBuilder[3] = LastCreatedEntity();
+                    beam_ID[CountOf(beam_ID) - 1] = _arrayBuilder;
+                }
+            }
+
+         else if(Wall_ID[x] == 9)
+        {
+            CreateEffect(AllPlayers(),Effect.Sphere,Color.Orange,AllPos[x],sphereRadius[x],EffectRev.VisibleTo);
+        }
+            MinWait();
+        }
+
+         for(define count = 0; CountOf(teleportPos);2)
+        {
+            CreateEffect(AllPlayers(),Effect.GoodAura,Color.Green,teleportPos[count],1.5,EffectRev.VisibleTo);
+            teleport_effect_ID[CountOf(teleport_effect_ID)] = LastCreatedEntity();
+            CreateEffect(AllPlayers(),Effect.GoodAura,Color.Red,teleportPos[count+1],1.5,EffectRev.VisibleTo);
+            teleport_effect_ID[CountOf(teleport_effect_ID)] = LastCreatedEntity();
+        }
+    }
+    initialized = true;
+}
+
+rule: "Send messages for button presses / advertisement for GrandeurHammers (please keep GH Credit!)"
+Event.OngoingPlayer
+if (hide_messages_sent == false && !startcam)
+{
+    if (messages_sent == 3)
+    {
+        SmallMessage(EventPlayer(), <"Join the ow_Surf community at <0> GrandeurHammers.com/discord", AbilityIconString(Hero.Torbjorn, Button.Ability2)>);
+        messages_sent = 0;
+        Wait(10, WaitBehavior.IgnoreCondition);
+        AbortIf(hide_messages_sent == false);
+        SmallMessage(EventPlayer(), <"Join the ow_Surf community at <0> GrandeurHammers.com/discord", AbilityIconString(Hero.Torbjorn, Button.Ability2)>);
+        Wait(10, WaitBehavior.IgnoreCondition);
+        AbortIf(hide_messages_sent == false);
+        SmallMessage(EventPlayer(), <"After you've completed your first track, Press CTRL + Primary Fire + Secondary Fire for Ghost Mode", AbilityIconString(Hero.Torbjorn, Button.Ability2)>);
+        Wait(10, WaitBehavior.IgnoreCondition);
+        AbortIf(hide_messages_sent == false);
+        SmallMessage(EventPlayer(), <"Press <0> to hide these messages", InputBindingString(Button.Ultimate)>);
+        Wait(10, WaitBehavior.IgnoreCondition);
+        AbortIf(hide_messages_sent == false);
+    }
+    messages_sent += 1;
+    SmallMessage(EventPlayer(), <"Press <0> to teleport to start", InputBindingString(Button.Interact)>);
+    Wait(10, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+/* rule: "Hide Messages if press ult"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Ultimate) == true)
+{
+    hide_messages_sent = true;
+} */
+
+rule:"Logging"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Crouch) && IsButtonHeld(eventPlayer,Button.Reload) && HostPlayer() == eventPlayer)
+{
+    WaitUntil(!IsButtonHeld(eventPlayer,Button.Crouch) && !IsButtonHeld(eventPlayer,Button.Reload),999);
+    EnableInspectorRecording();
+    SmallMessage(eventPlayer,"Logging");
+    LogToInspector("StartLogging");
+    define tempPos;
+    define tempStat;
+    while(!IsButtonHeld(eventPlayer,Button.Crouch) || !IsButtonHeld(eventPlayer,Button.Reload))
+    {
+        if(tempPos != Current_Wall_Pos)
+        {
+        LogToInspector(Current_Wall_Pos);
+        tempPos = Current_Wall_Pos;
+        }
+        
+        if(tempStat[0] != IsDead())
+        {
+        LogToInspector(IsDead()? "Died":"Respawned");
+        tempStat[1] = IsDead();
+        WaitUntil(IsAlive(),999);
+        }
+
+        if(tempStat[1] != IsTrueForAny(is_Grounded,ArrayElement() == true))
+        {
+        LogToInspector(is_Grounded? "Landed On Platform":"Jumped Off Platform");
+        tempStat[1] = IsTrueForAny(is_Grounded,ArrayElement() == true);
+        }
+       
+        if(IsButtonHeld(eventPlayer,Button.Interact))
+        {
+            LogToInspector("Pressed Interact");
+            WaitUntil(!IsButtonHeld(eventPlayer,Button.Interact),9999);
+        }
+        
+        if(tempStat[3] != IsOnGround())
+        {
+        LogToInspector(IsOnGround()? "Landed On Ground":"Jumped Off Ground");
+        tempStat[3] = IsOnGround();
+        }
+
+
+       
+        if(DistanceBetween(RayCastHitPosition(EyePosition(),EyePosition() + Normalize(VelocityOf()) * (MagnitudeOf(VelocityOf()) * 0.016) ), EyePosition()) < (MagnitudeOf(VelocityOf()) * 0.016) &&
+            Current_Wall_ID != 5 && !IsInLineOfSight(EyePosition(),EyePosition() + Normalize(VelocityOf()) * (MagnitudeOf(VelocityOf()) * 0.016)))
+            {
+                if(tempStat[4] == false)
+                {
+                LogToInspector("Ingame Wall collision detected");
+                tempStat[4] = !tempStat[4];
+                }
+            }
+            else
+            tempStat[4] = !tempStat[4];
+            
+     Wait(0.016);
+
+    }
+    WaitUntil(!IsButtonHeld(eventPlayer,Button.Crouch) && !IsButtonHeld(eventPlayer,Button.Reload),999);
+    LogToInspector("End Logging");
+    SmallMessage(eventPlayer,"Logging Ended");
+    DisableInspectorRecording();
+
+}
+
+// rule:"Ghost"
+// Event.OngoingPlayer
+// if(IsButtonHeld(eventPlayer,Button.PrimaryFire) &&  IsButtonHeld(eventPlayer,Button.SecondaryFire))
+// {
+//     WaitUntil(!IsButtonHeld(eventPlayer,Button.PrimaryFire) &&  !IsButtonHeld(eventPlayer,Button.SecondaryFire),999);
+//      if(CountOf(Best_ghostPos) > 0)
+//    {
+//        SmallMessage(eventPlayer,"Run Ghost Run");
+//         define nextIdx = 1;
+//         define previousSnapshot = Best_ghostPos[nextIdx-1];
+//         define nextSnapshot = Best_ghostPos[nextIdx];
+//          startGhostPos = previousSnapshot;
+
+//      while(true)
+//        {
+
+//                 if(nextIdx >= CountOf(Best_ghostPos))
+//                 {
+//                     StopChasingVariable(startGhostPos);
+//                     StopForcingPlayerPosition(ghostDummy);
+//                     Wait(0.016);
+//                     Abort();
+//                 }
+//                 else
+//                 {
+//                 nextIdx++;
+//                 previousSnapshot = Best_ghostPos[nextIdx-1];
+//                 nextSnapshot = Best_ghostPos[nextIdx];
+//                 ChaseVariableOverTime(startGhostPos,nextSnapshot,0.25,TimeChaseReevaluation.DestinationAndDuration);
+//                 StartForcingPlayerPosition(ghostDummy,startGhostPos,true);
+//                 WaitUntil(startGhostPos == nextSnapshot,999);
+//                 }
+//            }
+
+//        }    
+// }
+
+rule: "Dont Leave me"
+Event.OngoingPlayer
+if(IsDummyBot() && !EntityExists(myBoss))
+{
+    DestroyDummyBot(eventPlayer);
+}
+
+rule:"Ghost"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Crouch) && IsButtonHeld(eventPlayer,Button.PrimaryFire) &&  IsButtonHeld(eventPlayer,Button.SecondaryFire))
+{
+   WaitUntil(!IsButtonHeld(eventPlayer,Button.Crouch) && !IsButtonHeld(eventPlayer,Button.PrimaryFire) &&  !IsButtonHeld(eventPlayer,Button.SecondaryFire),999);
+  
+   if(CountOf(Best_ghostPos) > 0)
+   {
+       SmallMessage(eventPlayer,"Ghost Starting");
+        define nextIdx = 1;
+        define previousSnapshot = Best_ghostPos[nextIdx-1];
+        define nextSnapshot = Best_ghostPos[nextIdx];
+         startGhostPos = previousSnapshot;
+         Wait(0.05);
+        if(ghostDummy == 0)
+        {
+        DestroyDummyBot(TeamOf(),SlotOf() + 6);
+        Wait(0.016);
+        CreateDummyBot(HeroOf(),TeamOf(),SlotOf() + 6,previousSnapshot);
+        ghostDummy = LastCreatedEntity();
+        ghostDummy.myBoss = eventPlayer;
+        DisableNameplates(ghostDummy,AllPlayers());
+        CreateInWorldText(AllPlayers(),<"<0>'s Ghost",eventPlayer>,UpdateEveryFrame(EyePosition(ghostDummy) + Vector(0,1,0)),1);
+        SetStatus(ghostDummy,null,Status.PhasedOut);
+        StartFacing(ghostDummy,DirectionTowards(EyePosition(ghostDummy),EyePosition()),1000);
+        StartForcingPlayerPosition(ghostDummy,previousSnapshot,false);
+        }
+       while(!IsButtonHeld(eventPlayer,Button.Crouch) || !IsButtonHeld(eventPlayer,Button.PrimaryFire) ||  !IsButtonHeld(eventPlayer,Button.SecondaryFire))
+       {
+           if(IsTrueForAll(is_Grounded,ArrayElement() == false) || IsButtonHeld(eventPlayer,Button.Ultimate))
+           {
+                if(nextIdx >= CountOf(Best_ghostPos))
+                {
+                    StopChasingVariable(startGhostPos);
+                    StopForcingPlayerPosition(ghostDummy);
+                    Wait(0.016);
+                }
+                else
+                {
+                nextIdx++;
+                previousSnapshot = Best_ghostPos[nextIdx-1];
+                nextSnapshot = Best_ghostPos[nextIdx];
+                ChaseVariableOverTime(startGhostPos,nextSnapshot,0.25,TimeChaseReevaluation.DestinationAndDuration);
+                StartForcingPlayerPosition(ghostDummy,startGhostPos,true);
+                WaitUntil(startGhostPos == nextSnapshot,999);
+                }
+           }
+           else
+           {
+                StopChasingVariable(startGhostPos);
+                nextIdx = 1;
+                previousSnapshot = Best_ghostPos[nextIdx-1];
+                nextSnapshot = Best_ghostPos[nextIdx];
+                startGhostPos = previousSnapshot;
+                StartForcingPlayerPosition(ghostDummy,previousSnapshot,false);
+                Wait(0.016);
+           }
+       }    
+       WaitUntil(!IsButtonHeld(eventPlayer,Button.Crouch) && !IsButtonHeld(eventPlayer,Button.PrimaryFire) &&  !IsButtonHeld(eventPlayer,Button.SecondaryFire),999);
+       SmallMessage(eventPlayer,"Ghost Ended");
+   }
+   else
+   SmallMessage(eventPlayer,"Complete the course first");
+}
+
+rule: "Host hax"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Reload) && HostPlayer() == eventPlayer)
+{
+    define tempTime = TotalTimeElapsed();
+    WaitUntil(!IsButtonHeld(eventPlayer,Button.Reload),3);
+    if((TotalTimeElapsed() - tempTime) >= 3)
+    {
+     best_time[0] = 6969.69;
+     best_time[1] = 6969.69;
+     best_time[2] = 6969.69;
+     best_timePlayer = "Barry";
+    }
+}
+
+
+rule:"Data"
+Event.OngoingGlobal
+{
+    if(CurrentMap() == Map.Watchpoint_Gibraltar)
+    {
+        cameraSpeed = 100;
+        lighthouse();
+    }
+    else if(CurrentMap() == Map.Blizzard_World || CurrentMap() == Map.Blizzard_World_Winter)
+    {
+        cameraSpeed = 50;
+        blizzworld();
+    }
+
+    else if(CurrentMap() == Map.Paris)
+    {
+        cameraSpeed = 50;
+        paris();
+    }
+    else if(CurrentMap() == Map.Route_66)
+    {
+        cameraSpeed = 30;
+        route69();
+    }
+    else if(CurrentMap() == Map.Junkertown)
+    {
+        cameraSpeed = 30;
+        junkertown();
+    }
+
+    else if(CurrentMap() == Map.Dorado)
+    {
+        cameraSpeed = 50;
+        doritos();
+    }
+    
+    else if(CurrentMap() == Map.Workshop_Island || CurrentMap() == Map.Workshop_Island_Night)
+    {
+        cameraSpeed = 50;
+        island();
+    }
+
+    else if(CurrentMap() == Map.Hollywood || CurrentMap() == Map.Hollywood_Halloween)
+    {
+        cameraSpeed = 30;
+        hollywood();
+    }
+     else if(CurrentMap() == Map.Workshop_Expanse || CurrentMap() == Map.Workshop_Expanse_Night)
+    {
+        cameraSpeed = 200;
+        expanse();
+    }
+    
+}
+
+void blizzworld() "blizzworld"
+{
+ AllPos = [Vector(-55.835, 92.962, 266.289), Vector(-33.267, 45.714, 156.746), Vector(4.423, 37.989, 83.645), Vector(56.023, -5.709, 152.812), Vector(-23.13, 52.325, 214.509), Vector(-21.142, 49.904, 199.498), Vector(-27.385, 47.417, 172.168), Vector(-23.063, 49.821, 184.076), Vector(-38.588, 42.084, 140.4), Vector(-36.836, 41.544, 124.792), Vector(-30.468, 41.168, 110.929), Vector(-21.495, 39.482, 98.723), Vector(-8.995, 39.266, 89.158), Vector(17.732, 33.357, 80.824), Vector(39.588, 27.042, 80.325), Vector(49.254, 26.231, 89.771), Vector(49.522, 23.2, 103.415), Vector(47.361, 18.665, 117.097), Vector(47.429, 7.032, 131.714), Vector(-48.829, 71.531, 245.252), Vector(29.277, 30.997, 78.355), Vector(-34.439, 51.326, 228.026), Vector(64.169, 1.995, 161.705), Vector(45.121, 1.995, 162.799), Vector(66.924, 1.995, 142.826), Vector(56.023, 9.698, 152.813)];
+AllDir = [Vector(0, 1, 0), Vector(-0.332, 0.94, 0.077), Vector(0.078, 0.904, 0.42), Vector(0, 1, 0), Vector(-0.676, 0.707, -0.207), Vector(-0.705, 0.707, 0.051), Vector(-0.653, 0.707, 0.272), Vector(-0.689, 0.707, 0.159), Vector(0.704, 0.707, -0.062), Vector(0.668, 0.708, 0.23), Vector(0.592, 0.707, 0.387), Vector(0.545, 0.707, 0.451), Vector(0.254, 0.707, 0.66), Vector(-0.159, 0.707, -0.689), Vector(-0.197, 0.707, 0.679), Vector(-0.678, 0.707, 0.202), Vector(-0.703, 0.706, -0.089), Vector(0.657, 0.707, 0.261), Vector(0.745, 0.576, 0.336), Vector(-0.074, 0.518, -0.852), Vector(0.008, 0.707, -0.707), Vector(-0.517, 0.707, -0.483), Vector(-0.675, 0, -0.737), Vector(0.737, 0, -0.675), Vector(0.737, 0, -0.676), Vector(0, 1, 0)];
+firstpos = [Vector(-46.128, 92.962, 281.05), Vector(-28.238, 46.888, 164.05), Vector(-1.336, 36.748, 87.373), Vector(75.071, -5.709, 151.718), Vector(-18.491, 54.902, 208.168), Vector(-19.522, 52.055, 192.107), Vector(-27.869, 49.836, 164.723), Vector(-19.8, 52.055, 188.281), Vector(-40.557, 44.677, 147.623), Vector(-41.337, 43.834, 130.814), Vector(-36.188, 43.456, 115.487), Vector(-27.84, 41.828, 102.713), Vector(-16.501, 41.624, 89.525), Vector(24.161, 35.842, 81.888), Vector(34.128, 28.792, 76.923), Vector(49.544, 28.323, 83.409), Vector(52.275, 25.187, 97.442), Vector(46.343, 21.212, 112.762), Vector(42.242, 19.304, 122.191), Vector(-35.88, 55.22, 234.221), Vector(33.281, 33.08, 80.481), Vector(-25.639, 54.504, 223.262), Vector(75.071, -5.709, 151.718), Vector(53.267, 9.698, 171.692), Vector(75.071, 9.698, 151.718), Vector(58.778, 9.698, 133.933)];
+secondpos = [Vector(-65.542, 92.962, 251.528), Vector(-38.297, 44.54, 149.442), Vector(10.183, 39.23, 79.917), Vector(36.975, -5.709, 153.907), Vector(-27.769, 49.748, 220.85), Vector(-22.762, 47.753, 206.888), Vector(-26.901, 44.998, 179.612), Vector(-26.325, 47.588, 179.872), Vector(-36.62, 39.491, 133.177), Vector(-32.336, 39.254, 118.769), Vector(-24.749, 38.879, 106.371), Vector(-15.15, 37.136, 94.733), Vector(-1.489, 36.908, 88.79), Vector(11.303, 30.872, 79.761), Vector(45.047, 25.292, 83.726), Vector(48.964, 24.138, 96.132), Vector(46.77, 21.212, 109.389), Vector(48.378, 16.117, 121.433), Vector(52.616, -5.24, 141.237), Vector(-61.778, 87.842, 256.282), Vector(25.273, 28.913, 76.229), Vector(-43.24, 48.148, 232.79), Vector(53.267, 9.698, 171.692), Vector(36.975, -5.709, 153.907), Vector(58.778, -5.709, 133.933), Vector(53.267, 9.698, 171.692)];
+firstpoint2 = [Vector(-73.152, 92.962, 262.79), Vector(-31.98, 46.888, 147.972), Vector(11.135, 36.748, 85.064), Vector(58.778, -5.709, 133.933), Vector(-22.84, 54.902, 222.36), Vector(-18.47, 52.055, 206.576), Vector(-22.439, 49.836, 177.753), Vector(-21.975, 52.055, 178.867), Vector(-41.783, 44.677, 133.629), Vector(-36.673, 43.834, 117.275), Vector(-28.577, 43.456, 103.864), Vector(-18.767, 41.828, 91.742), Vector(-3.185, 41.624, 84.391), Vector(12.423, 35.842, 84.603), Vector(46.02, 28.792, 80.366), Vector(52.976, 28.323, 94.938), Vector(50.701, 25.187, 109.886), Vector(43.643, 21.212, 119.549), Vector(48.207, -1.949, 145.387), Vector(-53.8, 91.025, 257.527), Vector(25.228, 33.08, 80.394), Vector(-38.592, 54.504, 237.131), Vector(75.071, 9.698, 151.718), Vector(53.267, -5.709, 171.692), Vector(75.071, -5.709, 151.718), Vector(75.071, 9.698, 151.718)];
+secondpoint2 = [Vector(-38.518, 92.962, 269.788), Vector(-34.554, 44.54, 165.521), Vector(-2.288, 39.23, 82.225), Vector(53.267, -5.709, 171.692), Vector(-23.42, 49.748, 206.658), Vector(-23.814, 47.753, 192.419), Vector(-32.331, 44.998, 166.582), Vector(-24.15, 47.588, 189.286), Vector(-35.394, 39.491, 147.171), Vector(-37, 39.254, 132.308), Vector(-32.36, 38.879, 117.994), Vector(-24.223, 37.136, 105.704), Vector(-14.805, 36.908, 93.924), Vector(23.041, 30.872, 77.046), Vector(33.155, 25.292, 80.283), Vector(45.532, 24.138, 84.603), Vector(48.344, 21.212, 96.945), Vector(51.078, 16.117, 114.646), Vector(46.652, 16.013, 118.042), Vector(-43.858, 52.037, 232.976), Vector(33.326, 28.913, 76.316), Vector(-30.287, 48.148, 218.921), Vector(53.267, -5.709, 171.692), Vector(36.975, 9.698, 153.907), Vector(58.778, 9.698, 133.933), Vector(36.974, 9.698, 153.907)];
+z = 18;
+g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+showwalls = true;
+Wall_ID = [2, 4, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 8, 4, 4, 1, 1, 1, 7];
+x = 22;
+	camPoints =[Vector(-55.835, 92.962, 266.289), Vector(-48.829, 71.531, 245.252), Vector(-34.439, 51.326, 228.026),
+		Vector(-23.130, 52.325, 214.509), Vector(-21.142, 49.904, 199.498), Vector(-27.385, 47.417, 172.168), Vector(-38.588, 42.084,
+		140.400), Vector(-30.468, 41.168, 110.929), Vector(-8.995, 39.266, 89.158), Vector(29.277, 30.997, 78.355), Vector(49.254,
+		26.231, 89.771), Vector(47.361, 18.665, 117.097), Vector(56.023, -5.709, 152.812)];
+
+}
+
+void junkertown() "junkertown"
+{
+AllPos = [Vector(44.62, 33.708, -83.476), Vector(30.607, 22.152, -79.985), Vector(31.627, 22.152, -77.173), Vector(-4.233, 13.027, -42.898), Vector(-31.776, 8.385, -51.774), Vector(-36.171, 8.649, -57.441), Vector(-40.506, 5.513, -65.399), Vector(-38.798, 8.217, -75.632), Vector(-29.496, 9.634, -98.338), Vector(-58.452, 8.395, -107.977), Vector(-60.481, 10.311, -118.793), Vector(-71.868, 5.977, -134.581), Vector(-78.344, 4.166, -133.284), Vector(21.376, 12.271, -75.047), Vector(4.441, 14.65, -65.486), Vector(-44.605, 11.389, -107.673), Vector(-60.161, 16.425, -115.009), Vector(-80.037, 18.392, -155.311), Vector(-79.389, 18.392, -152.773), Vector(-64.356, 17.777, -143.397), Vector(-68.209, 17.777, -142.329), Vector(-96.357, 13.433, -126.19), Vector(-62.851, 8.395, -130.409), Vector(-74.616, 7.458, -133.316), Vector(-58.666, 11.629, -109.418), Vector(-87.213, 6.741, -131.246), Vector(-79.17, 7.309, -133.043), Vector(-88.85, 7.726, -103.299), Vector(-79.48, 19.994, -134.781)];
+AllDir = [Vector(0, 1, 0), Vector(-0.764, 0.434, -0.478), Vector(-0.279, 0.434, 0.857), Vector(-0.361, 0.707, -0.608), Vector(-0.135, 0.968, -0.211), Vector(0.537, 0, 0.844), Vector(0, 1, 0), Vector(0.386, 0.698, 0.603), Vector(-0.543, 0.707, 0.453), Vector(0, 1, 0), Vector(0.103, 0.782, 0.615), Vector(-0.665, 0.732, 0.15), Vector(0, 1, 0), Vector(0.432, 0.888, -0.157), Vector(0.704, 0.707, 0.062), Vector(0.179, 0.707, 0.684), Vector(0.212, 0, 0.977), Vector(-0.175, 0.707, -0.685), Vector(0.175, 0.707, 0.685), Vector(0.682, 0.707, -0.189), Vector(-0.682, 0.707, 0.189), Vector(0.747, 0.664, -0.024), Vector(0, 1, 0), Vector(0.98, 0, -0.201), Vector(-0.198, 0, -0.98), Vector(0.491, 0.864, -0.113), Vector(0, 1, 0), Vector(0, 1, 0), Vector(0.976, 0, -0.217)];
+firstpos = [Vector(41.147, 33.708, -71.821), Vector(37.815, 33.708, -81.008), Vector(37.815, 33.708, -81.008), Vector(6.049, 14.804, -46.929), Vector(-33.285, 5.513, -64.016), Vector(-41.201, 12.87, -54.24), Vector(-33.285, 5.513, -64.016), Vector(-47.728, 5.513, -66.781), Vector(-20.488, 11.692, -90.755), Vector(-61.981, 8.395, -98.669), Vector(-64.81, 8.395, -115.636), Vector(-68.594, 8.395, -131.883), Vector(-73.015, 4.166, -130.953), Vector(25.439, 10.596, -73.338), Vector(5.978, 12.154, -54.562), Vector(-40.054, 14.163, -111.729), Vector(-63.774, 18.369, -114.226), Vector(-70.418, 19.703, -156.415), Vector(-70.418, 19.703, -156.415), Vector(-64.64, 19.777, -136.938), Vector(-64.64, 19.777, -136.938), Vector(-95.228, 12.564, -115.046), Vector(-55.562, 8.395, -122.108), Vector(-73.265, 2.318, -126.732), Vector(-53.776, 8.395, -110.406), Vector(-83.674, 4.166, -135.615), Vector(-74.506, 7.309, -130.488), Vector(-96.637, 7.726, -96.488), Vector(-78.38, 11.913, -129.846)];
+secondpos = [Vector(48.093, 33.708, -95.131), Vector(23.4, 10.596, -78.962), Vector(25.439, 10.596, -73.338), Vector(-14.515, 11.251, -38.866), Vector(-30.268, 11.257, -39.532), Vector(-31.14, 4.427, -60.642), Vector(-47.728, 5.513, -66.781), Vector(-29.868, 10.922, -84.482), Vector(-38.504, 7.577, -105.921), Vector(-54.923, 8.395, -117.284), Vector(-56.152, 12.227, -121.95), Vector(-75.142, 3.559, -137.278), Vector(-83.674, 4.166, -135.615), Vector(17.314, 13.946, -76.755), Vector(2.904, 17.147, -76.41), Vector(-49.156, 8.615, -103.617), Vector(-56.548, 14.481, -115.792), Vector(-89.655, 17.081, -154.206), Vector(-88.359, 17.081, -149.13), Vector(-64.073, 15.776, -149.856), Vector(-71.779, 15.776, -147.719), Vector(-97.485, 14.302, -137.334), Vector(-70.14, 8.395, -138.71), Vector(-75.968, 12.597, -139.899), Vector(-63.556, 14.862, -108.43), Vector(-90.753, 9.317, -126.877), Vector(-83.835, 7.309, -135.597), Vector(-81.062, 7.726, -110.109), Vector(-80.579, 28.074, -139.715)];
+firstpoint2 = [Vector(34.483, 33.708, -90.195), Vector(22.187, 12.454, -75.34), Vector(22.187, 12.454, -75.34), Vector(-12.704, 14.804, -35.811), Vector(-42.268, 5.513, -58.26), Vector(-41.201, 4.427, -54.24), Vector(-42.268, 5.513, -58.26), Vector(-27.025, 5.513, -80.046), Vector(-35.346, 11.692, -108.557), Vector(-52.094, 8.395, -100.318), Vector(-55.362, 8.395, -117.211), Vector(-70.075, 8.395, -138.425), Vector(-82.122, 4.166, -128.86), Vector(23.4, 10.596, -78.962), Vector(7.877, 12.154, -75.968), Vector(-50.56, 14.163, -108.978), Vector(-63.774, 14.481, -114.226), Vector(-89.007, 19.703, -151.668), Vector(-89.007, 19.703, -151.668), Vector(-67.926, 19.777, -148.788), Vector(-67.926, 19.777, -148.788), Vector(-100.639, 17.915, -135.56), Vector(-65.854, 8.395, -119.778), Vector(-73.265, 12.597, -126.732), Vector(-53.776, 14.862, -110.406), Vector(-82.122, 4.166, -128.86), Vector(-76.034, 7.309, -137.338), Vector(-79.019, 7.726, -100.075), Vector(-78.38, 28.074, -129.846)];
+secondpoint2 = [Vector(54.757, 33.708, -76.757), Vector(39.028, 31.85, -84.629), Vector(41.067, 31.85, -79.006), Vector(4.238, 11.251, -49.984), Vector(-21.284, 11.257, -45.288), Vector(-31.14, 12.87, -60.642), Vector(-38.745, 5.513, -72.537), Vector(-50.57, 10.922, -71.217), Vector(-23.646, 7.577, -88.119), Vector(-64.81, 8.395, -115.636), Vector(-65.6, 12.227, -120.375), Vector(-73.661, 3.559, -130.736), Vector(-74.567, 4.166, -137.708), Vector(19.353, 13.946, -71.131), Vector(1.005, 17.147, -55.004), Vector(-38.65, 8.615, -106.368), Vector(-56.548, 18.369, -115.792), Vector(-71.066, 17.081, -158.953), Vector(-69.77, 17.081, -153.877), Vector(-60.787, 15.776, -138.006), Vector(-68.493, 15.776, -135.87), Vector(-92.074, 8.951, -116.82), Vector(-59.848, 8.395, -141.04), Vector(-75.968, 2.318, -139.899), Vector(-63.556, 8.395, -108.43), Vector(-92.305, 9.317, -133.632), Vector(-82.306, 7.309, -128.748), Vector(-98.68, 7.726, -106.523), Vector(-80.579, 11.913, -139.715)];
+z = 29;
+g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+showwalls = true;
+Wall_ID = [2, 8, 8, 4, 4, 5, 7, 4, 4, 7, 4, 4, 7, 4, 4, 4, 5, 4, 4, 4, 4, 8, 7, 5, 5, 4, 7, 2, 1];
+x = 29;
+camPoints = [Vector(44.62, 33.708, -83.476), Vector(30.607, 22.152, -79.985), Vector(21.376, 12.271, -75.047), Vector(4.441, 14.65, -65.486), Vector(-4.233, 13.027, -42.898), Vector(-31.776, 8.385, -51.774), Vector(-36.171, 8.649, -57.441), Vector(-40.506, 5.513, -65.399), Vector(-38.798, 8.217, -75.632), Vector(-29.496, 9.634, -98.338), Vector(-44.605, 11.389, -107.673), Vector(-58.452, 8.395, -107.977), Vector(-58.666, 11.629, -109.418), Vector(-58.452, 8.395, -107.977), Vector(-60.481, 10.311, -118.793), Vector(-64.356, 17.777, -143.397), Vector(-79.389, 18.392, -152.773), Vector(-96.357, 13.433, -126.19), Vector(-88.85, 7.726, -103.299)];
+}
+
+void island() "island"
+{
+    _arrayBuilder = [null, null, null, null];
+    AllPos = [Vector(-45.726, 46.73, -61), Vector(-8.706, 40.404, -57.515), Vector(30.245, 26.202, -28.243), Vector(27.957, 26.139, -18.21), Vector(23.839, 20.946, 6.999), Vector(60.834, 20.426, 3.324), Vector(74.654, 15.171, -13.832), Vector(85.651, 6.949, -36.208), Vector(102.407, 9.239, -33.46), Vector(108.649, 9.818, -5.792), Vector(101.523, 5.118, 7.446), Vector(-74.89, 73.297, -55.8), Vector(-61.407, 58.973, -56.486), Vector(-61.881, 58.973, -59.779), Vector(7.498, 39.034, -51.711), Vector(15.213, 21.363, -0.709), Vector(39.48, 21.847, 5.791), Vector(92.408, 1.62, 21.1), Vector(51.348, 15.02, 59.94), Vector(40.238, 17.851, 70.455), Vector(-41.076, 12.059, 74.358), Vector(-50.03, 12.059, 77.48), Vector(-81.648, 17.316, -25.135), Vector(-81.015, 17.316, -25.386), Vector(-81.648, 44.78, -25.135), Vector(-89.013, 34.145, -43.728), Vector(-104.895, 34.145, -15.926), Vector(-58.4, 34.145, -34.345), Vector(-74.282, 47.877, -6.543), Vector(3.326, 34.144, 17.121), Vector(69.438, 34.144, 31.439)];
+    AllDir = [Vector(-0.429, 0.901, 0.062), Vector(0.08, 0.707, 0.703), Vector(-0.478, 0.707, 0.521), Vector(-0.563, 0.707, -0.427), Vector(0.338, 0.69, -0.64), Vector(-0.526, 0.707, -0.473), Vector(-0.512, 0.555, -0.656), Vector(0, 1, 0), Vector(-0.299, 0.928, -0.223), Vector(-0.682, 0.707, -0.187), Vector(-0.735, 0.65, -0.192), Vector(0, 1, 0), Vector(0.468, 0.347, 0.813), Vector(0.22, 0.347, -0.912), Vector(-0.58, 0.707, 0.405), Vector(0.614, 0.707, -0.351), Vector(0.028, 0.707, 0.707), Vector(0.422, 0.785, -0.453), Vector(0, 1, 0), Vector(0.43, 0.806, -0.407), Vector(0.668, 0.707, -0.233), Vector(-0.668, 0.707, 0.233), Vector(0, 1, 0), Vector(0, 1, 0), Vector(0, 1, 0), Vector(0.368, 0, 0.93), Vector(-0.93, 0, 0.368), Vector(-0.93, 0, 0.368), Vector(-0.368, 0, -0.93), Vector(-0.517, 0, 0.856), Vector(0.845, 0, 0.535)];
+    firstpos = [Vector(-48.823, 44.78, -54.055), Vector(-17.224, 43.424, -59.581), Vector(27.083, 29.85, -36.101), Vector(38.344, 29.85, -25.761), Vector(17.44, 23.271, 6.122), Vector(56.385, 23.052, 12.199), Vector(71.778, 23.052, -4.918), Vector(69.052, 6.949, -29.6), Vector(102.25, 6.949, -42.815), Vector(114.43, 13.747, -12.005), Vector(110.447, 13.747, 2.502), Vector(-75.934, 73.297, -46.983), Vector(-47.487, 48.822, -60.172), Vector(-47.487, 48.822, -60.172), Vector(5.536, 43.424, -62.183), Vector(15.465, 23.636, 4.316), Vector(32.892, 18.621, 9.277), Vector(92.599, -3.511, 12.39), Vector(57.686, 15.02, 49.996), Vector(45.009, 15.02, 69.883), Vector(-33.833, 16.8, 109.525), Vector(-33.833, 16.8, 109.525), Vector(-51.035, 17.316, -15.753), Vector(-74.527, 17.316, -22.578), Vector(-65.766, 44.78, -52.938), Vector(-112.261, 17.316, -34.518), Vector(-112.261, 17.316, -34.518), Vector(-65.766, 17.316, -52.938), Vector(-51.035, 50.973, -15.753), Vector(-51.035, 17.316, -15.753), Vector(57.686, 17.316, 49.996)];
+    secondpos = [Vector(-42.628, 48.681, -67.945), Vector(-0.188, 37.384, -55.448), Vector(33.407, 22.554, -20.385), Vector(17.571, 22.428, -10.659), Vector(30.238, 18.621, 7.875), Vector(65.282, 17.8, -5.55), Vector(77.529, 7.289, -22.747), Vector(102.25, 6.949, -42.815), Vector(102.564, 11.53, -24.104), Vector(102.867, 5.889, 0.421), Vector(92.599, -3.511, 12.39), Vector(-73.845, 73.297, -64.617), Vector(-75.326, 69.124, -52.8), Vector(-76.275, 69.124, -59.386), Vector(9.459, 34.644, -41.239), Vector(14.96, 19.09, -5.735), Vector(46.067, 25.074, 2.305), Vector(92.216, 6.751, 29.81), Vector(45.009, 15.02, 69.883), Vector(35.466, 20.682, 71.028), Vector(-48.319, 7.318, 39.19), Vector(-66.227, 7.318, 45.435), Vector(-112.261, 17.316, -34.518), Vector(-87.502, 17.316, -28.194), Vector(-97.53, 44.78, 2.667), Vector(-65.766, 50.973, -52.938), Vector(-97.53, 50.973, 2.667), Vector(-51.035, 50.973, -15.753), Vector(-97.53, 44.78, 2.667), Vector(57.686, 50.973, 49.996), Vector(81.191, 50.973, 12.881)];
+    firstpoint2 = [Vector(-50.656, 44.78, -66.79), Vector(-0.874, 43.424, -61.45), Vector(38.344, 29.85, -25.761), Vector(23.486, 29.85, -6.173), Vector(28.17, 23.271, 11.79), Vector(69.188, 23.052, -2.038), Vector(83.122, 12.894, -22.374), Vector(84.041, 6.949, -18.415), Vector(93.393, 6.949, -30.947), Vector(110.447, 13.747, 2.502), Vector(97.569, 4.403, 20.19), Vector(-69.477, 73.297, -48.762), Vector(-71.661, 73.297, -56.689), Vector(-71.661, 73.297, -56.689), Vector(16.657, 43.424, -46.27), Vector(11.011, 23.636, -3.477), Vector(46.319, 18.621, 8.753), Vector(101.081, -3.511, 20.278), Vector(61.624, 15.02, 54.157), Vector(41.071, 15.02, 65.723), Vector(-57.273, 16.8, 42.313), Vector(-57.273, 16.8, 42.313), Vector(-97.53, 17.316, 2.667), Vector(-83.819, 17.316, -18.897), Vector(-51.035, 44.78, -15.753), Vector(-112.261, 50.973, -34.518), Vector(-112.261, 50.973, -34.518), Vector(-65.766, 50.973, -52.938), Vector(-51.035, 44.78, -15.753), Vector(-51.035, 50.973, -15.753), Vector(57.686, 50.973, 49.996)];
+    secondpoint2 = [Vector(-40.795, 48.681, -55.211), Vector(-16.538, 37.384, -53.579), Vector(22.146, 22.554, -30.724), Vector(32.429, 22.428, -30.247), Vector(19.508, 18.621, 2.207), Vector(52.479, 17.8, 8.686), Vector(66.186, 17.447, -5.291), Vector(87.262, 6.949, -54.001), Vector(111.42, 11.53, -35.972), Vector(106.85, 5.889, -14.086), Vector(105.478, 5.834, -5.297), Vector(-80.302, 73.297, -62.838), Vector(-51.152, 44.649, -56.283), Vector(-52.101, 44.649, -62.868), Vector(-1.662, 34.644, -57.152), Vector(19.414, 19.09, 2.058), Vector(32.641, 25.074, 2.828), Vector(83.734, 6.751, 21.922), Vector(41.071, 15.02, 65.723), Vector(39.405, 20.682, 75.188), Vector(-24.879, 7.318, 106.403), Vector(-42.787, 7.318, 112.648), Vector(-65.766, 17.316, -52.938), Vector(-78.21, 17.316, -31.875), Vector(-112.261, 44.78, -34.518), Vector(-65.766, 17.316, -52.938), Vector(-97.53, 17.316, 2.667), Vector(-51.035, 17.316, -15.753), Vector(-97.53, 50.973, 2.667), Vector(57.686, 17.316, 49.996), Vector(81.191, 17.316, 12.881)];
+    z = 31;
+    g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+    showwalls = true;
+    Wall_ID = [4, 4, 4, 4, 4, 4, 8, 7, 4, 4, 8, 2, 8, 8, 4, 4, 4, 4, 7, 4, 4, 4, 7, 2, 7, 1, 1, 1, 1, 1, 1];
+    x = 30;
+camPoints = [Vector(-74.89, 73.297, -55.8), Vector(-61.407, 58.973, -56.486), Vector(-45.726, 46.73, -61), Vector(7.498, 39.034, -51.711), Vector(27.957, 26.139, -18.21), Vector(39.48, 21.847, 5.791), Vector(60.834, 20.426, 3.324), Vector(85.651, 6.949, -36.208), Vector(102.407, 9.239, -33.46), Vector(101.523, 5.118, 7.446), Vector(92.408, 1.62, 21.1), Vector(40.238, 17.851, 70.455), Vector(-41.076, 12.059, 74.358), Vector(-81.015, 17.316, -25.386)];
+}
+
+void route69() "route69"
+{
+AllPos = [Vector(50.624, 50.232, 85.503), Vector(54.285, 41.711, 73.405), Vector(51.261, 41.808, 72.464), Vector(54.269, 24.183, 45.692), Vector(56.613, 22.184, 30.953), Vector(54.175, 23.91, 14.117), Vector(44.432, 22.767, -1.608), Vector(31.741, 20.626, -13.717), Vector(16.129, 19.578, -21.398), Vector(1.002, 19.178, -21.2), Vector(-24.881, 12.816, -34.723), Vector(-43.938, 8.363, -22.931), Vector(-51.216, 6.862, -4.086), Vector(-56.061, 6.869, 3.697), Vector(-76.772, 11.493, 6.731), Vector(-93.764, 10.973, -8.248), Vector(-106.477, 12.518, -27.394)];
+AllDir = [Vector(0, 1, 0), Vector(0.812, 0.531, -0.243), Vector(-0.555, 0.537, -0.635), Vector(0.702, 0.707, 0.085), Vector(0.698, 0.707, 0.114), Vector(-0.629, 0.707, 0.323), Vector(0.616, 0.707, -0.346), Vector(-0.325, 0.707, 0.629), Vector(-0.263, 0.707, 0.656), Vector(0.204, 0.707, 0.677), Vector(-0.297, 0.707, 0.642), Vector(0.647, 0.707, 0.284), Vector(0.571, 0, -0.821), Vector(0.229, 0.902, -0.365), Vector(0.311, 0.707, -0.635), Vector(0.645, 0.707, -0.289), Vector(0, 1, 0)];
+firstpos = [Vector(44.447, 50.232, 78.462), Vector(51.08, 49.066, 78.761), Vector(54.945, 36.884, 65.078), Vector(51.149, 26.6, 51.333), Vector(53.11, 24.748, 36.463), Vector(53.024, 25.744, 7.869), Vector(46.166, 25.182, 6.407), Vector(25.471, 22.602, -19.18), Vector(22.326, 21.023, -20.468), Vector(6.447, 20.787, -24.524), Vector(-29.754, 14.421, -38.748), Vector(-43.399, 10.263, -28.896), Vector(-48.093, 3.308, -1.914), Vector(-55.26, 3.277, -4.685), Vector(-69.01, 13.934, 13.252), Vector(-92.549, 13.934, 1.724), Vector(-109.736, 12.518, -22.525)];
+secondpos = [Vector(56.8, 50.232, 92.544), Vector(57.489, 34.356, 68.048), Vector(47.577, 46.733, 79.849), Vector(57.388, 21.766, 40.052), Vector(60.117, 19.619, 25.443), Vector(55.327, 22.075, 20.365), Vector(42.698, 20.352, -9.623), Vector(38.012, 18.65, -8.255), Vector(9.932, 18.132, -22.328), Vector(-4.442, 17.569, -17.877), Vector(-20.009, 11.211, -30.699), Vector(-44.476, 6.464, -16.965), Vector(-54.339, 10.417, -6.258), Vector(-56.863, 10.46, 12.079), Vector(-84.534, 9.053, 0.211), Vector(-94.978, 8.012, -18.221), Vector(-103.219, 12.518, -32.263)];
+firstpoint2 = [Vector(41.488, 50.232, 87.57), Vector(54.945, 36.884, 65.078), Vector(51.08, 49.066, 78.761), Vector(52.59, 26.6, 39.469), Vector(55.054, 24.748, 24.612), Vector(58.589, 25.744, 18.687), Vector(38.487, 25.182, -7.257), Vector(39.824, 22.602, -11.761), Vector(11.008, 21.023, -25.01), Vector(-5.372, 20.787, -20.961), Vector(-18.66, 14.421, -33.612), Vector(-47.959, 10.263, -18.492), Vector(-48.093, 10.417, -1.914), Vector(-48.856, 3.277, -0.66), Vector(-86.682, 13.934, 4.597), Vector(-100.386, 13.934, -15.802), Vector(-101.126, 12.518, -25.01)];
+secondpoint2 = [Vector(59.759, 50.232, 83.436), Vector(53.624, 46.538, 81.731), Vector(51.442, 34.551, 66.166), Vector(55.947, 21.766, 51.916), Vector(58.173, 19.619, 37.294), Vector(49.762, 22.075, 9.547), Vector(50.377, 20.352, 4.041), Vector(23.659, 18.65, -15.674), Vector(21.25, 18.132, -17.786), Vector(7.377, 17.569, -21.44), Vector(-31.103, 11.211, -35.835), Vector(-39.916, 6.464, -27.37), Vector(-54.339, 3.308, -6.258), Vector(-63.267, 10.46, 8.055), Vector(-66.862, 9.053, 8.865), Vector(-87.141, 8.012, -0.695), Vector(-111.829, 12.518, -29.778)];
+z = 17;
+g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+showwalls = true;
+Wall_ID = [2, 8, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 2];
+x = 16;
+camPoints = [Vector(50.624, 50.232, 85.503), Vector(54.285, 41.711, 73.405), Vector(54.269, 24.183, 45.692), Vector(56.613, 22.184, 30.953), Vector(54.175, 23.91, 14.117), Vector(44.432, 22.767, -1.608), Vector(31.741, 20.626, -13.717), Vector(16.129, 19.578, -21.398), Vector(1.002, 19.178, -21.2), Vector(-24.881, 12.816, -34.723), Vector(-43.938, 8.363, -22.931), Vector(-51.216, 6.862, -4.086), Vector(-56.061, 6.869, 3.697), Vector(-76.772, 11.493, 6.731), Vector(-93.764, 10.973, -8.248), Vector(-106.477, 12.518, -27.394)];
+}
+
+void paris() "paris"
+{
+AllPos = [Vector(-248.971, 383.543, 250.365), Vector(-262.665, 347.094, 208.598), Vector(-271.576, 347.094, 212.667), Vector(-97.68, 253.152, 182.506), Vector(-31.322, 220.942, 116.948), Vector(-28.236, 188.708, -58.069), Vector(-66.238, 185.974, -117.789), Vector(-149.144, 139.636, -134.584), Vector(-224.458, 94.552, -49.671), Vector(-219.139, 86.646, -90.256), Vector(-132.69, 63.973, 61.793), Vector(-54.366, 75.539, 42.389), Vector(-75.002, 32.504, 55.642), Vector(-98.904, 43.932, 84.574), Vector(-93.063, 65.98, 43.036), Vector(-132.68, 79.662, 0.714), Vector(0.602, 216.063, 50.884), Vector(-93.078, 252.917, 176.307), Vector(-186.851, 281.258, 138.461), Vector(-210.778, 233.56, 271.461), Vector(-287.006, 315.544, 178.872), Vector(-278.095, 315.544, 174.804), Vector(-290.024, 318.611, 172.265), Vector(-281.111, 318.611, 168.196), Vector(-54.977, 12.025, 14.338), Vector(-49.317, 16.185, 8.803), Vector(-50.684, 16.185, 18.727), Vector(-59.269, 16.185, 9.949), Vector(-54.977, 20.344, 14.338)];
+AllDir = [Vector(0, 1, 0), Vector(0.286, 0.577, -0.765), Vector(-0.765, 0.577, -0.285), Vector(-0.214, 0.707, -0.674), Vector(-0.329, 0.707, -0.626), Vector(-0.612, 0.707, 0.354), Vector(-0.608, 0.707, 0.362), Vector(-0.383, 0.527, 0.759), Vector(0.489, 0.707, -0.511), Vector(0, 1, 0), Vector(0.645, 0.707, 0.291), Vector(0, 1, 0), Vector(-0.525, 0.672, -0.522), Vector(-0.246, 0.707, -0.663), Vector(-0.73, 0, -0.684), Vector(0.282, 0.707, -0.648), Vector(-0.685, 0.707, 0.174), Vector(-0.706, 0.707, -0.045), Vector(0.359, 0.707, -0.609), Vector(0.94, 0, -0.342), Vector(-0.643, 0.707, 0.294), Vector(0.643, 0.707, -0.294), Vector(-0.285, 0.577, 0.765), Vector(0.765, 0.578, 0.285), Vector(0, 1, 0), Vector(-0.715, 0, 0.699), Vector(-0.699, 0, -0.715), Vector(0.699, 0, 0.715), Vector(0, 1, 0)];
+firstpos = [Vector(-243.096, 383.543, 234.348), Vector(-254.015, 383.543, 239.334), Vector(-254.016, 383.543, 239.334), Vector(-104.958, 260.989, 193.034), Vector(-9.017, 230.087, 115.539), Vector(-14.246, 195.059, -46.512), Vector(-50.4, 194.576, -108.005), Vector(-136.982, 165.395, -146.333), Vector(-266.763, 106.787, -73.249), Vector(-238.125, 86.646, -53.493), Vector(-132.953, 69.647, 48.582), Vector(5.573, 75.539, -62.136), Vector(-81.94, 48.138, 82.769), Vector(-81.94, 48.138, 82.769), Vector(-53.853, 120.449, 1.194), Vector(-122.827, 88.105, 14.207), Vector(12.942, 224.905, 63.547), Vector(-84.377, 260.989, 166.724), Vector(-218.391, 287.851, 127.497), Vector(-158.58, 425.356, 414.763), Vector(-284.873, 320.441, 171.751), Vector(-280.228, 320.441, 181.926), Vector(-297.789, 321.673, 167.055), Vector(-286.842, 326.574, 167.441), Vector(-53.609, 12.025, 4.414), Vector(-53.609, 12.025, 4.414), Vector(-45.024, 12.025, 13.192), Vector(-64.929, 12.025, 15.484), Vector(-64.929, 20.344, 15.484)];
+secondpos = [Vector(-254.846, 383.543, 266.381), Vector(-271.315, 310.646, 177.862), Vector(-289.136, 310.646, 185.999), Vector(-90.402, 245.316, 171.979), Vector(-53.626, 211.796, 118.356), Vector(-42.227, 182.357, -69.626), Vector(-82.076, 177.371, -127.573), Vector(-161.307, 113.877, -122.835), Vector(-182.153, 82.318, -26.092), Vector(-200.154, 86.646, -127.018), Vector(-132.428, 58.3, 75.004), Vector(-114.305, 75.539, 146.913), Vector(-68.065, 16.869, 28.514), Vector(-115.867, 39.727, 86.379), Vector(-132.272, 11.511, 84.878), Vector(-142.532, 71.219, -12.778), Vector(-11.739, 207.221, 38.221), Vector(-101.778, 244.845, 185.891), Vector(-155.311, 274.665, 149.426), Vector(-262.976, 41.765, 128.159), Vector(-289.138, 310.646, 185.994), Vector(-275.962, 310.646, 167.683), Vector(-282.26, 315.548, 177.474), Vector(-275.38, 310.649, 168.951), Vector(-56.344, 12.025, 24.262), Vector(-45.024, 20.344, 13.192), Vector(-56.344, 20.344, 24.262), Vector(-53.609, 20.344, 4.414), Vector(-45.024, 20.344, 13.192)];
+firstpoint2 = [Vector(-233.02, 383.543, 256.415), Vector(-282.261, 315.547, 177.473), Vector(-282.26, 315.547, 177.473), Vector(-85.667, 260.989, 186.92), Vector(-45.106, 230.087, 134.539), Vector(-31.24, 195.059, -75.965), Vector(-67.302, 194.576, -136.375), Vector(-176.596, 126.445, -139.266), Vector(-199.082, 106.787, -8.419), Vector(-258.852, 86.646, -101.869), Vector(-142.764, 69.647, 70.343), Vector(46.087, 75.539, -24.148), Vector(-62.557, 21.074, 28.385), Vector(-112.941, 48.138, 94.268), Vector(-53.853, 11.511, 1.194), Vector(-149.266, 88.105, 2.718), Vector(5.39, 224.905, 33.864), Vector(-85.667, 260.989, 186.92), Vector(-162.013, 287.851, 160.779), Vector(-158.58, 41.765, 414.763), Vector(-280.228, 320.441, 181.926), Vector(-284.873, 320.441, 171.751), Vector(-286.842, 326.574, 167.441), Vector(-279.96, 321.673, 158.916), Vector(-45.024, 12.025, 13.192), Vector(-53.609, 20.344, 4.414), Vector(-45.024, 20.344, 13.192), Vector(-64.929, 20.344, 15.484), Vector(-53.609, 20.344, 4.414)];
+secondpoint2 = [Vector(-264.922, 383.543, 244.314), Vector(-243.069, 378.642, 239.723), Vector(-260.891, 378.642, 247.861), Vector(-109.693, 245.316, 178.093), Vector(-17.537, 211.796, 99.357), Vector(-25.233, 182.357, -40.173), Vector(-65.175, 177.371, -99.203), Vector(-121.693, 152.826, -129.901), Vector(-249.835, 82.318, -90.922), Vector(-179.427, 86.646, -78.643), Vector(-122.617, 58.3, 53.243), Vector(-154.819, 75.539, 108.925), Vector(-87.448, 43.934, 82.898), Vector(-84.866, 39.727, 74.88), Vector(-132.272, 120.449, 84.878), Vector(-116.093, 71.219, -1.289), Vector(-4.187, 207.221, 67.905), Vector(-100.488, 244.845, 165.695), Vector(-211.689, 274.665, 116.144), Vector(-262.976, 425.356, 128.159), Vector(-293.783, 310.646, 175.819), Vector(-271.317, 310.646, 177.858), Vector(-293.207, 310.647, 177.088), Vector(-282.262, 315.55, 177.476), Vector(-64.929, 12.025, 15.484), Vector(-45.024, 12.025, 13.192), Vector(-56.344, 12.025, 24.262), Vector(-53.609, 12.025, 4.414), Vector(-56.344, 20.344, 24.262)];
+z = 24;
+g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+showwalls = true;
+Wall_ID = [2, 8, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 8, 1, 4, 4, 4, 4, 1, 4, 4, 4, 4, 2, 1, 1, 1, 7];
+x = 25;
+camPoints = [Vector(-248.971, 383.543, 250.365), Vector(-262.665, 347.094, 208.598), Vector(-278.095, 315.544, 174.804), Vector(-281.111, 318.611, 168.196), Vector(-186.851, 281.258, 138.461), Vector(-97.68, 253.152, 182.506), Vector(-93.078, 252.917, 176.307), Vector(-31.322, 220.942, 116.948), Vector(0.602, 216.063, 50.884), Vector(-28.236, 188.708, -58.069), Vector(-66.238, 185.974, -117.789), Vector(-219.139, 86.646, -90.256), Vector(-224.458, 94.552, -49.671), Vector(-132.68, 79.662, 0.714), Vector(-132.69, 63.973, 61.793), Vector(-75.002, 32.504, 55.642), Vector(-54.977, 12.025, 14.338)];
+}
+
+
+
+void lighthouse() "lighthouse"
+{
+    	    AllPos = [Vector(14.279, 129.965, 26.212), Vector(8.664, 125.585, 60.106), Vector(18.948, 121.167, 93.845), Vector(45.842, 115.967, 120.506), Vector(83.249, 109.096, 134.658), Vector(85.368, 69.935, 36.939), Vector(98.19, 66.758, 7.375), Vector(114.137, 38.365, -75.838), Vector(105.394, 38.941, -70.254), Vector(60.5, 27.697, -146.282), Vector(30.1, 26.657, -188.797), Vector(13.987, 26.037, -240.33), Vector(20.466, 25.92, -273.465), Vector(42.31, 25.481, -286.487), Vector(222.856, 2.022, -222.434), Vector(220.429, 2.194, -215.31), Vector(112.305, 64.671, -24.55), Vector(134.413, 78.945, 98.783), Vector(128.392, 79.568, 104.548), Vector(115.381, 103.376, 137.863), Vector(90.048, 13.245, -271.775), Vector(84.51, 13.145, -261.963), Vector(158.536, 3.596, -243.893), Vector(155.663, 3.844, -235.081), Vector(267.37, -5.621, -197.296), Vector(271.44, -4.949, -202.891), Vector(34.337, 190.055, -39.403), Vector(293.209, -9.316, -157.781), Vector(23.04, 154.042, -5.122), Vector(30.85, 154.042, -2.835)];
+    AllDir = [Vector(-0.579, 0.803, -0.141), Vector(-0.625, 0.777, 0.071), Vector(-0.52, 0.723, 0.455), Vector(-0.237, 0.738, 0.632), Vector(0.003, 0.803, 0.596), Vector(0.698, 0.697, -0.163), Vector(0.59, 0.752, 0.293), Vector(0.595, 0.708, -0.38), Vector(-0.606, 0.695, 0.387), Vector(0.406, 0.815, -0.413), Vector(0.499, 0.811, -0.305), Vector(0.609, 0.788, -0.088), Vector(0.558, 0.723, 0.408), Vector(0.007, 0.642, 0.767), Vector(0.208, 0.763, -0.612), Vector(-0.247, 0.645, 0.723), Vector(0.531, 0.843, 0.086), Vector(0.457, 0.774, -0.438), Vector(-0.448, 0.784, 0.429), Vector(0.269, 0.827, 0.494), Vector(0.291, 0.806, -0.516), Vector(-0.342, 0.718, 0.606), Vector(0.209, 0.74, -0.639), Vector(-0.229, 0.673, 0.703), Vector(-0.43, 0.682, 0.591), Vector(0.413, 0.713, -0.567), Vector(0, 1, 0), Vector(0, 1, 0), Vector(-0.846, 0.472, 0.247), Vector(0.579, 0.472, 0.665)];
+    firstpos = [Vector(20.979, 132.865, 15.191), Vector(10.637, 128.573, 44.703), Vector(12.4, 126.537, 77.835), Vector(33.868, 120.804, 110.37), Vector(70.062, 113.113, 129.313), Vector(82.151, 75.532, 47.06), Vector(90.656, 70.415, 13.142), Vector(125.348, 43.915, -47.935), Vector(125.348, 43.915, -47.935), Vector(71.806, 31.579, -127.52), Vector(37.344, 31.079, -165.147), Vector(11.068, 30.696, -218.897), Vector(7.281, 30.236, -263.082), Vector(28.562, 29.638, -289.844), Vector(205.8, 5.81, -223.515), Vector(205.8, 5.81, -223.515), Vector(106.628, 67.073, -12.983), Vector(165.024, 82.612, 137.241), Vector(165.024, 82.612, 137.241), Vector(105.328, 106.733, 137.722), Vector(70.206, 17.912, -275.678), Vector(70.206, 17.912, -275.678), Vector(118.367, 8.323, -251.522), Vector(118.367, 8.323, -251.522), Vector(252.411, -1.719, -212.678), Vector(252.411, -1.719, -212.678), Vector(50.896, 190.055, -48.954), Vector(290.136, -9.316, -127.094), Vector(19.247, 132.865, 22.308), Vector(19.247, 132.865, 22.308)];
+    secondpos = [Vector(7.579, 127.064, 37.233), Vector(6.692, 122.597, 75.508), Vector(25.496, 115.797, 109.856), Vector(57.816, 111.13, 130.641), Vector(96.436, 105.078, 140.004), Vector(88.585, 64.338, 26.817), Vector(105.723, 63.101, 1.607), Vector(102.926, 32.815, -103.741), Vector(85.44, 33.967, -92.573), Vector(49.194, 23.814, -165.044), Vector(22.856, 22.235, -212.446), Vector(16.906, 21.379, -261.764), Vector(33.651, 21.605, -283.849), Vector(56.057, 21.324, -283.131), Vector(239.912, -1.765, -221.353), Vector(235.058, -1.422, -207.104), Vector(117.981, 62.27, -36.117), Vector(103.802, 75.277, 60.326), Vector(91.76, 76.525, 71.856), Vector(125.434, 100.018, 138.005), Vector(109.889, 8.578, -267.872), Vector(98.814, 8.377, -248.249), Vector(198.705, -1.131, -236.264), Vector(192.96, -0.636, -218.639), Vector(282.328, -9.523, -181.915), Vector(290.469, -8.178, -193.105), Vector(17.778, 190.055, -29.852), Vector(296.283, -9.316, -188.468), Vector(26.833, 175.22, -32.553), Vector(42.453, 175.22, -27.978)];
+    firstpoint2 = [Vector(15.166, 132.865, 39.079), Vector(14.025, 128.573, 74.679), Vector(33.949, 126.537, 102.459), Vector(61.528, 120.804, 120.745), Vector(96.379, 113.113, 129.176), Vector(78.004, 75.532, 29.286), Vector(98.244, 70.415, -2.113), Vector(93.537, 43.915, -97.744), Vector(93.537, 43.915, -97.744), Vector(41.545, 31.579, -157.26), Vector(12.399, 31.079, -206.073), Vector(5.092, 30.696, -260.048), Vector(26.361, 30.236, -289.179), Vector(55.993, 29.638, -290.096), Vector(237.025, 5.81, -212.878), Vector(237.025, 5.81, -212.878), Vector(110.562, 67.073, -37.317), Vector(97.322, 82.612, 66.53), Vector(97.322, 82.612, 66.53), Vector(120.704, 106.733, 129.334), Vector(103.644, 17.912, -256.807), Vector(103.644, 17.912, -256.807), Vector(195.484, 8.323, -226.383), Vector(195.484, 8.323, -226.383), Vector(286.609, -1.719, -187.799), Vector(286.609, -1.719, -187.799), Vector(44.284, 190.055, -23.079), Vector(321.428, -9.316, -170.225), Vector(32.843, 181.578, -24.121), Vector(32.843, 181.578, -24.121)];
+    secondpoint2 = [Vector(13.392, 127.064, 13.345), Vector(3.303, 122.597, 45.532), Vector(3.948, 115.797, 85.232), Vector(30.156, 111.13, 120.266), Vector(70.118, 105.078, 140.141), Vector(92.733, 64.338, 44.591), Vector(98.135, 63.101, 16.862), Vector(134.737, 32.815, -53.931), Vector(117.25, 33.967, -42.763), Vector(79.456, 23.814, -135.304), Vector(47.8, 22.235, -171.52), Vector(22.882, 21.379, -220.612), Vector(14.571, 21.605, -257.751), Vector(28.626, 21.324, -282.878), Vector(208.687, -1.765, -231.99), Vector(203.833, -1.422, -217.741), Vector(114.047, 62.27, -11.784), Vector(171.504, 75.277, 131.036), Vector(159.462, 76.525, 142.567), Vector(110.058, 100.018, 146.393), Vector(76.451, 8.578, -286.743), Vector(65.377, 8.377, -267.12), Vector(121.588, -1.131, -261.402), Vector(115.842, -0.636, -243.778), Vector(248.13, -9.523, -206.793), Vector(256.271, -8.178, -217.983), Vector(24.39, 190.055, -55.727), Vector(264.991, -9.316, -145.337), Vector(13.236, 126.506, 13.876), Vector(28.856, 126.506, 18.451)];
+    z = 30;
+    g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+    showwalls = true;
+    Wall_ID = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 8, 8];
+    x = 30;
+    camPoints = [Vector(34.337, 190.055, -39.403), Vector(21.533, 152.035, 0.136), Vector(14.279, 129.965, 26.212), Vector(8.664, 125.585, 60.106), Vector(45.842, 115.967, 120.506), Vector(83.249, 109.096, 134.658), Vector(134.413, 78.945, 98.783), Vector(85.368, 69.935, 36.939), Vector(114.137, 38.365, -75.838), Vector(60.5, 27.697, -146.282), Vector(30.1, 26.657, -188.797), Vector(13.987, 26.037, -240.33), Vector(20.466, 25.92, -273.465), Vector(42.31, 25.481, -286.487), Vector(90.048, 13.245, -271.775), Vector(155.663, 3.844, -235.081), Vector(271.44, -4.949, -202.891), Vector(293.209, -9.316, -157.781)];
+}
+
+void doritos() "doritos"
+{
+AllPos = [Vector(141.289, 95.118, -166.178), Vector(141.52, 95.118, -161.483), Vector(219.823, 129.52, -169.536), Vector(194.484, 114.857, -169.645), Vector(194.842, 114.857, -165.792), Vector(85.41, 71.996, -174.025), Vector(45.673, 63.785, -180.913), Vector(111.573, 42.414, -126.302), Vector(19.859, 61.122, -170.496), Vector(107.38, 43.133, -111.483), Vector(113.656, 42.564, -118.821), Vector(78.527, 37.154, -59.061), Vector(67.824, 42.511, -148.109), Vector(137.038, 11.236, 28.384), Vector(151.749, 13.895, 31.804), Vector(184.005, 14.293, 40.828), Vector(134.321, 42.029, 27.012), Vector(83.048, 42.196, -93.242), Vector(59.664, 37.154, -30.671), Vector(66.685, 37.154, -3.37), Vector(63.979, 39.09, -31.567), Vector(56.756, 39.09, -32.22), Vector(65.359, 39.09, -0.881), Vector(71, 39.09, -4.267), Vector(154.49, 12.061, 32.57), Vector(75.462, 39.02, -46.301), Vector(173.693, 69.193, -29.736), Vector(101.274, 29.055, 15.059)];
+AllDir = [Vector(-0.035, 0.707, -0.706), Vector(0.035, 0.707, 0.706), Vector(0, 1, 0), Vector(-0.368, 0.473, -0.801), Vector(-0.214, 0.473, 0.855), Vector(-0.119, 0.707, 0.697), Vector(-0.278, 0.707, 0.65), Vector(-0.627, 0.707, 0.327), Vector(0.804, 0.572, -0.163), Vector(-0.36, 0.707, -0.609), Vector(-0.778, 0.624, -0.069), Vector(0, 1, 0), Vector(-0.274, 0.707, 0.652), Vector(0, 1, 0), Vector(-0.966, 0, -0.259), Vector(0, 1, 0), Vector(-0.964, 0, -0.264), Vector(0.631, 0.707, 0.32), Vector(0, 1, 0), Vector(0, 1, 0), Vector(-0.885, 0, -0.466), Vector(-0.883, 0, -0.47), Vector(-0.47, 0, 0.883), Vector(-0.47, 0, 0.883), Vector(-0.483, 0.865, -0.135), Vector(0.289, 0.788, -0.544), Vector(0.342, 0, -0.94), Vector(0.382, 0.901, 0.204)];
+firstpos = [Vector(159.8, 97.467, -164.736), Vector(159.8, 97.467, -164.736), Vector(212.975, 129.52, -161.306), Vector(212.825, 129.52, -169.406), Vector(212.825, 129.52, -169.406), Vector(100.272, 74.72, -174.25), Vector(58.315, 66.766, -178.754), Vector(111.951, 45.254, -131.719), Vector(16.466, 64.156, -176.554), Vector(115.364, 45.254, -113.746), Vector(116.234, 45.254, -123.515), Vector(79.493, 37.154, -46.859), Vector(101.41, 46.334, -138.15), Vector(153.952, 11.236, 22.298), Vector(152.502, 16.789, 29), Vector(191.397, 14.293, 35.19), Vector(135.551, 30.351, 22.523), Vector(81.063, 37.26, -78.399), Vector(67.86, 37.154, -53.058), Vector(45.652, 37.154, -11.383), Vector(73.676, 37.154, -49.958), Vector(67.86, 37.154, -53.058), Vector(45.652, 37.154, -11.383), Vector(54.281, 37.154, -13.176), Vector(153.48, 11, 29.371), Vector(79.493, 37.154, -46.859), Vector(238.06, 118.411, -6.331), Vector(87.718, 37.154, 4.642)];
+secondpos = [Vector(122.779, 92.769, -167.619), Vector(123.241, 92.769, -158.23), Vector(226.67, 129.52, -177.765), Vector(176.143, 100.194, -169.883), Vector(176.859, 100.194, -162.177), Vector(70.547, 69.271, -173.799), Vector(33.031, 60.803, -183.071), Vector(111.195, 39.573, -120.885), Vector(23.252, 58.087, -164.437), Vector(99.396, 41.012, -109.221), Vector(111.079, 39.873, -114.127), Vector(77.561, 37.154, -71.263), Vector(34.239, 38.687, -158.068), Vector(120.124, 11.236, 34.471), Vector(150.996, 11, 34.608), Vector(176.613, 14.293, 46.467), Vector(133.09, 53.707, 31.501), Vector(85.033, 47.131, -108.085), Vector(51.468, 37.154, -8.283), Vector(87.718, 37.154, 4.642), Vector(54.281, 41.026, -13.176), Vector(45.652, 41.026, -11.383), Vector(85.066, 41.026, 9.62), Vector(87.718, 41.026, 4.642), Vector(155.5, 13.123, 35.768), Vector(71.43, 40.885, -45.742), Vector(109.326, 19.974, -53.142), Vector(114.829, 20.957, 25.476)];
+firstpoint2 = [Vector(123.01, 97.467, -162.925), Vector(123.01, 97.467, -162.925), Vector(212.675, 129.52, -177.506), Vector(173.474, 105.117, -165.749), Vector(173.474, 105.117, -165.749), Vector(71.464, 74.72, -179.169), Vector(35.376, 66.766, -188.557), Vector(116.234, 45.254, -123.515), Vector(19.101, 64.156, -163.593), Vector(101.556, 45.254, -105.572), Vector(115.364, 45.254, -113.746), Vector(67.86, 37.154, -53.058), Vector(37.2, 46.334, -165.119), Vector(148.756, 11.236, 42.016), Vector(152.502, 11, 29), Vector(187.759, 14.293, 49.334), Vector(135.551, 53.707, 22.523), Vector(93.847, 37.26, -103.617), Vector(73.676, 37.154, -49.958), Vector(48.305, 37.154, -16.361), Vector(73.676, 41.026, -49.958), Vector(67.86, 41.026, -53.058), Vector(45.652, 41.026, -11.383), Vector(54.281, 41.026, -13.176), Vector(151.968, 11, 34.78), Vector(73.676, 37.154, -49.958), Vector(238.06, 19.974, -6.331), Vector(85.066, 37.154, 9.62)];
+secondpoint2 = [Vector(159.569, 92.769, -169.431), Vector(160.031, 92.769, -160.041), Vector(226.97, 129.52, -161.566), Vector(215.494, 124.596, -173.541), Vector(216.21, 124.596, -165.834), Vector(99.355, 69.271, -168.88), Vector(55.971, 60.803, -173.268), Vector(106.913, 39.573, -129.09), Vector(20.617, 58.087, -177.398), Vector(113.204, 41.012, -117.395), Vector(111.949, 39.873, -123.896), Vector(89.194, 37.154, -65.064), Vector(98.448, 38.687, -131.099), Vector(125.32, 11.236, 14.753), Vector(150.996, 16.789, 34.608), Vector(180.252, 14.293, 32.322), Vector(133.09, 30.351, 31.501), Vector(72.249, 47.131, -82.867), Vector(45.652, 37.154, -11.383), Vector(85.066, 37.154, 9.62), Vector(54.281, 37.154, -13.176), Vector(45.652, 37.154, -11.383), Vector(85.066, 37.154, 9.62), Vector(87.718, 37.154, 4.642), Vector(157.012, 13.123, 30.359), Vector(77.247, 40.885, -42.643), Vector(109.326, 118.411, -53.142), Vector(117.481, 20.957, 20.498)];
+z = 28;
+g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+showwalls = true;
+Wall_ID = [4, 4, 2, 8, 8, 4, 4, 4, 4, 4, 4, 7, 4, 7, 5, 2, 5, 4, 7, 7, 3, 3, 3, 3, 4, 4, 1, 8];
+x = 28;
+camPoints = [Vector(219.823, 129.52, -169.536), Vector(194.484, 114.857, -169.645), Vector(141.289, 95.118, -166.178), Vector(85.41, 71.996, -174.025), Vector(45.673, 63.785, -180.913), Vector(19.859, 61.122, -170.496), Vector(67.824, 42.511, -148.109), Vector(111.573, 42.414, -126.302), Vector(113.656, 42.564, -118.821), Vector(107.38, 43.133, -111.483), Vector(83.048, 42.196, -93.242), Vector(78.527, 37.154, -59.061), Vector(59.664, 37.154, -30.671), Vector(66.685, 37.154, -3.37), Vector(137.038, 11.236, 28.384), Vector(151.749, 13.895, 31.804), Vector(154.49, 12.061, 32.57), Vector(151.749, 13.895, 31.804), Vector(184.005, 14.293, 40.828)];
+}
+
+void hollywood() "hollywood"
+{
+    _arrayBuilder = [null, null, null, null];
+    AllPos = [Vector(-0.992, 13.461, 59.848), Vector(-3.091, 13.461, 59.907), Vector(-2.59, 6.45, 44.021), Vector(-10.428, 3.474, 1.476), Vector(-7.119, 5.665, -6.555), Vector(-3.62, 3.987, -41.175), Vector(12.526, 3.945, -47.887), Vector(15.447, 3.713, -65.573), Vector(-1.189, 5.657, -83.295), Vector(-2.223, 2.271, -87.396), Vector(-3.427, 2.568, -92.171), Vector(-20.217, 2.536, -95.909), Vector(-28.59, 2.685, -105.107), Vector(-0.889, 3.093, -82.104), Vector(-2.016, 20.979, 70.036), Vector(-11.211, 5.088, 24.586), Vector(-4.028, 3.667, -20.722), Vector(-30.935, -13.558, -132.556), Vector(-30.48, -21.018, -121.614), Vector(-33.909, 1.75, -131.978), Vector(-35.675, -2.174, -139.069), Vector(-4.497, 6.451, 44.324), Vector(-2.437, 26.483, 63.655)];
+    AllDir = [Vector(0.687, 0.508, -0.52), Vector(-0.715, 0.508, -0.48), Vector(0.698, 0.707, -0.111), Vector(-0.609, 0.707, -0.36), Vector(-0.512, 0, 0.859), Vector(0.607, 0.707, 0.363), Vector(-0.171, 0.707, -0.686), Vector(0.686, 0.707, -0.174), Vector(0.244, 0, 0.97), Vector(0, 1, 0), Vector(0.096, 0.92, 0.38), Vector(0.055, 0.707, -0.705), Vector(0.653, 0.707, -0.272), Vector(-0.136, 0.831, -0.539), Vector(0, 1, 0), Vector(-0.496, 0.707, 0.504), Vector(-0.688, 0.707, 0.164), Vector(0.171, 0.707, 0.686), Vector(0, 1, 0), Vector(0, 1, 0), Vector(0.242, 0, 0.97), Vector(-0.698, 0.707, 0.111), Vector(0, 1, 0)];
+    firstpos = [Vector(-1.869, 20.979, 66.031), Vector(-1.869, 20.979, 66.031), Vector(-2.256, 7.416, 52.275), Vector(-13.144, 5.25, 9.554), Vector(-10.16, 9.727, -8.367), Vector(-7.923, 6.283, -38.448), Vector(17.085, 6.254, -46.641), Vector(14.701, 5.821, -59.946), Vector(-4.625, 9.71, -82.429), Vector(-4.625, 2.271, -82.429), Vector(-6.693, 2.271, -90.63), Vector(-14.95, 3.932, -94.097), Vector(-25.704, 3.932, -94.942), Vector(-4.625, 2.271, -82.429), Vector(4.777, 20.979, 66.274), Vector(-4.634, 6.699, 28.79), Vector(-3.934, 5.729, -29.213), Vector(-46.474, -6.098, -136.378), Vector(-37.255, -21.018, -123.287), Vector(-39.673, 1.75, -138.073), Vector(-39.673, 1.75, -138.073), Vector(-2.256, 7.416, 52.275), Vector(-16.11, 26.483, 41.984)];
+    secondpos = [Vector(-0.116, 5.944, 53.666), Vector(-4.314, 5.944, 53.784), Vector(-2.925, 5.485, 35.767), Vector(-7.712, 1.698, -6.602), Vector(-4.078, 1.604, -4.743), Vector(0.683, 1.692, -43.902), Vector(7.966, 1.636, -49.133), Vector(16.192, 1.604, -71.201), Vector(2.247, 1.604, -84.161), Vector(0.179, 2.271, -92.362), Vector(-0.161, 2.866, -93.713), Vector(-25.485, 1.141, -97.722), Vector(-31.476, 1.438, -115.272), Vector(2.847, 3.914, -81.779), Vector(-8.809, 20.979, 73.799), Vector(-17.788, 3.477, 20.381), Vector(-4.121, 1.604, -12.231), Vector(-15.395, -21.018, -128.734), Vector(-23.705, -21.018, -119.94), Vector(-28.144, 1.75, -125.884), Vector(-31.678, -6.098, -140.065), Vector(-6.739, 5.485, 36.373), Vector(11.236, 26.483, 85.326)];
+    firstpoint2 = [Vector(-2.256, 7.416, 52.275), Vector(-2.256, 7.416, 52.275), Vector(-4.832, 7.416, 36.07), Vector(-4.655, 5.25, -4.793), Vector(-10.16, 1.604, -8.367), Vector(-3.259, 6.283, -46.257), Vector(9.082, 6.254, -44.649), Vector(12.107, 5.821, -70.164), Vector(-4.625, 1.604, -82.429), Vector(2.247, 2.271, -84.161), Vector(0.179, 2.271, -92.362), Vector(-25.704, 3.932, -94.942), Vector(-33.775, 3.932, -114.314), Vector(2.247, 2.271, -84.161), Vector(-8.515, 20.979, 65.787), Vector(-15.528, 6.699, 18.082), Vector(-0.107, 5.729, -13.189), Vector(-19.006, -6.098, -143.223), Vector(-25.282, -21.018, -126.271), Vector(-31.678, 1.75, -140.065), Vector(-39.673, -6.098, -138.073), Vector(-4.832, 7.416, 36.07), Vector(12.786, 26.483, 43.043)];
+    secondpoint2 = [Vector(0.271, 19.507, 67.422), Vector(-3.927, 19.507, 67.54), Vector(-0.349, 5.485, 51.971), Vector(-16.201, 1.698, 7.745), Vector(-4.078, 9.727, -4.743), Vector(-3.981, 1.692, -36.093), Vector(15.969, 1.636, -51.125), Vector(18.786, 1.604, -60.983), Vector(2.247, 9.71, -84.161), Vector(-6.693, 2.271, -90.63), Vector(-7.034, 2.866, -91.981), Vector(-14.731, 1.141, -96.876), Vector(-23.405, 1.438, -95.9), Vector(-4.025, 3.914, -80.047), Vector(4.483, 20.979, 74.286), Vector(-6.894, 3.477, 31.089), Vector(-7.948, 1.604, -28.254), Vector(-42.864, -21.018, -121.89), Vector(-35.677, -21.018, -116.957), Vector(-36.14, 1.75, -123.892), Vector(-31.678, 1.75, -140.065), Vector(-4.163, 5.485, 52.577), Vector(-17.66, 26.483, 84.267)];
+    z = 23;
+    g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+    showwalls = true;
+    Wall_ID = [8, 8, 4, 4, 5, 4, 4, 4, 5, 7, 4, 4, 4, 4, 2, 4, 4, 8, 7, 6, 3, 4, 2];
+    teleportPos = [Vector(-29.691, -21.018, -118.449), Vector(-3.539, 24.015, 28.691)];
+    teleportDirection = [Vector(0.126, 0.041, 0.991), Vector(0.026, 0.555, 0.831)];
+    camPoints = [Vector(-2.016, 20.979, 70.036), Vector(-0.992, 13.461, 59.848), Vector(-2.590, 6.450, 44.021), Vector(
+		-11.211, 5.088, 24.586), Vector(-10.428, 3.474, 1.476), Vector(-7.119, 5.665, -6.555), Vector(-4.028, 3.667, -20.722), Vector(
+		-3.620, 3.987, -41.175), Vector(12.526, 3.945, -47.887), Vector(15.447, 3.713, -65.573), Vector(-1.189, 5.657, -83.295),
+		Vector(-3.427, 2.568, -92.171), Vector(-20.217, 2.536, -95.909), Vector(-28.590, 2.685, -105.107), Vector(-33.909, 1.750,
+		-131.978), Vector(-35.675, -2.174, -139.069), Vector(-33.909, 1.750, -131.978), Vector(-30.480, -21.018, -121.614), Vector(
+		-2.239, 26.483, 58.266)];
+}
+
+void expanse() "expanse"
+{
+    _arrayBuilder = [null, null, null, null];
+    AllPos = [Vector(-364.975, 26.122, 387.23), Vector(-355.58, 19.325, -5.806), Vector(-351.131, 19.325, -5.698), Vector(-354.783, 10.736, -35.85), Vector(-350.474, 10.739, -35.745), Vector(-353.151, 38.407, -238.393), Vector(-353.115, 25.892, -298.046), Vector(-283.523, 30.174, -291.183), Vector(-45.186, 40.2, -299.63), Vector(-45.248, 40.2, -306.8), Vector(25.157, 45.116, -295.008), Vector(31.823, 45.06, -275.366), Vector(22.492, 44.954, -257.198), Vector(-1.766, 52.106, -102.491), Vector(-2.266, 52.621, -108.426), Vector(9.477, 60.581, -40.332), Vector(-360.992, 17.306, 364.858), Vector(-353.708, 20.519, 135.057), Vector(-356.756, 36.268, 162.516), Vector(159.982, 0, 23.238), Vector(-126.7, 103.097, 9.349)];
+    AllDir = [Vector(0, 1, 0), Vector(-0.611, 0.58, -0.539), Vector(0.636, 0.58, -0.509), Vector(-0.707, 0.707, -0.017), Vector(0.707, 0.707, 0.017), Vector(-0.707, 0.707, 0.031), Vector(-0.01, 0.707, 0.707), Vector(1, 0, -0.003), Vector(0.006, 0.707, 0.707), Vector(-0.006, 0.707, -0.707), Vector(-0.566, 0.707, 0.425), Vector(-0.707, 0.707, 0.006), Vector(-0.454, 0.707, -0.543), Vector(-0.707, 0.707, 0.009), Vector(0.015, 0, -1), Vector(0.006, 0, 1), Vector(0.707, 0.707, 0.001), Vector(0, 1, 0), Vector(0.722, 0.581, -0.375), Vector(0, 1, 0), Vector(0, 1, 0)];
+    firstpos = [Vector(-373.469, 26.122, 393.937), Vector(-353.535, 28.394, 1.638), Vector(-349.143, 25.757, 4.127), Vector(-353.119, 12.894, -15.522), Vector(-353.119, 12.894, -15.522), Vector(-349.309, 41.13, -212.623), Vector(-381.338, 33.279, -305.83), Vector(-283.452, 10.412, -268.178), Vector(-64.716, 43.786, -303.047), Vector(-64.716, 43.786, -303.047), Vector(20.024, 47.595, -305.974), Vector(34.254, 47.595, -287.017), Vector(34.462, 47.595, -263.76), Vector(-0.252, 54.717, -188.723), Vector(1.317, 57.379, -108.371), Vector(-2.296, 42.68, -40.26), Vector(-365.134, 21.433, 372.96), Vector(-346.071, 20.519, 149.547), Vector(-359.41, 49.366, 177.7), Vector(184.002, 0, 51.999), Vector(-114.008, 103.097, 15.731)];
+    secondpos = [Vector(-356.48, 26.122, 380.523), Vector(-357.626, 10.257, -13.25), Vector(-353.119, 12.894, -15.522), Vector(-356.447, 8.578, -56.178), Vector(-347.829, 8.584, -55.969), Vector(-356.993, 35.685, -264.163), Vector(-324.892, 18.505, -290.261), Vector(-283.594, 49.935, -314.188), Vector(-25.656, 36.614, -296.212), Vector(-25.78, 36.614, -310.553), Vector(30.291, 42.637, -284.042), Vector(29.392, 42.526, -263.715), Vector(10.522, 42.312, -250.635), Vector(-3.279, 49.494, -16.259), Vector(-5.848, 47.862, -108.481), Vector(21.251, 78.483, -40.404), Vector(-356.851, 13.179, 356.756), Vector(-361.346, 20.519, 120.568), Vector(-354.102, 23.17, 147.333), Vector(135.963, 0, -5.523), Vector(-139.392, 103.097, 2.967)];
+    firstpoint2 = [Vector(-356.646, 26.122, 394.142), Vector(-358.042, 25.757, 3.911), Vector(-353.535, 28.394, 1.638), Vector(-352.135, 12.894, -56.073), Vector(-352.135, 12.894, -56.073), Vector(-351.554, 41.13, -264.399), Vector(-324.685, 33.279, -305.037), Vector(-283.452, 49.935, -268.178), Vector(-25.718, 43.786, -303.383), Vector(-25.718, 43.786, -303.383), Vector(34.254, 47.595, -287.017), Vector(34.462, 47.595, -263.76), Vector(13.908, 47.595, -246.583), Vector(1.943, 54.717, -16.325), Vector(1.317, 47.862, -108.371), Vector(-2.296, 78.483, -40.26), Vector(-365.105, 21.433, 356.741), Vector(-360.811, 20.519, 149.816), Vector(-357.746, 26.201, 145), Vector(136.005, 0, 52.034), Vector(-138.488, 103.097, 17.278)];
+    secondpoint2 = [Vector(-373.303, 26.122, 380.318), Vector(-353.118, 12.894, -15.522), Vector(-348.727, 10.257, -13.034), Vector(-357.431, 8.578, -15.627), Vector(-348.813, 8.584, -15.418), Vector(-354.748, 35.685, -212.388), Vector(-381.545, 18.505, -291.055), Vector(-283.594, 10.412, -314.188), Vector(-64.655, 36.614, -295.877), Vector(-64.778, 36.614, -310.217), Vector(16.06, 42.637, -302.998), Vector(29.184, 42.526, -286.972), Vector(31.076, 42.312, -267.812), Vector(-5.474, 49.494, -188.657), Vector(-5.848, 57.379, -108.481), Vector(21.251, 42.68, -40.404), Vector(-356.88, 13.179, 372.975), Vector(-346.605, 20.519, 120.298), Vector(-355.767, 46.335, 180.032), Vector(183.96, 0, -5.558), Vector(-114.912, 103.097, 1.42)];
+    z = 21;
+    g_beamType = [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
+    showwalls = true;
+    Wall_ID = [2, 8, 8, 4, 4, 4, 4, 1, 4, 4, 4, 4, 4, 4, 1, 1, 4, 7, 8, 6, 2];
+    teleportPos = [Vector(-355.88, 14.531, -88.291), Vector(-350.494, 51.225, -187.615), Vector(0.325, 52.112, 20.283), Vector(151.461, 12.434, 66.243), Vector(-360.978, 17.306, 356.748), Vector(-357.466, 51.517, 172.785), Vector(-346.605, 20.519, 120.298), Vector(-354.222, 49.323, 31.047), Vector(-241.356, 52.493, -297.448), Vector(-101.429, 50.996, -302.981), Vector(175.478, 3.167, 3.123), Vector(-123.966, 114.586, 80.829), Vector(152.482, 4.9, 17.584), Vector(0.569, 58.205, 41.234)];
+    teleportDirection = [Vector(0.035, -0.598, -0.801), Vector(-0.004, -0.114, -0.993), Vector(0.094, -0.226, 0.97), Vector(0.003, 0.024, -1), Vector(-0.002, 0, 1), Vector(-0.025, -0.518, -0.855), Vector(-0.297, 0.008, 0.955), Vector(0.021, -0.372, -0.928), Vector(-0.889, 0.458, 0.001), Vector(1, 0.022, -0.011), Vector(-0.822, 0.215, 0.528), Vector(-0.037, 0, -0.999), Vector(0.832, 0.026, -0.555), Vector(0.016, -0.337, -0.941)];
+    camPoints =[ Vector(-364.975, 26.122, 387.230), Vector(-360.992, 17.306, 364.858), Vector(-356.756, 36.268, 162.516),
+		Vector(-353.708, 20.519, 135.057), Vector(-351.131, 19.325, -5.698), Vector(-350.474, 10.739, -35.745), Vector(-353.151,
+		38.407, -238.393), Vector(-353.115, 25.892, -298.046), Vector(-45.186, 40.200, -299.630), Vector(31.823, 45.060, -275.366),
+		Vector(22.492, 44.954, -257.198), Vector(-1.766, 52.106, -102.491), Vector(159.982, 0, 23.238), Vector(-126.680, 103.070,
+		5.210)];
+}
+
+
+define eventPlayer: EventPlayer();
+define BezierPathCalculation(Vector p0, Vector p1, Vector p2, Vector p3, define t): ((1-t)^3)*p0 + (3*(1-t)^2)*t*p1 + (3*(1-t)*(t^2)*p2) + (t^3)*p3;
+define SmoothStep(define edge0, define edge1, define t): edge0 + (t*t*(3-(2*t)))*edge1;
+define ftbl: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(firstpos[z]),YOf(secondpos[z]),ZOf(firstpos[z]))),DirectionTowards(firstpos[z],filterpos));
+define fttr: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(firstpos[z],filterpos));
+define stbl: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(firstpos[z]),YOf(secondpos[z]),ZOf(firstpos[z]))),DirectionTowards(secondpos[z],filterpos));
+define sttr: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(secondpos[z],filterpos));
+
+
+define ftbl2: DotProduct(DirectionTowards(firstpos[z],firstpoint2[z]),DirectionTowards(firstpos[z],filterpos));
+define fttr2: DotProduct(DirectionTowards(firstpos[z],secondpoint2[z]),DirectionTowards(firstpos[z],filterpos));
+define stbl2: DotProduct(DirectionTowards(secondpos[z],firstpoint2[z]),DirectionTowards(secondpos[z],filterpos));
+define sttr2: DotProduct(DirectionTowards(secondpos[z],secondpoint2[z]),DirectionTowards(secondpos[z],filterpos));
+
+
+
+define h_walldot1: DotProduct(DirectionTowards(firstpos[CurrentArrayIndex()],Vector(XOf(firstpos[CurrentArrayIndex()]),YOf(secondpos[CurrentArrayIndex()]),ZOf(firstpos[CurrentArrayIndex()]))),DirectionTowards(firstpos[CurrentArrayIndex()],eventPlayer));
+define h_walldot2: DotProduct(DirectionTowards(firstpos[CurrentArrayIndex()],Vector(XOf(secondpos[CurrentArrayIndex()]),YOf(firstpos[CurrentArrayIndex()]),ZOf(secondpos[CurrentArrayIndex()]))),DirectionTowards(firstpos[CurrentArrayIndex()],eventPlayer));
+define h_walldot3: DotProduct(DirectionTowards(secondpos[CurrentArrayIndex()],Vector(XOf(firstpos[CurrentArrayIndex()]),YOf(secondpos[CurrentArrayIndex()]),ZOf(firstpos[CurrentArrayIndex()]))),DirectionTowards(secondpos[CurrentArrayIndex()],eventPlayer));
+define h_walldot4: DotProduct(DirectionTowards(secondpos[CurrentArrayIndex()],Vector(XOf(secondpos[CurrentArrayIndex()]),YOf(firstpos[CurrentArrayIndex()]),ZOf(secondpos[CurrentArrayIndex()]))),DirectionTowards(secondpos[CurrentArrayIndex()],eventPlayer));
+
+define walldot1: DotProduct(DirectionTowards(firstpos[CurrentArrayIndex()],firstpoint2[CurrentArrayIndex()]),DirectionTowards(firstpos[CurrentArrayIndex()],eventPlayer));
+define walldot2: DotProduct(DirectionTowards(firstpos[CurrentArrayIndex()],secondpoint2[CurrentArrayIndex()]),DirectionTowards(firstpos[CurrentArrayIndex()],eventPlayer));
+define walldot3: DotProduct(DirectionTowards(secondpos[CurrentArrayIndex()],firstpoint2[CurrentArrayIndex()]),DirectionTowards(secondpos[CurrentArrayIndex()],eventPlayer));
+define walldot4: DotProduct(DirectionTowards(secondpos[CurrentArrayIndex()],secondpoint2[CurrentArrayIndex()]),DirectionTowards(secondpos[CurrentArrayIndex()],eventPlayer));
+
+
+
+
+///////////////////////////////////////////////////////////////
+define ftbl2_prev_pos: DotProduct(DirectionTowards(firstpos[z],firstpoint2[z]),DirectionTowards(firstpos[z],prevpos_intersection));
+define fttr2_prev_pos: DotProduct(DirectionTowards(firstpos[z],secondpoint2[z]),DirectionTowards(firstpos[z],prevpos_intersection));
+define stbl2_prev_pos: DotProduct(DirectionTowards(secondpos[z],firstpoint2[z]),DirectionTowards(secondpos[z],prevpos_intersection));
+define sttr2_prev_pos: DotProduct(DirectionTowards(secondpos[z],secondpoint2[z]),DirectionTowards(secondpos[z],prevpos_intersection));
+//////////////////////////////////////////////////////////////
+define ftbl_prev_pos: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(firstpos[z]),YOf(secondpos[z]),ZOf(firstpos[z]))),DirectionTowards(firstpos[z],prevpos_intersection));
+define fttr_prev_pos: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(firstpos[z],prevpos_intersection));
+define stbl_prev_pos: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(firstpos[z]),YOf(secondpos[z]),ZOf(firstpos[z]))),DirectionTowards(secondpos[z],prevpos_intersection));
+define sttr_prev_pos: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(secondpos[z],prevpos_intersection));

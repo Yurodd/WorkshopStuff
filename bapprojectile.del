@@ -1,0 +1,307 @@
+playervar define charging;
+playervar define maxSpeed;
+playervar define minSpeed;
+playervar define arrowPos;
+playervar define direction;
+playervar define mass;
+playervar define gravity;
+playervar define deltaTime;
+playervar define time;
+playervar define hasShot2;
+playervar define gravity_Velocity;
+globalvar define allpos;
+playervar define MyAllPos;
+playervar define myPoint;
+playervar define tempgrav = 0.3;
+rule: "Rule 3"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.SecondaryFire))
+{
+    //DestroyAllEffects();
+    charging = true;
+    //hasShot2 = false;
+    maxSpeed = 60;
+
+}
+
+// rule: "Rule 3"
+// Event.OngoingPlayer
+// if (IsFiringPrimary(EventPlayer()) == true)
+// {
+//     define aura;
+//     for(define x = 0; 10; 1)
+//     {
+//         aura[x] = (EyePosition()  + FacingDirectionOf() * 5 )+ Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)) * 1
+//     }
+//    while(IsFiringPrimary(EventPlayer()) == true)
+//    {
+//        for(define y = 0; 10; 1)
+//         {
+//             aura[y] = aura[y] + DirectionTowards(aura[y],EyePosition() + Vector(0,-0.1,0) + FacingDirectionOf() * 5) * 0.3
+//             PlayEffect(AllPlayers(Team.All), PlayEffect.RingExplosion, Color.Blue, aura[y], 0.3);
+//             if(DistanceBetween(aura[y],EyePosition() + Vector(0,-0.1,0) + FacingDirectionOf() * 5) <= 0.1)
+//             aura[y] = (EyePosition()  + FacingDirectionOf() * 5 )+ Vector(RandomReal(-1,1),RandomReal(-1,1),RandomReal(-1,1)) * 1
+//             Wait(0.016);
+//         }
+//        Wait(0.016);
+//    }
+// }
+
+rule: "Rule 1"
+Event.OngoingPlayer
+if (charging == true)
+{
+
+        arrowPos = EyePosition(EventPlayer());
+        direction = (FacingDirectionOf(EventPlayer()) + Vector(0,0.01 - (YOf(FacingDirectionOf())*0),0))  * maxSpeed;
+        mass = 1;
+        gravity = 20 + (YOf(FacingDirectionOf())*0.4);
+        deltaTime = 0.016;
+        time = 0;
+        hasShot2 = true;
+        //charging = false;
+        // CreateEffect(EventPlayer(), Effect.Sphere, Color.White, arrowPos + direction * deltaTime * 0.5, 0.2, EffectRev.VisibleToPositionAndRadius);
+        gravity_Velocity = Vector(0, -1 * gravity * mass, 0);
+        direction = direction + (gravity_Velocity / mass) * deltaTime;
+        arrowPos = arrowPos + direction * deltaTime;
+        time = time + deltaTime;
+            //Wait(0.016);
+        
+            charging = false;
+}
+
+rule: "Rule 2"
+Event.OngoingPlayer
+if (hasShot2 == true)
+if (DistanceBetween(arrowPos, PreProjectile()) >= 1 + minSpeed / 100)
+{
+    direction = direction + (gravity_Velocity / mass) * deltaTime;
+    arrowPos = arrowPos + direction * deltaTime;
+    time = time + deltaTime;
+    PlayEffect(AllPlayers(Team.All), PlayEffect.BadExplosion, Color.Blue, arrowPos, 0.05);
+    MinWait();
+    LoopIfConditionIsTrue();
+    //allpos[CountOf(allpos)] = PreProjectile();
+    // Teleport(EventPlayer(), arrowPos);
+    charging = false;
+    // Wait(1, WaitBehavior.IgnoreCondition);
+    // StopCamera(EventPlayer());
+    hasShot2 = false;
+}
+
+rule: "Rule 2"
+Event.OngoingPlayer
+if(hasShot2)
+if (IsTrueForAny(MyAllPos,DistanceBetween(ArrayElement(),PreProjectile())<=0.66 && ArrayElement() != Vector()))
+if (DistanceBetween(arrowPos, PreProjectile()) <= 1 + minSpeed / 100)
+{
+    define temptarget = FirstOf(SortedArray(MyAllPos,DistanceBetween(PreProjectile(),ArrayElement())));
+    define index = IndexOfArrayValue(MyAllPos,temptarget);
+    MyAllPos [index] = Vector();
+    PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Yellow,temptarget,5);
+    PlayEffect(AllPlayers(),PlayEffect.BuffImpactSound,Color.SkyBlue,EventPlayer(),70);
+     PlayEffect(AllPlayers(),PlayEffect.BuffImpactSound,Color.SkyBlue,temptarget,70);
+    myPoint++;
+    if(myPoint == 40)
+    {
+        BigMessage(AllPlayers(),<"<0> Has Found ALL ORBS!",EventPlayer()>);
+    }
+    //PlayEffect(AllPlayers(),PlayEffect.RingExplosionSound,Color.SkyBlue,temptarget,70);
+}
+
+rule: "Rule 4"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Crouch) == true)
+if (IsButtonHeld(EventPlayer(), Button.Reload) == true)
+{
+    PlayEffect(AllPlayers(),PlayEffect.GoodPickupEffect,Color.SkyBlue,EventPlayer(),70);
+    PlayEffect(AllPlayers(),PlayEffect.RingExplosionSound,Color.SkyBlue,EventPlayer(),70);
+    myPoint = 0;
+    MyAllPos = allpos;
+}
+
+
+
+rule: "Rule 4"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact) == true)
+{
+    StartCamera(EventPlayer(), arrowPos, arrowPos + direction * deltaTime * 1, 0);
+}
+
+rule: "Rule 5"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact) == false)
+{
+    StopCamera(EventPlayer());
+}
+
+rule: "Rule 5"
+Event.OngoingPlayer
+if (HasSpawned())
+{
+    CreateHudText(EventPlayer(),tempgrav * 10000);
+    CreateHudText(EventPlayer(),YOf(FacingDirectionOf()) * 10000);
+    //SetProjectileGravity(EventPlayer(),0);
+    //SetProjectileSpeed(EventPlayer(),10);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,arrowPos,0.3);
+}
+
+rule: "Rule 5"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    tempgrav -= 0.001;
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+}
+rule: "Rule 5"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Reload))
+{
+    tempgrav += 0.001;
+    Wait(0.016);
+    LoopIfConditionIsTrue();
+}
+// rule: "Rule 9"
+// Event.OngoingPlayer
+// if (IsCommunicatingAny())
+// {
+//     SmallMessage(EventPlayer(),"compile");
+//     EnableInspectorRecording();
+//     allpos = allpos;
+// }
+
+
+// rule: "Rule 7"
+// Event.OnDeath
+// if (IsDummyBot(EventPlayer()) == true)
+// {
+//     Resurrect(EventPlayer());
+// }
+
+rule: "Rule 9"
+Event.OngoingGlobal
+{
+    //CreateEffect(AllPlayers(), Effect.Sphere, Color.Yellow, PreProjectile(), 0.025, EffectRev.VisibleToPositionAndRadius);
+    //DisableInspectorRecording();
+    // for(define x =0; CountOf(allpos); 1)
+    // {
+
+    allpos = [Vector(-18.263, 17.622, -73.628), Vector(-34.604, 31.618, -93.512), Vector(-63.633, 39.324, -80.449), Vector(
+		-76.952, 39.113, -98.387), Vector(-41.979, 37.076, -59.286), Vector(-43.381, 32.981, -78.409), 
+		Vector(-31.883, 12.445, -29.238), Vector(-41.575, 17.189, -57.740), Vector(-23.852, 29.881, 0.016), Vector(-34.791,
+		38.793, -7.513), Vector(-47.406, 19.149, -50.179), Vector(8.072, 17.550, -38.695), Vector(-11.908, 18.044, -62.926), Vector(
+		-59.147, 44.555, -27.767), Vector(32.491, 11.683, -94.832), Vector(12.009, 17.505, -88.778), Vector(-1.483, 35.756, -97.665),
+		Vector(46.674, 32.396, -78.573), Vector(25.376, 19.415, -64.723), Vector(27.882, 27.324, -48.377), Vector(-48.504, 25.339,
+		-86.727), Vector(-100.423, 12.824, -132.068), Vector(-89.762, 14.662, -110.843), Vector(-34.651, 26.344, -68.809), Vector(
+		-47.051, 8.261, -85.184), Vector(-45.783, 11.251, -63.030), Vector(-41.722, 13.534, -132.412), Vector(-96.388, 25.498,
+		-124.360), Vector(43.009, 10, -61.147), Vector(-8.318, 16.155, -81.970), Vector(-60.746, 22.141, -116.808), Vector(-106.586,
+		6.850, -142.926), Vector(-47.921, 66.770, -120.438), Vector(23.127, 9, -67.931), Vector(-62.366, 71.080, -117.886), 
+        Vector(-88.671, 15.436, -100.235), Vector(-80.307, 14.764, -118.811),Vector(-23.15,6.98,-54.15),Vector(6.64,6.92,-49.71),Vector(-59.03,29.97,-109.51)];
+
+     CreateEffect(FilteredArray(AllPlayers(),allpos[0] == ArrayElement().MyAllPos[0]), Effect.Sphere, Color.Red, allpos[0], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[1] == ArrayElement().MyAllPos[1]), Effect.Sphere, Color.Red, allpos[1], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[2] == ArrayElement().MyAllPos[2]), Effect.Sphere, Color.Red, allpos[2], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[3] == ArrayElement().MyAllPos[3]), Effect.Sphere, Color.Red, allpos[3], 0.4, EffectRev.VisibleTo); 
+     CreateEffect(FilteredArray(AllPlayers(),allpos[4] == ArrayElement().MyAllPos[4]), Effect.Sphere, Color.Red, allpos[4], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[5] == ArrayElement().MyAllPos[5]), Effect.Sphere, Color.Red, allpos[5], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[6] == ArrayElement().MyAllPos[6]), Effect.Sphere, Color.Red, allpos[6], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[7] == ArrayElement().MyAllPos[7]), Effect.Sphere, Color.Red, allpos[7], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[8] == ArrayElement().MyAllPos[8]), Effect.Sphere, Color.Red, allpos[8], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[9] == ArrayElement().MyAllPos[9]), Effect.Sphere, Color.Red, allpos[9], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[10] == ArrayElement().MyAllPos[10]), Effect.Sphere, Color.Red, allpos[10], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[11] == ArrayElement().MyAllPos[11]), Effect.Sphere, Color.Red, allpos[11], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[12] == ArrayElement().MyAllPos[12]), Effect.Sphere, Color.Red, allpos[12], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[13] == ArrayElement().MyAllPos[13]), Effect.Sphere, Color.Red, allpos[13], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[14] == ArrayElement().MyAllPos[14]), Effect.Sphere, Color.Red, allpos[14], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[15] == ArrayElement().MyAllPos[15]), Effect.Sphere, Color.Red, allpos[15], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[16] == ArrayElement().MyAllPos[16]), Effect.Sphere, Color.Red, allpos[16], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[17] == ArrayElement().MyAllPos[17]), Effect.Sphere, Color.Red, allpos[17], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[18] == ArrayElement().MyAllPos[18]), Effect.Sphere, Color.Red, allpos[18], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[19] == ArrayElement().MyAllPos[19]), Effect.Sphere, Color.Red, allpos[19], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[20] == ArrayElement().MyAllPos[20]), Effect.Sphere, Color.Red, allpos[20], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[21] == ArrayElement().MyAllPos[21]), Effect.Sphere, Color.Red, allpos[21], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[22] == ArrayElement().MyAllPos[22]), Effect.Sphere, Color.Red, allpos[22], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[23] == ArrayElement().MyAllPos[23]), Effect.Sphere, Color.Red, allpos[23], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[24] == ArrayElement().MyAllPos[24]), Effect.Sphere, Color.Red, allpos[24], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[25] == ArrayElement().MyAllPos[25]), Effect.Sphere, Color.Red, allpos[25], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[26] == ArrayElement().MyAllPos[26]), Effect.Sphere, Color.Red, allpos[26], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[27] == ArrayElement().MyAllPos[27]), Effect.Sphere, Color.Red, allpos[27], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[28] == ArrayElement().MyAllPos[28]), Effect.Sphere, Color.Red, allpos[28], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[29] == ArrayElement().MyAllPos[29]), Effect.Sphere, Color.Red, allpos[29], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[30] == ArrayElement().MyAllPos[30]), Effect.Sphere, Color.Red, allpos[30], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[31] == ArrayElement().MyAllPos[31]), Effect.Sphere, Color.Red, allpos[31], 0.4, EffectRev.VisibleTo); 
+     CreateEffect(FilteredArray(AllPlayers(),allpos[32] == ArrayElement().MyAllPos[32]), Effect.Sphere, Color.Red, allpos[32], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[33] == ArrayElement().MyAllPos[33]), Effect.Sphere, Color.Red, allpos[33], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[34] == ArrayElement().MyAllPos[34]), Effect.Sphere, Color.Red, allpos[34], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[35] == ArrayElement().MyAllPos[35]), Effect.Sphere, Color.Red, allpos[35], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[36] == ArrayElement().MyAllPos[36]), Effect.Sphere, Color.Red, allpos[36], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[37] == ArrayElement().MyAllPos[37]), Effect.Sphere, Color.Red, allpos[37], 0.4, EffectRev.VisibleTo);   
+     CreateEffect(FilteredArray(AllPlayers(),allpos[38] == ArrayElement().MyAllPos[38]), Effect.Sphere, Color.Red, allpos[38], 0.4, EffectRev.VisibleTo);  
+     CreateEffect(FilteredArray(AllPlayers(),allpos[39] == ArrayElement().MyAllPos[39]), Effect.Sphere, Color.Red, allpos[39], 0.4, EffectRev.VisibleTo);
+      
+     //CreateInWorldText(AllPlayers(),"Deleted Orbs. Dont bother.",Vector())
+     
+    //}
+    //CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,FirstOf(SortedArray(allpos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition())))),1);
+}
+
+// rule: "Rule 9"
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Melee) == true)
+// {
+//     allpos = RemoveFromArray(allpos,FirstOf(SortedArray(allpos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition())))));
+//     DestroyAllEffects();
+//     Wait(0.016);
+//     for(define x =0; CountOf(allpos); 1)
+//     {
+//      CreateEffect(EventPlayer(), Effect.Sphere, Color.Red, allpos[x], 0.5, EffectRev.VisibleTo);   
+//     }
+//     CreateEffect(EventPlayer(),Effect.Sphere,Color.Green,FirstOf(SortedArray(allpos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition())))),1);
+// }
+
+// rule: "Rule 9"
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(), Button.Reload) == true)
+// {
+//     //newallpos [CountOf(newallpos)] = FirstOf(SortedArray(allpos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition()))));
+//     CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,FirstOf(SortedArray(allpos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition())))),1,EffectRev.None);
+// }
+
+rule: "Rule 9"
+Event.OngoingPlayer
+if (HasSpawned() && IsDummyBot() == false)
+{
+    MyAllPos = allpos;
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,PreProjectile(),0.1);
+    BigMessage(EventPlayer(),"Find and Pop ALL Red Bubbles!");
+    CreateHudText(AllPlayers(),null,<"<0> - <1>",EventPlayer(),myPoint>,null,Location.Left,10,Color.Orange);
+    CreateHudText(EventPlayer(),null,<"<0> / <1>",myPoint,CountOf(allpos)>,null,Location.Top,10);
+    CreateHudText(EventPlayer(),ServerLoad());
+    //CreateHudText(EventPlayer(),PreProjectile());
+    CreateHudText(EventPlayer(),null,"-Only latest arrow shot counts",null,Location.Right);
+    CreateHudText(EventPlayer(),null,"-Arrow must LAND inside the sphere for it to count",null,Location.Right);
+    CreateHudText(EventPlayer(),null,"-2 Out of Bound Orbs",null,Location.Right);
+    CreateHudText(EventPlayer(),null,"-Press Interact during arrow flight to Start Camera",null,Location.Right);
+    CreateHudText(EventPlayer(),null," \n\n\n\n-Press Crouch and Reload to restart",null,Location.Right);
+    CreateHudText(EventPlayer(),null," \n\n\n\nMade by: Yurodd",null,Location.Right,0,Color.Orange,Color.Orange);
+    
+}
+
+// rule: "Rule 9"
+// Event. OngoingGlobal
+// {
+//     if(CountOf(AllPlayers()) < 6)
+//     {
+//         for(define x = 0; 6 - CountOf(AllPlayers()); 1)
+//         {
+//             CreateDummyBot(Hero.Hanzo,Team.Team1,-1);
+//             CreateDummyBot(Hero.Hanzo,Team.Team2,-1);
+//         }
+//     }
+//     Wait(10);
+//     Loop();
+// }
+
+define PreProjectile(): RayCastHitPosition(arrowPos, arrowPos + direction * deltaTime * 1000, AllPlayers(Team.All), EventPlayer(), true);

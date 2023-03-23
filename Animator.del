@@ -1,0 +1,237 @@
+playervar define centerPos;
+playervar define u_a;
+playervar define u_b;
+playervar define cos_a;
+playervar define sin_a;
+playervar define cos_b;
+playervar define sin_b;
+playervar define rotationpos;
+playervar define allPos = EmptyArray();
+playervar define allDist= EmptyArray();
+playervar define allDir= EmptyArray();
+playervar define radius;
+playervar define init_dir;
+playervar define prev_rotation_value = 0;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    centerPos = eyecast5();
+    init_dir = FacingDirectionOf();
+    radius = 1;
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.White,centerPos,0.1,EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Green,rotationpos,0.1,EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,centerPos,rotationpos);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (centerPos!=0)
+{
+    rotationpos = eyecast5();
+    if(CountOf(allPos)>0)
+    {
+        if(IsButtonHeld(EventPlayer(),Button.PrimaryFire))
+        {
+         
+            for(define current =0;CountOf(allPos);1)
+            {
+            u_a=CrossProduct(DirectionTowards(centerPos,rotationpos),CrossProduct(DirectionTowards(centerPos,rotationpos),Down()))
+            cos_a = allDist[current]*CosineFromDegrees(allDir[current])*Normalize(CrossProduct(DirectionTowards(centerPos,rotationpos),Down()));
+            //sin_a = Vector();
+            sin_a = allDist[current]*SineFromDegrees(allDir[current])*u_a;
+            if(sin_a ==0)
+            {
+               sin_a = Vector(); 
+            }
+            u_b=CrossProduct(DirectionTowards(centerPos,rotationpos),CrossProduct(DirectionTowards(centerPos,rotationpos),Down()))
+            cos_b = allDist[current]*CosineFromDegrees(allDir[current])*Normalize(CrossProduct(DirectionTowards(centerPos,rotationpos),Down()));
+            sin_b = Vector();
+            //sin_b = allDist[current]*SineFromDegrees(180)*u_b;
+            //allPos[current] = (centerPos + cos_a + sin_b) + DirectionTowards(centerPos,rotationpos)*allDist[current] + DirectionTowards(centerPos,(centerPos + cos_a + sin_b))*allDist[current]
+            //allPos[current] = eyecast5() + Vector(1,0,1) * current;
+            //(centerPos + cos_a + sin_b)
+            allPos[current] = centerPos + DirectionTowards(centerPos, centerPos + cos_a + sin_a ) * allDist[current];
+            //allPos[current] = centerPos - allDir[current] + DirectionTowards(centerPos,(centerPos + cos_a + sin_b))*allDist[current];
+            }
+        }
+    }
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    allPos[CountOf(allPos)] = EyePosition()+FacingDirectionOf()*5;
+    allDist[CountOf(allDist)] = DistanceBetween(centerPos,allPos[CountOf(allPos)-1]);
+    //allDir[CountOf(allDir)] = centerPos - allPos[CountOf(allPos)-1] 
+    allDir[CountOf(allDir)] = AbsoluteValue(HorizontalAngleFromDirection(DirectionTowards(allPos[CountOf(allPos)-1],centerPos)));
+    SmallMessage(EventPlayer(),allDir[CountOf(allDir)-1]);
+    //allDir[CountOf(allDir)] = AngleBetweenVectors(centerPos,allPos[CountOf(allPos)-1]); 
+    if(CountOf(allPos == 1))
+    {
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[0],1,EffectRev.VisibleToPositionAndRadius);
+    }
+    else
+    {
+    Damage(EventPlayer(),EventPlayer(),CountOf(allPos));
+    }
+}
+
+rule: "Pathfind to cursor." //
+Event.OnDamageTaken
+{
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[EventDamage()-1],1,EffectRev.VisibleToPositionAndRadius);
+    SmallMessage(AllPlayers(),allDir[CountOf(allDir)-1]);
+    Heal(EventPlayer(),null,EventDamage()+1);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingGlobal
+{
+CreateHudText(AllPlayers(),ServerLoad());
+}
+
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned())
+{
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[0],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[1],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[2],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[3],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[4],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[5],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[6],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[7],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[8],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[9],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[10],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[11],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[12],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[13],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[14],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[15],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[16],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[17],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[18],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[19],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[20],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[21],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[22],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[23],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[24],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[25],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[26],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[27],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[28],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[29],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[30],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[31],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[32],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[33],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[34],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[35],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[36],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[37],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[38],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[39],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[40],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[41],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[42],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[43],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[44],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[45],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[46],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[47],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[48],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[49],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[50],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[51],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[52],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[53],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[54],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[55],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[56],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[57],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[58],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[59],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[60],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[61],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[62],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[63],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[64],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[65],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[66],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[67],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[68],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[69],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[70],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[71],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[72],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[73],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[74],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[75],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[76],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[77],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[78],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[79],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[80],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[81],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[82],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[83],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[84],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[85],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[86],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[87],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[88],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[89],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[90],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[91],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[92],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[93],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[94],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[95],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[96],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[97],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[98],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[99],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[100],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[101],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[102],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[103],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[104],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[105],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[106],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[107],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[108],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[109],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[110],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[111],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[112],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[113],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[114],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[115],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[116],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[117],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[118],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[119],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[120],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[121],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[122],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[123],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[124],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[125],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[126],0.1,EffectRev.VisibleToPositionAndRadius);
+CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,allPos[127],0.1,EffectRev.VisibleToPositionAndRadius);
+
+
+}
+
+
+
+define eyecast5(): EyePosition()+FacingDirectionOf()*5;

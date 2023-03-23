@@ -1,0 +1,88 @@
+
+playervar define pos = EmptyArray();
+playervar define dummy;
+playervar define path_Calculate = false;
+playervar define show_path;
+playervar define closest_node = EmptyArray();
+playervar define prev_node;
+playervar define initialized = false;
+playervar define bad_pos = EmptyArray();
+playervar define inside = false;
+playervar define alldots = EmptyArray();
+playervar define count = 0;
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(eventPlayer,Button.Interact))
+{
+    pos[CountOf(pos)] = RayCastHitPosition(EyePosition(),EyePosition() + FacingDirectionOf() * 100);
+    //pos[CountOf(pos)] = EyePosition() + FacingDirectionOf() * 5;
+    pos = MappedArray(pos,Vector(XOf(ArrayElement()),YOf(PositionOf()),ZOf(ArrayElement())));
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&& !IsDummyBot() && HostPlayer() == eventPlayer)
+{
+    Wait(5);
+    CreateHudText(eventPlayer,ServerLoad());
+    //CreateHudText(eventPlayer,count);
+    CreateHudText(eventPlayer,inside);
+    for(define z = 0; 128; 1)
+    {
+        Damage(eventPlayer,EventPlayer(),z);
+        Wait(0.016);
+    }
+
+    initialized = true;
+}
+
+rule: "Pathfind to cursor." //
+Event.OnDamageDealt
+{
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Red,Vector(XOf(pos[EventDamage()-1]),YOf(PositionOf()),ZOf(pos[EventDamage()-1])),0.3);
+    Heal(eventPlayer,eventPlayer,10000);
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (initialized)
+{
+
+    //pos = MappedArray(pos,Vector(XOf(ArrayElement()),YOf(PositionOf()),ZOf(ArrayElement())));
+    // count = 0;
+    // for(define x = 0; CountOf(pos); 1)
+    // {
+    //     define cross = CrossProduct(Up(),DirectionTowards(pos[x],pos[Modulo(x+1,CountOf(pos))]));
+    //     define intersection_length = DotProduct(pos[x] - Vector(XOf(EyePosition()),YOf(pos[x]),ZOf(EyePosition())),cross) / DotProduct(Vector(1,0,1) , cross);
+    //     if( intersection_length > 0 && DotProduct(DirectionTowards(pos[x],pos[Modulo(x+1,CountOf(pos))]), DirectionTowards(Vector(XOf(EyePosition()),YOf(pos[x]),ZOf(EyePosition())) + Vector(1,0,1) * intersection_length,pos[x])) != DotProduct(DirectionTowards(pos[x],pos[Modulo(x+1,CountOf(pos))]), DirectionTowards(Vector(XOf(EyePosition()),YOf(pos[x]),ZOf(EyePosition())) + Vector(1,0,1) * intersection_length,pos[Modulo(x+1,CountOf(pos))])))
+    //     {
+    //         count++;
+    //     }
+        
+    // }
+    // if(Modulo(count,2) == 1)
+    //  inside = true;
+    // else
+    // inside =  false;
+     count =0;
+    for(define x = 0; CountOf(pos); 1)
+    {
+        define angletopos = HorizontalAngleFromDirection(DirectionTowards(PositionOf(),pos[x]));
+        define angletonextpos = HorizontalAngleFromDirection(DirectionTowards(PositionOf(),pos[Modulo(x+1,CountOf(pos))]));
+        define dif = AngleDifference(angletopos,angletonextpos);
+        count = count + dif;
+    }
+    if(AbsoluteValue(count) > 359)
+    inside = true;
+    else
+    inside = false;
+
+    Wait(0.016);
+  Loop()
+}
+
+
+
+
+define eventPlayer: EventPlayer();

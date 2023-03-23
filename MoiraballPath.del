@@ -1,0 +1,58 @@
+playervar define eyepos;
+playervar define normal;
+playervar define initdir;
+playervar define pos;
+playervar define allpos;
+playervar define allnormal;
+playervar define reflectdir;
+playervar define backpos;
+
+
+
+rule: "Reset"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.PrimaryFire) && IsUsingAbility2())
+{
+    allpos = EmptyArray();
+    allnormal = EmptyArray();
+
+    eyepos = EyePosition();
+    initdir = FacingDirectionOf();
+
+    allpos[CountOf(allpos)] = RayCastHitPosition(eyepos, eyepos + initdir * 100);
+    allnormal[CountOf(allnormal)] = RayCastHitNormal(eyepos, eyepos + initdir * 100);
+    reflectdir = initdir - 2 * (DotProduct(initdir,allnormal[CountOf(allnormal)-1])) * allnormal[CountOf(allnormal)-1];
+
+    for(define current = 1; 9;1)
+    {
+    backpos = allpos[current-1] + initdir * -0.5;
+    allpos[current] = RayCastHitPosition(backpos, backpos + reflectdir * 100);
+    initdir = DirectionTowards(backpos,allpos[current]);
+    allnormal[current] = RayCastHitNormal(backpos, backpos + reflectdir * 100);
+    reflectdir = initdir - 2 * (DotProduct(initdir,allnormal[current])) * allnormal[current];
+    
+    MinWait();
+    //CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[current-1],allpos[current],Color.Aqua,EffectRev.VisibleToPositionAndRadius);
+    }
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if (HasSpawned())
+{
+    SetProjectileSpeed(EventPlayer(),10);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,EventPlayer(), RayCastHitPosition(EyePosition(),EyePosition()+FacingDirectionOf()*100));
+
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,RayCastHitPosition(EyePosition(),EyePosition()+FacingDirectionOf()*100), RayCastHitPosition(EyePosition(),EyePosition()+FacingDirectionOf()*100) + (FacingDirectionOf() - 2 * (DotProduct(FacingDirectionOf(),RayCastHitNormal(EyePosition(),EyePosition()+FacingDirectionOf()*100))) * RayCastHitNormal(EyePosition(),EyePosition()+FacingDirectionOf()*100)) * 100);
+
+    /* CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,EventPlayer(),allpos[0]);
+
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[0],allpos[1]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[1],allpos[2]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[2],allpos[3]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[3],allpos[4]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[4],allpos[5]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[5],allpos[6]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[7],allpos[8]);
+    CreateBeamEffect(AllPlayers(),BeamType.GrappleBeam,allpos[8],allpos[9]); */
+}

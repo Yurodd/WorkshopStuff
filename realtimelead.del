@@ -1,0 +1,260 @@
+
+
+playervar define  aimspot;
+globalvar define  dummy;
+playervar define  projectile_speed = 50;
+playervar define  t;
+playervar define  minspeed;
+playervar define  maxspeed;
+playervar define projectilepos;
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot())
+{
+    CreateHudText(EventPlayer(),projectile_speed);
+    CreateHudText(EventPlayer(),VelocityOf(dummy));
+    CreateHudText(EventPlayer(),t);
+    CreateBeamEffect(EventPlayer(),BeamType.GrappleBeam,aimspot,aimspot+DirectionTowards(aimspot,EyePosition())*(DistanceBetween(EyePosition(),aimspot)/2));
+    CreateDummyBot(Hero.Hanzo,Team.All,-1);
+    dummy = LastCreatedEntity();
+    //dummy = PlayerClosestToReticle(EventPlayer(),Team.All)
+    SetDamageReceived(AllPlayers(),1);
+    //SetMaxHealth(dummy,10000);
+    CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,aimspot,0.2);
+   // CreateEffect(AllPlayers(),Effect.Sphere,Color.Yellow,projectilepos,0.2);
+    //StartFacing(EventPlayer(),DirectionTowards(EyePosition(),aimspot),10000)
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsDummyBot())
+{
+    StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),EyePosition()+Vector(0,0,1)),1)
+    Wait(5);
+    StartThrottleInDirection(EventPlayer(),DirectionTowards(EyePosition(),EyePosition()+Vector(0,0,-1)),1)
+    Wait(5);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot()&&HeroOf()==Hero.Ana)
+{
+    projectile_speed = 27;
+     dummy = PlayerClosestToReticle(EventPlayer(),Team.All)
+     define a = projectile_speed * projectile_speed - DotProduct(VelocityOf(dummy),VelocityOf(dummy));
+     define b = DotProduct(VelocityOf(dummy),PositionOf(dummy)-EyePosition());
+     define c = DotProduct(PositionOf(dummy)-EyePosition(),PositionOf(dummy)-EyePosition());
+
+     define d = b*b + a*c;
+
+    if (d >= 0)
+    {
+        t = (b + SquareRoot(d)) / a;
+        if (t < 0)
+            t = 0;
+    }
+        //aimspot = PositionOf(dummy) + VelocityOf(dummy) * t
+         aimspot = PositionOf(dummy) + VelocityOf(dummy) * t + 0.5*Vector(0,8,0)*t^2;  //LEAD WITH GRAVITY
+        Wait(0.016);
+        LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot()&&HeroOf()==Hero.Hanzo)
+{
+    projectile_speed = 70;
+    dummy = PlayerClosestToReticle(EventPlayer(),Team.All)
+     //projectile_speed = minspeed;
+     define a = projectile_speed * projectile_speed - DotProduct(VelocityOf(dummy),VelocityOf(dummy));
+     define b = DotProduct(VelocityOf(dummy),EyePosition(dummy)-EyePosition());
+     define c = DotProduct(EyePosition(dummy)-EyePosition(),EyePosition(dummy)-EyePosition());
+
+     define d = b*b + a*c;
+
+    if (d >= 0)
+    {
+        t = (b + SquareRoot(d)) / a;
+        if (t < 0)
+            t = 0;
+    }
+        //aimspot = PositionOf(dummy) + VelocityOf(dummy) * t
+         aimspot = EyePosition(dummy) + VelocityOf(dummy) * t + 0.5*Vector(0,3.1,0)*t^2;  //LEAD WITH GRAVITY
+
+
+        Wait(0.016);
+        LoopIfConditionIsTrue();
+}
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (HasSpawned()&&!IsDummyBot()&&HeroOf()==Hero.Mei)
+// {
+//     projectile_speed = 75;
+//      define a = projectile_speed * projectile_speed - DotProduct(VelocityOf(dummy),VelocityOf(dummy));
+//      define b = DotProduct(VelocityOf(dummy),PositionOf(dummy)-EyePosition());
+//      define c = DotProduct(PositionOf(dummy)-EyePosition(),PositionOf(dummy)-EyePosition());
+
+//      define d = b*b + a*c;
+
+//     if (d >= 0)
+//     {
+//         t = (b + SquareRoot(d)) / a;
+//         if (t < 0)
+//             t = 0;
+//     }
+//         aimspot = EyePosition(dummy) + VelocityOf(dummy) * t
+//          //aimspot = PositionOf(dummy) + VelocityOf(dummy) * t + 0.5*Vector(0,9.8,0)*t^2;  //LEAD WITH GRAVITY
+//         Wait(0.016);
+//         LoopIfConditionIsTrue();
+// }
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot()&&HeroOf()==Hero.Mei)
+{
+ projectile_speed = 66;
+      //dummy = ClosestPlayerTo(EventPlayer(),Team.All)
+//      //projectile_speed = minspeed;
+//      define a = projectile_speed * projectile_speed - DotProduct(VelocityOf(dummy),VelocityOf(dummy));
+//      define b = DotProduct(VelocityOf(dummy),EyePosition(dummy)-EyePosition());
+//      define c = DotProduct(EyePosition(dummy)-EyePosition(),EyePosition(dummy)-EyePosition());
+
+//      define d = b*b + a*c;
+
+//     if (d >= 0)
+//     {
+//         t = (b + SquareRoot(d)) / a;
+//         if (t < 0)
+//             t = 0;
+//     }
+
+ //t = DistanceBetween(Vector(),EyePosition() - EyePosition(dummy)) / projectile_speed;
+
+define totarget =  EyePosition(dummy) - EyePosition();
+
+define a = DotProduct(VelocityOf(dummy), VelocityOf(dummy)) - (projectile_speed * projectile_speed);
+define b = -2 * DotProduct(VelocityOf(dummy), totarget);
+define c = DotProduct(totarget, totarget);
+
+define p = -b / (2 * a);
+define q = SquareRoot((b * b) - 4 * a * c) / (2 * a);
+
+define t1 = p - q;
+define t2 = p + q;
+
+if (t1 > t2 && t2 > 0)
+{
+    t = t2;
+}
+else
+{
+    t = t1;
+}
+
+     aimspot = EyePosition(dummy) + VelocityOf(dummy) * t 
+        Wait(0.016);
+        LoopIfConditionIsTrue();
+}
+
+
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (HasSpawned()&&!IsDummyBot()&&HeroOf()==Hero.Genji)
+{
+ projectile_speed = 40;
+
+define totarget =  EyePosition(dummy) - EyePosition();
+
+define a = DotProduct(VelocityOf(dummy), VelocityOf(dummy)) - (projectile_speed * projectile_speed);
+define b = -2 * DotProduct(VelocityOf(dummy), totarget);
+define c = DotProduct(totarget, totarget);
+
+define p = -b / (2 * a);
+define q = SquareRoot((b * b) - 4 * a * c) / (2 * a);
+
+define t1 = p - q;
+define t2 = p + q;
+
+if (t1 > t2 && t2 > 0)
+{
+    t = t2;
+}
+else
+{
+    t = t1;
+}
+
+     aimspot = EyePosition(dummy) + VelocityOf(dummy) * t 
+        Wait(0.016);
+        LoopIfConditionIsTrue();
+}
+
+
+// rule: "Pathfind to cursor." //Pull Bow
+// Event.OngoingPlayer
+// if (IsFiringPrimary()&&!IsDummyBot()&&HeroOf()==Hero.Hanzo)
+// {
+//     minspeed = 20;
+//     maxspeed = 85;
+//     ChaseVariableOverTime(minspeed,maxspeed,0.727,TimeChaseReevaluation.DestinationAndDuration);  
+// }
+
+// rule: "Pathfind to cursor." //Pull Bow
+// Event.OngoingPlayer
+// if (!IsFiringPrimary()&&!IsDummyBot()&&HeroOf()==Hero.Hanzo)
+// {
+//     ChaseVariableOverTime(minspeed,30,0.727,TimeChaseReevaluation.DestinationAndDuration);  
+// }
+
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    projectile_speed = projectile_speed - 0.1;
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Jump))
+{
+    projectile_speed = projectile_speed + 0.1;
+    Wait(0.1);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact))
+{
+    StartCamera(EventPlayer(),EyePosition(dummy) + Vector(0,5,0),dummy,100);
+    while (IsButtonHeld(EventPlayer(),Button.Interact))
+    {
+        Wait(0.016);
+    }
+    StopCamera();
+}
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (IsButtonHeld(EventPlayer(),Button.Interact))
+// {
+//     StopChasingVariable(projectilepos);
+//     projectilepos = EyePosition();
+//     ChaseVariableAtRate(projectilepos,EyePosition() + FacingDirectionOf() * 100, projectile_speed,RateChaseReevaluation.DestinationAndRate);
+// }
+
+// rule: "Pathfind to cursor." //
+// Event.OngoingPlayer
+// if (DistanceBetween(projectilepos,EyePosition(dummy))<0.2)
+// {
+//     SmallMessage(AllPlayers(),"HIT");
+// }

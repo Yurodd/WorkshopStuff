@@ -1,0 +1,56 @@
+playervar define rays;
+playervar define range;
+playervar define closestpos;
+playervar define dummy;
+playervar define vistednodes;
+playervar define goodnodes;
+rule: "Reset"
+Event.OngoingPlayer
+if(HasSpawned() && !IsDummyBot())
+{
+    CreateHudText(eventPlayer,ServerLoad());
+    CreateHudText(eventPlayer,SpeedOf());
+    CreateEffect(eventPlayer,Effect.Sphere,Color.Red,closestpos,0.3);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,eventPlayer,rays[24]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,eventPlayer,rays[25])
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,eventPlayer,rays[64])
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,eventPlayer,rays[65])
+    CreateDummyBot(Hero.Ana,Team.Team1,-1,NearestWalkablePosition(eventPlayer + Vector(RandomInteger(-30,30),RandomInteger(-30,30),RandomInteger(-30,30))))
+    dummy = LastCreatedEntity();
+    CreateIcon(eventPlayer,dummy)
+    Wait(1);
+    Teleport(dummy,NearestWalkablePosition(eventPlayer + Vector(RandomInteger(-30,30),YOf(eventPlayer),RandomInteger(-30,30))))
+    while (true)
+    {
+        for(define i = 0; 89; 1)
+        {
+            rays[i] = RayCastHitPosition(eyepos,eyepos + DirectionFromAngles( HorizontalAngleFromDirection(CrossProduct(facedir, Up())) + (i * 2), 0) * 100)
+            if(IsTrueForAny(vistednodes,DistanceBetween(rays[i],ArrayElement()) < 2))
+            {
+            define tempray = rays[i];
+            rays[i] = RayCastHitPosition(eyepos,eyepos + DirectionTowards(tempray, eventPlayer) * 100,null,null)
+            }
+        }
+        rays[CountOf(rays)] = RayCastHitPosition(eyepos,eyepos + DirectionFromAngles(HorizontalAngleFromDirection(facedir) + RandomInteger(-90,90),0)  * -100)
+        define shortest = ArraySlice(SortedArray(FilteredArray(rays,!IsInLineOfSight(ArrayElement(),ArrayElement() + Vector(0,-3,0))),DistanceBetween(ArrayElement(),dummy)),0,20)
+        //closestpos = RandomValueInArray(SortedArray(shortest,DistanceBetween(ArrayElement(),eventPlayer)))
+        closestpos = RandomValueInArray(SortedArray(shortest,DistanceBetween(eventPlayer,ArrayElement())));
+        if(DistanceBetween(eventPlayer,closestpos) < 2 || SpeedOf() < 2)
+        {
+        PressButton(eventPlayer,Button.Jump)
+        define longest =  ArraySlice(SortedArray(FilteredArray(rays,!IsInLineOfSight(ArrayElement(),ArrayElement() + Vector(0,-3,0))),DistanceBetween(ArrayElement(),eventPlayer)),CountOf(rays)-20,20)
+        closestpos = RandomValueInArray(longest);
+        vistednodes[CountOf(vistednodes)] = closestpos;
+        }
+        StartThrottleInDirection(eventPlayer,DirectionTowards(PositionOf(),closestpos),1);
+        StartFacing(eventPlayer,DirectionTowards(eyepos,closestpos),100)
+        if(DistanceBetween(eventPlayer,dummy) < 5)
+        Teleport(dummy,NearestWalkablePosition(eventPlayer + Vector(RandomInteger(-30,30),YOf(eventPlayer),RandomInteger(-30,30))))
+        vistednodes = FilteredArray(vistednodes,DistanceBetween(eventPlayer,ArrayElement()) < 10);
+        Wait(0.3);
+    }
+}
+
+define eventPlayer: EventPlayer();
+define eyepos: EyePosition();
+define facedir: FacingDirectionOf();

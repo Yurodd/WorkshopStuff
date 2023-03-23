@@ -1,0 +1,364 @@
+playervar define corners;
+playervar define object;
+playervar define object2;
+playervar define ghostObject;
+playervar define intersection_length_0;
+playervar define intersection_length_1;
+playervar define intersection;
+globalvar define size = 2;
+playervar define temppos;
+playervar define degree;
+playervar define initiated;
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(eventPlayer,Button.Interact))
+{
+    corners[0][0] = EyePosition() + WorldVectorOf(Vector(size,size,5),eventPlayer);
+    corners[0][1] = EyePosition() + WorldVectorOf(Vector(-size,size,5),eventPlayer);
+    corners[0][2] = EyePosition() + WorldVectorOf(Vector(-size,-size,5),eventPlayer);
+    corners[0][3] = EyePosition() + WorldVectorOf(Vector(size,-size,5),eventPlayer);
+    corners[0][4] = (corners[0][0] + corners[0][2]) / 2;
+    corners[0][5] = FacingDirectionOf() * Vector(1,0,1);
+
+    corners[1][0] = EyePosition() + WorldVectorOf(Vector(size,size,5 + (size*2)),eventPlayer);
+    corners[1][1] = EyePosition() + WorldVectorOf(Vector(size,size,5),eventPlayer);
+    corners[1][2] = EyePosition() + WorldVectorOf(Vector(size,-size,5),eventPlayer);
+    corners[1][3] = EyePosition() + WorldVectorOf(Vector(size,-size,5 + (size*2)),eventPlayer);
+    corners[1][4] = (corners[1][0] + corners[1][2]) / 2;
+    corners[1][5] = DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf()) - 90,VerticalAngleFromDirection(FacingDirectionOf()));
+
+    corners[2][0] = EyePosition() + WorldVectorOf(Vector(-size,size,5),eventPlayer);
+    corners[2][1] = EyePosition() + WorldVectorOf(Vector(-size,size,5 + (size*2)),eventPlayer);
+    corners[2][2] = EyePosition() + WorldVectorOf(Vector(-size,-size,5 + (size*2)),eventPlayer);
+    corners[2][3] = EyePosition() + WorldVectorOf(Vector(-size,-size,5),eventPlayer);
+    corners[2][4] = (corners[2][0] + corners[2][2]) / 2;
+    corners[2][5] = DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf()) + 90,VerticalAngleFromDirection(FacingDirectionOf()));
+
+    corners[3][0] = EyePosition() + WorldVectorOf(Vector(-size,size,5 + (size*2)),eventPlayer);
+    corners[3][1] = EyePosition() + WorldVectorOf(Vector(size,size,5 + (size*2)),eventPlayer);
+    corners[3][2] = EyePosition() + WorldVectorOf(Vector(size,-size,5 + (size*2)),eventPlayer);
+    corners[3][3] = EyePosition() + WorldVectorOf(Vector(-size,-size,5 + (size*2)),eventPlayer);
+    corners[3][4] = (corners[3][0] + corners[3][2]) / 2;
+    corners[3][5] = (FacingDirectionOf() * Vector(1,0,1)) * -1;
+    WaitUntil(!IsButtonHeld(eventPlayer,Button.Interact),999);
+
+    while(!IsButtonHeld(eventPlayer,Button.Interact))
+    {
+        
+/////////////////////////////Object1////////////////////////////////////////////////////////////////////
+        object[0][0] = WorldVectorForPosition(Vector(0.5,0.5,(size*2)/2),corners[0][4],corners[0][5]);
+         object[0][1] =  WorldVectorForPosition(Vector(-0.5,0.5,(size*2)/2),corners[0][4],corners[0][5]);
+
+        object[0][2] = WorldVectorForPosition(Vector(0.5,-0.5,(size*2)/2),corners[0][4],corners[0][5]);
+         object[0][3] =  WorldVectorForPosition(Vector(-0.5,-0.5,(size*2)/2),corners[0][4],corners[0][5]);
+
+         object[0][4] = object[0][0] + Vector(0,0,0.001);
+         object[0][5] = object[0][2];
+
+         object[0][6] = object[0][1]+ Vector(0,0,0.001);
+         object[0][7] =  object[0][3];
+
+////////////////////number1//////////////////////////////////////////////////////////
+        //  object[0][8] = WorldVectorForPosition(Vector(0.5,0.5,(size*2)-0.01),corners[0][4],corners[0][5]);
+        //  object[0][9] =  WorldVectorForPosition(Vector(0,1,(size*2)-0.01),corners[0][4],corners[0][5]);
+
+        //  object[0][10] = WorldVectorForPosition(Vector(0.001,1,(size*2)-0.01),corners[0][4],corners[0][5]);
+        //  object[0][11] = WorldVectorForPosition(Vector(0,-0.8,(size*2)-0.01),corners[0][4],corners[0][5]);
+
+        //  object[0][12] = WorldVectorForPosition(Vector(0.7,-0.8,(size*2)-0.01),corners[0][4],corners[0][5]);
+        //  object[0][13] = WorldVectorForPosition(Vector(-0.7,-0.8,(size*2)-0.01),corners[0][4],corners[0][5]);
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////object0 X////////////////////////////////////////////
+            // object[0][8] = WorldVectorForPosition(Vector(2,-2,(size*2)-0.001),corners[0][4],corners[0][5]);
+            //  object[0][9] = WorldVectorForPosition(Vector(-2,2,(size*2)-0.001),corners[0][4],corners[0][5]);
+            //   object[0][10] = WorldVectorForPosition(Vector(2,2,(size*2)-0.001),corners[0][4],corners[0][5]);
+            //  object[0][11] = WorldVectorForPosition(Vector(-2,-2,(size*2)-0.001),corners[0][4],corners[0][5]);
+
+
+
+            //   object[0][14] = WorldVectorForPosition(Vector(1.998,1,0),corners[0][4],corners[0][5]);
+            //  object[0][15] = WorldVectorForPosition(Vector(1.999,-2,(size*2)),corners[0][4],corners[0][5]);
+
+//////////////////////////////////////////////////////////////////////////////////
+         
+/////////////////////////////Object1////////////////////////////////////////////////////////////////////
+
+/////////////////////////////Object2////////////////////////////////////////////////////////////////////
+        object[1][0] = WorldVectorForPosition(Vector(0.5,0.5,(size*2)/2),corners[1][4],corners[1][5]);
+         object[1][1] =  WorldVectorForPosition(Vector(-0.5,0.5,(size*2)/2),corners[1][4],corners[1][5]);
+
+         object[1][2] = WorldVectorForPosition(Vector(0.5,-0.5,(size*2)/2),corners[1][4],corners[1][5]);
+         object[1][3] =  WorldVectorForPosition(Vector(-0.5,-0.5,(size*2)/2),corners[1][4],corners[1][5]);
+
+/////////////////////////////Object2////////////////////////////////////////////////////////////////////
+
+/////////////////////////////Object3////////////////////////////////////////////////////////////////////
+         object[2][0] = WorldVectorForPosition(Vector(0,0.5,(size*2)/2),corners[2][4],corners[2][5]);
+         object[2][1] =  WorldVectorForPosition(Vector(-0.5,-0.5,(size*2)/2),corners[2][4],corners[2][5]);
+
+         object[2][2] = WorldVectorForPosition(Vector(0.5,-0.5,(size*2)/2),corners[2][4],corners[2][5]);
+         object[2][3] =  WorldVectorForPosition(Vector(0,0.5,(size*2)/2),corners[2][4],corners[2][5]);
+
+         object[2][4] = WorldVectorForPosition(Vector(0.5,-0.5,(size*2)/2),corners[2][4],corners[2][5]);
+         object[2][5] =  WorldVectorForPosition(Vector(-0.5,-0.5,(size*2)/2),corners[2][4],corners[2][5]);
+
+/////////////////////////////Object3////////////////////////////////////////////////////////////////////
+
+
+        //  object[2][0] = WorldVectorForPosition(Vector(1,1,(size*2)/2),corners[1][4],corners[1][5]);
+        //  object[2][1] =  WorldVectorForPosition(Vector(2,1,(size*2)/2),corners[1][4],corners[1][5]);
+
+        //  object[2][2] = WorldVectorForPosition(Vector(0.8,1,(size*2)/2),corners[1][4],corners[1][5]);
+        //  object[2][3] =  WorldVectorForPosition(Vector(1.8,0.5,(size*2)/2),corners[1][4],corners[1][5]);
+
+        //  object[2][4] = WorldVectorForPosition(Vector(0.6,1,(size*2)/2),corners[1][4],corners[1][5]);
+        //  object[2][5] =   WorldVectorForPosition(Vector(1.2,-0.5,(size*2)/2),corners[1][4],corners[1][5]);
+         
+        //  object[2][6] = WorldVectorForPosition(Vector(0.4,1,(size*2)/2),corners[1][4],corners[1][5]);
+        //  object[2][7] = WorldVectorForPosition(Vector(1,-0.2,(size*2)/2),corners[1][4],corners[1][5]);
+
+/////////////////////////////Object3////////////////////////////////////////////////////////////////////
+
+        if(degree >= 360)
+        degree = 0;
+        
+        degree += 2;
+
+                  for (define d2 = 0; 8; 1)
+                 {
+                    object[0][d2] = WorldVectorForPosition(Vector(SineFromDegrees(degree),CosineFromDegrees(degree),0), object[0][d2],corners[0][5]);
+                 }
+
+
+                 for (define d2 = 0; CountOf(object[1]); 1)
+                 {
+                    object[1][d2] = WorldVectorForPosition(Vector(SineFromDegrees(degree),0,0), object[1][d2],corners[1][5]);
+                 }
+
+
+                //   for (define d2 = 0; CountOf(object[2]); 1)
+                //  {
+                //     object[2][d2] = WorldVectorForPosition(Vector(CosineFromDegrees(degree),SineFromDegrees(degree),0), object[1][d2],corners[1][5]);
+                //  }
+
+                
+        
+
+
+         for(define count2 =0; 4 ; 1)
+         {
+             for(define count = 0; CountOf(object[count2]); 2)
+             {
+            // define intersection_length = DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(DirectionTowards(lastsavedpos,fullbodypos) , AllDir[z]);
+             //prevpos_intersection = fullbodypos + (DirectionTowards(lastsavedpos,fullbodypos)* Vector(1,0,1)) * intersection_length;
+                for(define wallCount = 0; 2; 1)
+             {
+                 if(wallCount == 0)
+                 {
+                     intersection_length_0[count2][count] = DotProduct(futurePos - object[count2][count],CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up())) / DotProduct(DirectionTowards(object[count2][count],object[count2][count + 1]) , CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up()));
+                     intersection_length_0[count2][count + 1] = DotProduct(futurePos - object[count2][count + 1],CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up())) / DotProduct(DirectionTowards(object[count2][count + 1],object[count2][count]) , CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up()));
+                     //intersection_length_1[count2][count] = DotProduct(futurePos - object[count2][count + 1],CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up())) / DotProduct(DirectionTowards(object[count2][count + 1],object[count2][count]) , CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up()));
+                   
+                        if(intersection_length_0[count2][count] < DistanceBetween(object[count2][count],object[count2][count+1]) && 
+                       intersection_length_0[count2][count] > 0)
+                        object[count2][count] = object[count2][count] + DirectionTowards(object[count2][count],object[count2][count + 1]) * intersection_length_0[count2][count];
+                        
+                    
+                       
+
+                 }
+                 else
+                 {
+
+                     intersection_length_1[count2][count] = DotProduct(futurePos - object[count2][count],CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up())) / DotProduct(DirectionTowards(object[count2][count],object[count2][count + 1]) , CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up()));
+                     intersection_length_1[count2][count+1] = DotProduct(futurePos - object[count2][count + 1],CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up())) / DotProduct(DirectionTowards(object[count2][count + 1],object[count2][count]) , CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up()));
+                     //intersection_length_1[count2][count] = DotProduct(futurePos - object[count2][count + 1],CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up())) / DotProduct(DirectionTowards(object[count2][count + 1],object[count2][count]) , CrossProduct(DirectionTowards(futurePos,corners[count2][wallCount]) * Vector(1,0,1),Up()));
+                   
+                        if(intersection_length_1[count2][count + 1] < DistanceBetween(object[count2][count],object[count2][count+1]) &&
+                         intersection_length_1[count2][count + 1] > 0)
+                        object[count2][count + 1] = object[count2][count + 1] + DirectionTowards(object[count2][count + 1],object[count2][count]) * intersection_length_1[count2][count + 1];
+                 }
+             }
+               
+
+
+            //   define intersection_length = DotProduct(corners[count2][4] - object[count2][count],corners[count2][5]) / DotProduct(DirectionTowards(object[count2][count],futurePos) , corners[count2][5]);
+            //   intersection[count2][count] = object[count2][count] + DirectionTowards(object[count2][count],futurePos) * intersection_length;
+                 
+            //     if(DotProduct(DirectionTowards(corners[count2][0],corners[count2][1]),DirectionTowards(corners[count2][0],intersection[count2][count])) <= 0)
+            //     {
+                    
+
+            //         object[count2][count] = Vector(XOf(corners[count2][0]),YOf(object[count2][count]),ZOf(corners[count2][0])) + DirectionTowards(futurePos,Vector(XOf(corners[count2][0]),YOf(futurePos),ZOf(corners[count2][0]))) * DistanceBetween(Vector(XOf(corners[count2][0]),YOf(object[count2][count]),ZOf(corners[count2][0])),object[count2][count]);
+            //         //object[count] = Vector(XOf(corners[0]),YOf(corners[4]),ZOf(corners[0]));
+            //     }
+            //     else if(DotProduct(DirectionTowards(corners[count2][1],corners[count2][0]),DirectionTowards(corners[count2][1],intersection[count2][count])) <= 0) 
+            //     {
+            //         object[count2][count] = Vector(XOf(corners[count2][1]),YOf(object[count2][count]),ZOf(corners[count2][1])) + DirectionTowards(futurePos,Vector(XOf(corners[count2][1]),YOf(futurePos),ZOf(corners[count2][1]))) * DistanceBetween(Vector(XOf(corners[count2][1]),YOf(object[count2][count]),ZOf(corners[count2][1])),object[count2][count]);
+            //         //object[count] = Vector(XOf(corners[1]),YOf(corners[4]),ZOf(corners[1]));
+            //     }
+             }
+
+         }
+        Wait(0.016);
+        initiated = true;
+    }
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (initiated)
+{
+    //=SetMoveSpeed(eventPlayer,10);
+
+    CreateHudText(eventPlayer,ServerLoad());
+
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[0][0],corners[0][1]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[0][1] + Vector(0,0,0.001),corners[0][2]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[0][2],corners[0][3]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[0][3]+ Vector(0,0,0.001),corners[0][0]);
+
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[1][0],corners[1][1]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[1][1] + Vector(0,0,0.001),corners[1][2]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[1][2],corners[1][3]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[1][3]+ Vector(0,0,0.001),corners[1][0]);
+
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[2][0],corners[2][1]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[2][1] + Vector(0,0,0.001),corners[2][2]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[2][2],corners[2][3]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[2][3]+ Vector(0,0,0.001),corners[2][0]);
+
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[3][0],corners[3][1]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[3][1] + Vector(0,0,0.001),corners[3][2]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[3][2],corners[3][3]);
+    CreateBeamEffect(eventPlayer,BeamType.GrappleBeam,corners[3][3]+ Vector(0,0,0.001),corners[3][0]);
+
+    //  CreateBeamEffect(AllPlayers(),BeamType.BadBeam,corners[0][0],object[0][0]);
+    // CreateBeamEffect(AllPlayers(),BeamType.BadBeam,corners[0][1],object[0][1]);
+    // CreateBeamEffect(AllPlayers(),BeamType.BadBeam,corners[0][2],object[0][1]);
+    // CreateBeamEffect(AllPlayers(),BeamType.BadBeam,corners[0][3],object[0][0]);
+
+
+
+
+
+/////////////////////////////Object1////////////////////////////////////////////////////////////////////
+for(define wallCount = 0; 4;1)
+{
+    for(define objectCount = 0; CountOf(object[wallCount]); 2)
+    {
+        // CreateBeamEffect(FilteredArray(eventPlayer,
+        // (DotProduct(CrossProduct(DirectionTowards(futurePos,corners[0][0]) * Vector(1,0,1),Down()),DirectionTowards(object[0][EvaluateOnce(objectCount)],corners[0][0])) > 0 ||
+        //  DotProduct(CrossProduct(DirectionTowards(futurePos,corners[0][0]) * Vector(1,0,1),Down()),DirectionTowards(object[0][EvaluateOnce(objectCount + 1)],corners[0][0])) > 0) &&
+        //  (DotProduct(CrossProduct(DirectionTowards(futurePos,corners[0][1]) * Vector(1,0,1),Up()),DirectionTowards(object[0][EvaluateOnce(objectCount)],corners[0][1])) > 0 ||
+        //  DotProduct(CrossProduct(DirectionTowards(futurePos,corners[0][1]) * Vector(1,0,1),Up()),DirectionTowards(object[0][EvaluateOnce(objectCount + 1)],corners[0][1])) > 0) && 
+        //  DotProduct(DirectionTowards(corners[0][4],futurePos) * Vector(1,0,1),corners[0][5]) < 0
+        // ),BeamType.BadBeam,object[0][EvaluateOnce(objectCount)],object[0][EvaluateOnce(objectCount + 1)],Color.Aqua);
+        if(wallCount == 0  && objectCount >=8)
+        {
+        CreateBeamEffect(FilteredArray(eventPlayer,
+
+        (intersection_length_0[EvaluateOnce(wallCount)][EvaluateOnce(objectCount + 1)] > 0 &&   
+        intersection_length_1[EvaluateOnce(wallCount)][EvaluateOnce(objectCount)] > 0) && 
+        DotProduct(DirectionTowards(corners[EvaluateOnce(wallCount)][4],EyePosition()) * Vector(1,0,1) ,corners[EvaluateOnce(wallCount)][5]) < 0
+
+        ),BeamType.GrappleBeam,object[EvaluateOnce(wallCount)][EvaluateOnce(objectCount)],object[EvaluateOnce(wallCount)][EvaluateOnce(objectCount + 1)],Color.Red);
+        }
+        else
+        CreateBeamEffect(FilteredArray(eventPlayer,
+
+        (intersection_length_0[EvaluateOnce(wallCount)][EvaluateOnce(objectCount + 1)] > 0 &&   
+        intersection_length_1[EvaluateOnce(wallCount)][EvaluateOnce(objectCount)] > 0) && 
+        DotProduct(DirectionTowards(corners[EvaluateOnce(wallCount)][4],EyePosition()) * Vector(1,0,1) ,corners[EvaluateOnce(wallCount)][5]) < 0
+
+        ),BeamType.BadBeam,object[EvaluateOnce(wallCount)][EvaluateOnce(objectCount)],object[EvaluateOnce(wallCount)][EvaluateOnce(objectCount + 1)],Color.Red);
+        
+
+    }
+}
+   
+
+
+    // CreateBeamEffect( FilteredArray(eventPlayer,
+    // ((DotProduct(DirectionTowards(corners[0][0],corners[0][1]),DirectionTowards(corners[0][0],intersection[0][0])) >= 0 
+    // || DotProduct(DirectionTowards(corners[0][0],corners[0][1]),DirectionTowards(corners[0][0],intersection[0][1])) >= 0) 
+    // && (DotProduct(DirectionTowards(corners[0][1],corners[0][0]),DirectionTowards(corners[0][1],intersection[0][0])) >= 0 
+    // || DotProduct(DirectionTowards(corners[0][1],corners[0][0]),DirectionTowards(corners[0][1],intersection[0][1])) >= 0))
+    // && DotProduct(DirectionTowards(corners[0][4],EyePosition()) * Vector(1,0,1),corners[0][5]) < 0
+    // ),BeamType.BadBeam,object[0][0],object[0][1],Color.Aqua);
+   
+    // CreateBeamEffect(FilteredArray(eventPlayer,
+    //  ((DotProduct(DirectionTowards(corners[0][0],corners[0][1]),DirectionTowards(corners[0][0],intersection[0][2])) >= 0 
+    // || DotProduct(DirectionTowards(corners[0][0],corners[0][1]),DirectionTowards(corners[0][0],intersection[0][3])) >= 0) 
+    // && (DotProduct(DirectionTowards(corners[0][1],corners[0][0]),DirectionTowards(corners[0][1],intersection[0][2])) >= 0 
+    // || DotProduct(DirectionTowards(corners[0][1],corners[0][0]),DirectionTowards(corners[0][1],intersection[0][3])) >= 0))
+    // && DotProduct(DirectionTowards(corners[0][4],EyePosition()) * Vector(1,0,1) ,corners[0][5]) < 0
+    // ),BeamType.BadBeam,object[0][2],object[0][3],Color.Aqua);
+
+    // CreateBeamEffect(FilteredArray(eventPlayer,
+    //     (DotProduct(DirectionTowards(corners[0][0],corners[0][1]),DirectionTowards(corners[0][0],intersection[0][0])) >= 0 
+    // && DotProduct(DirectionTowards(corners[0][1],corners[0][0]),DirectionTowards(corners[0][1],intersection[0][0])) >= 0)
+    // &&  DotProduct(DirectionTowards(corners[0][4],EyePosition()) * Vector(1,0,1),corners[0][5]) < 0 ),
+    // BeamType.BadBeam,object[0][0] + Vector(0,0,0.001),object[0][2],Color.Aqua);
+
+    // CreateBeamEffect(FilteredArray(eventPlayer,
+    // (DotProduct(DirectionTowards(corners[0][0],corners[0][1]),DirectionTowards(corners[0][0],intersection[0][1])) >= 0
+    // && DotProduct(DirectionTowards(corners[0][1],corners[0][0]),DirectionTowards(corners[0][1],intersection[0][1])) >= 0)
+    // &&  DotProduct(DirectionTowards(corners[0][4],EyePosition()) * Vector(1,0,1),corners[0][5]) < 0),
+    // BeamType.BadBeam,object[0][1]+ Vector(0,0,0.001),object[0][3],Color.Aqua);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////OBJECT2////////////////////////////////////////////////////////////
+
+// CreateBeamEffect( FilteredArray(eventPlayer,
+//     ((DotProduct(DirectionTowards(corners[1][0],corners[1][1]),DirectionTowards(corners[1][0],intersection[1][0])) >= 0 
+//     || DotProduct(DirectionTowards(corners[1][0],corners[1][1]),DirectionTowards(corners[1][0],intersection[1][1])) >= 0) 
+//     && (DotProduct(DirectionTowards(corners[1][1],corners[1][0]),DirectionTowards(corners[1][1],intersection[1][0])) >= 0 
+//     || DotProduct(DirectionTowards(corners[1][1],corners[1][0]),DirectionTowards(corners[1][1],intersection[1][1])) >= 0))
+//     && DotProduct(DirectionTowards(corners[1][4],EyePosition()) * Vector(1,0,1),corners[1][5]) < 0
+//     ),BeamType.BadBeam,object[1][0],object[1][1],Color.Red);
+   
+//     CreateBeamEffect(FilteredArray(eventPlayer,
+//      ((DotProduct(DirectionTowards(corners[1][0],corners[1][1]),DirectionTowards(corners[1][0],intersection[1][2])) >= 0 
+//     || DotProduct(DirectionTowards(corners[1][0],corners[1][1]),DirectionTowards(corners[1][0],intersection[1][3])) >= 0) 
+//     && (DotProduct(DirectionTowards(corners[1][1],corners[1][0]),DirectionTowards(corners[1][1],intersection[1][2])) >= 0 
+//     || DotProduct(DirectionTowards(corners[1][1],corners[1][0]),DirectionTowards(corners[1][1],intersection[1][3])) >= 0))
+//     && DotProduct(DirectionTowards(corners[1][4],EyePosition()) * Vector(1,0,1) ,corners[1][5]) < 0
+//     ),BeamType.BadBeam,object[1][2],object[1][3],Color.Red);
+//     ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//     ///////////////////////////////////////OBJECT3////////////////////////////////////////////////////////////
+
+//     for(define x=0; 8;2)
+//     {
+//             CreateBeamEffect(FilteredArray(eventPlayer,
+//      ((DotProduct(DirectionTowards(corners[2][0],corners[2][1]),DirectionTowards(corners[2][0],intersection[2][2])) >= 0 
+//     || DotProduct(DirectionTowards(corners[2][0],corners[2][1]),DirectionTowards(corners[2][0],intersection[2][3])) >= 0) 
+//     && (DotProduct(DirectionTowards(corners[2][1],corners[2][0]),DirectionTowards(corners[2][1],intersection[2][2])) >= 0 
+//     || DotProduct(DirectionTowards(corners[2][1],corners[2][0]),DirectionTowards(corners[2][1],intersection[2][3])) >= 0))
+//     && DotProduct(DirectionTowards(corners[2][4],EyePosition()) * Vector(1,0,1) ,corners[2][5]) < 0
+//     ),BeamType.BadBeam,object[2][EvaluateOnce(x)],object[2][EvaluateOnce(x + 1)],Color.Red);
+
+//     }
+
+    ///////////////////////////////////////OBJECT3////////////////////////////////////////////////////////////
+
+
+    //  CreateEffect(eventPlayer,Effect.Sphere,Color.Red,intersection[0],0.1);
+    //  CreateEffect(eventPlayer,Effect.Sphere,Color.Yellow,intersection[1],0.1);
+    // CreateEffect(eventPlayer,Effect.Sphere,Color.Aqua,intersection[2],0.1);
+    //CreateEffect(eventPlayer,Effect.Sphere,Color.Red,object[1],0.1);
+}
+
+define eventPlayer:EventPlayer();
+define futurePos: EyePosition() + (VelocityOf() * 0.1);
+define sliceVector(define x,define y,define z): Vector(XOf(x),YOf(y),ZOf(z));
+
+Vector YAxisFromZAxis(Vector zAxis): DirectionFromAngles(HorizontalAngleFromDirection(zAxis), VerticalAngleFromDirection(zAxis) - 90);
+
+Vector XAxisFromZAxis(Vector zAxis): DirectionFromAngles(HorizontalAngleFromDirection(zAxis)+90, 0);
+
+Vector WorldVectorForPosition(Vector vector, Vector position, Vector facing): position + XAxisFromZAxis(facing)*XOf(vector) + YAxisFromZAxis(facing)*YOf(vector) + facing*ZOf(vector);

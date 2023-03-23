@@ -1,0 +1,68 @@
+playervar define done= false;
+playervar define start_point;
+playervar define pixel_pos=EmptyArray();
+playervar define store_pixel=EmptyArray();
+playervar define effectid=EmptyArray();
+globalvar define array_state=EmptyArray();
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Crouch))
+{
+    start_point = RayCastHitPosition(EyePosition(),Add(EyePosition(),Multiply(FacingDirectionOf(),7))); 
+    start_point = start_point + WorldVectorOf(Multiply(Left(),4),EventPlayer());
+    start_point = start_point + WorldVectorOf(Multiply(Up(),4),EventPlayer());
+    define fix_start_point = start_point;
+    CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,start_point,0.1,EffectRev.None);
+    for (define y = 0; y < 8; y++)
+    {
+        for (define x = 0; x < 8; x++)
+        {
+            // start_point = Add(start_point,Multiply(DirectionFromAngles(Add(HorizontalFacingAngleOf(),-90),VerticalFacingAngleOf()),x));
+            
+            start_point = start_point + WorldVectorOf(Multiply(Right(),0.5),EventPlayer());
+            pixel_pos[CountOf(pixel_pos)] = start_point;
+            array_state[CountOf(array_state)] =0;
+            CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,start_point,0.1,EffectRev.None);
+            
+        }
+        start_point = start_point + WorldVectorOf(Multiply(Left(),8*0.5),EventPlayer());
+        start_point = start_point + WorldVectorOf(Multiply(Down(),0.5),EventPlayer());
+        //CreateEffect(EventPlayer(),Effect.Sphere,Color.Yellow,start_point,0.1,EffectRev.None);
+    }
+    done = true;
+    CreateHudText(EventPlayer(),CountOf(pixel_pos));
+    
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Interact)&&done)
+{   
+    define pixel = FirstOf(SortedArray(pixel_pos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition()))));
+    if(!ArrayContains(store_pixel,pixel))
+    {
+    store_pixel[CountOf(store_pixel)] =pixel;
+    array_state[IndexOfArrayValue(pixel_pos,pixel)] = 1;
+    CreateEffect(EventPlayer(),Effect.Sphere,Color.Red,pixel,0.25,EffectRev.None);
+    effectid[CountOf(effectid)] = LastCreatedEntity();
+    }
+    MinWait();
+    LoopIfConditionIsTrue();
+    
+}
+
+rule: "Pathfind to cursor." //
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(),Button.Ultimate)&&done)
+{   
+    define pixel_delete = FirstOf(SortedArray(pixel_pos,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition()))));
+    if(ArrayContains(store_pixel,pixel_delete))
+    {
+    DestroyEffect(effectid[IndexOfArrayValue(store_pixel,pixel_delete)]);
+    store_pixel[IndexOfArrayValue(store_pixel,pixel_delete)] = 0;
+    array_state[IndexOfArrayValue(pixel_pos,pixel_delete)] = 0;
+    }
+    MinWait();
+    LoopIfConditionIsTrue();
+    
+}

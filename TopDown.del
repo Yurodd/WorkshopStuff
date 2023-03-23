@@ -1,0 +1,27 @@
+playervar define prevFacingDir;
+playervar define distance;
+playervar define cursorPos;
+rule: "SpawnButts"
+Event.OngoingPlayer
+if(HasSpawned())
+{
+    StartCamera(eventPlayer,EyePosition() + Vector(0,10,0),eventPlayer,0);
+    CreateHudText(eventPlayer,cursorPos);
+    cursorPos = PositionOf();
+    CreateIcon(AllPlayers(),cursorPos,Icon.X);
+    prevFacingDir = FacingDirectionOf();
+    distance = 0.1;
+}
+
+rule: "SpawnButts"
+Event.OngoingPlayer
+if(IsAlive()&&prevFacingDir != FacingDirectionOf()&&IsButtonHeld(eventPlayer,Button.Interact))
+{
+    define XradAngles = CosineFromRadians(AngleBetweenVectors(FacingDirectionOf() * Vector(1,0,1),prevFacingDir * Vector(1,0,1)) / (180/ArccosineInRadians(-1))) * MagnitudeOf(prevFacingDir - FacingDirectionOf());
+    define YradAngles = SineFromRadians(AngleBetweenVectors(FacingDirectionOf() * Up(),prevFacingDir * Up()) / (180/ArccosineInRadians(-1))) * MagnitudeOf(prevFacingDir - FacingDirectionOf());
+    cursorPos = Vector(XradAngles,0,YradAngles);
+    SetFacing(eventPlayer,DirectionTowards(EyePosition(),cursorPos));
+    prevFacingDir = FacingDirectionOf();
+}
+
+define eventPlayer: EventPlayer();

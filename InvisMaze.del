@@ -1,0 +1,493 @@
+globalvar define AllPos = EmptyArray();
+globalvar define AllPosSecond = EmptyArray();
+globalvar define AllDir = EmptyArray();
+globalvar define radius = EmptyArray();
+globalvar define center = EmptyArray();
+playervar define filterpos = EmptyArray();
+globalvar define firstpos = EmptyArray();
+globalvar define secondpos = EmptyArray();
+globalvar define firstpoint2 = EmptyArray();
+globalvar define secondpoint2 = EmptyArray();
+globalvar define second;
+playervar define point;
+globalvar define z;
+globalvar define set;
+globalvar define destoryall = false;
+playervar define lastsavedpos;
+globalvar define showwalls = true;
+playervar define closestbodypos;
+playervar define fullbodypos;
+playervar define openui = false;
+playervar define UIVector;
+playervar define UI_ID;
+playervar define stopBool = false;
+playervar define UI_wallDirection = false; //false = Vertical
+
+rule: "Reset"
+Event.OngoingPlayer
+/* if (IsAlive() && IsTrueForAny(AllDir, DotProduct(ArrayElement(), DirectionTowards(eventPlayer,AllPos[IndexOfArrayValue(AllDir, ArrayElement())])) <= 0.005))
+{ */
+if (HasSpawned())
+{
+
+
+        if(!openui)
+        {
+            if(CountOf(firstpos)==0)
+            {
+                point = EyePosition() + FacingDirectionOf() * 5;
+            }
+            else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+            {
+                point = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+            }
+            else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+            {
+                point = FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+            }
+            else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+            {
+                point = FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+            }
+            else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+            {
+                point = FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+            }
+
+            else
+            {
+                point = EyePosition() + FacingDirectionOf() * 5;
+            }
+        
+
+
+            for( z =0; CountOf(AllPos);1)
+            {
+                 if(YOf(AllDir[z]) ==0)
+                 {
+                    if(YOf(firstpos[z]) >= YOf(PositionOf()) && YOf(firstpos[z]) <= YOf(EyePosition()+Vector(0,0.2,0)))
+                    {
+                        closestbodypos = firstpos[z];
+                    }
+                    else if(YOf(secondpos[z]) >= YOf(PositionOf()) && YOf(secondpos[z]) <= YOf(EyePosition()+Vector(0,0.2,0)))
+                    {
+                        closestbodypos = secondpos[z];
+                    }
+                    else
+                    {
+                        closestbodypos = EyePosition();
+                    }
+
+                    //closestbodypos = FirstOf(SortedArray(allbodypos,DistanceBetween(ArrayElement(),AllPos[z])));
+                    fullbodypos = Vector(XOf(EyePosition()),YOf(closestbodypos),ZOf(EyePosition()));
+                    filterpos[z] = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+
+                    //if(DistanceBetween((PositionOf()+Vector(0,0.5,0)),filterpos[z])<=1 && XOf(filterpos[z]) >= XOf(firstpos[z]) && XOf(filterpos[z])<= XOf(secondpos[z]) && YOf(filterpos[z])<=YOf(firstpos[z])&& YOf(filterpos[z])>=YOf(secondpos[z]))
+                    //{
+                //    if(DistanceBetween(PositionOf(),filterpos[z])<=1)
+                //     {
+                        //Teleport(eventPlayer,PositionOf() + DirectionTowards(filterpos[z],PositionOf()) * (1.00000001-DistanceBetween(PositionOf(),filterpos[z])));
+                        //SetMoveSpeed(eventPlayer,10);
+
+                        if(DistanceBetween(fullbodypos,filterpos[z])<=1 && fttr >= 0 && ftbl >= 0 && sttr >= 0 && stbl >= 0 )
+                        {
+
+                                if(DistanceBetween(fullbodypos,filterpos[z])<=0.8)
+                                {
+                                //Teleport(eventPlayer,PositionOf() + DirectionTowards(Vector(XOf(filterpos[z]),YOf(PositionOf()),ZOf(filterpos[z])),PositionOf()) * (1.00000001-DistanceBetween(PositionOf(),Vector(XOf(filterpos[z]),YOf(PositionOf()),ZOf(filterpos[z])))));
+                                ApplyImpulse(eventPlayer, DirectionTowards(filterpos[z],fullbodypos + Normalize(WorldVectorOf(-ThrottleOf(),eventPlayer)) * 5) * Vector(1,0,1), 0.001);
+                                //StartThrottleInDirection(eventPlayer,null,false,Relative.ToWorld,ThrottleBehavior.AddToExistingThrottle,ThrottleRev.None);
+                                }
+                                ApplyImpulse(eventPlayer, DirectionTowards(filterpos[z],fullbodypos) * Vector(1,0,1), 0.001);
+                                StartThrottleInDirection(eventPlayer,null,false,Relative.ToWorld,ThrottleBehavior.AddToExistingThrottle,ThrottleRev.None);
+                            //ApplyImpulse(eventPlayer, DirectionTowards(filterpos[z],EyePosition()) * Vector(1,0,1),SpeedOf() * 0.001);
+                        }
+                        else
+                        {
+                            lastsavedpos = EyePosition();
+                        }
+                }
+                else
+                {
+                    if(YOf(firstpos[z]) >= YOf(PositionOf()) && YOf(firstpos[z]) <= YOf(EyePosition()+Vector(0,0.2,0)))
+                    {
+                        closestbodypos = firstpos[z];
+                    }
+                    else if(YOf(firstpos[z]) <= YOf(PositionOf()))
+                    {
+                        closestbodypos = PositionOf();
+                    }
+                    else if(YOf(firstpos[z]) >= YOf(EyePosition()))
+                    {
+                        closestbodypos = EyePosition();
+                    }
+
+                    fullbodypos = Vector(XOf(EyePosition()),YOf(closestbodypos),ZOf(EyePosition()));
+                    filterpos[z] = fullbodypos + AllDir[z] * DotProduct(AllPos[z] - fullbodypos,AllDir[z]) / DotProduct(AllDir[z], AllDir[z]);
+                    if(YOf(filterpos[z]) >= YOf(fullbodypos) || YOf(filterpos[z]) <= YOf(fullbodypos) && fttr2 >= 0 && ftbl2 >= 0 && sttr2 >= 0 && stbl2 >= 0 )
+                    {
+                     ApplyImpulse(eventPlayer, DirectionTowards(filterpos[z],fullbodypos) * Vector(0,1,0), 0.001);
+                     StartThrottleInDirection(eventPlayer,null,false,Relative.ToWorld,ThrottleBehavior.AddToExistingThrottle,ThrottleRev.None);
+                    }
+                }
+            }     
+         }
+    
+
+    MinWait();
+    Loop();
+    //LoopIfConditionIsTrue()
+
+}
+
+
+
+rule: "Reset"
+Event.OngoingGlobal
+{
+        // AllPos[CountOf(AllPos)] = Vector(10, 1, 0);
+        // radius[CountOf(radius)] = 10;
+        // AllDir[CountOf(AllDir)] = Vector(1, 0, 0);
+
+		// AllPos[CountOf(AllPos)] = Vector(0, 1, 10);
+        // radius[CountOf(radius)] = 10;
+		// AllDir[CountOf(AllDir)] = Vector(0, 0, 1);
+
+        // AllPos[CountOf(AllPos)] = Vector(-10, 1, 0);
+        // radius[CountOf(radius)] = 10;
+        // AllDir[CountOf(AllDir)] = Vector(-1, 0, 0);
+
+		// AllPos[CountOf(AllPos)] = Vector(0, 1, -10);
+        // radius[CountOf(radius)] = 10;
+		// AllDir[CountOf(AllDir)] = Vector(0, 0, -1);
+
+		// AllPos[CountOf(AllPos)] = Vector(0, 3, 0);
+        // radius[CountOf(radius)] = 10;
+		// AllDir[CountOf(AllDir)] = Vector(0, -1, 0);
+
+        
+
+
+/*         AllPos[2] = Vector(7.581, 100, 0);
+        radius[2] = 10;
+        AllDir[2] = Vector(-1, 0, 0);
+
+		AllPos[3] = Vector(0, 100, 7.581);
+        radius[3] = 10;
+		AllDir[3] = Vector(0, 0, -1); */
+
+
+    DisableInspectorRecording();
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(HasSpawned())
+{
+
+
+    //CreateEffect(eventPlayer,Effect.Sphere,Color.Red, EyePosition() + FacingDirectionOf() * (DotProduct(AllPos[z] - EyePosition(),AllDir[z]) / DotProduct(AllDir[z], AllDir[z])),0.1);
+
+    //CreateHudText(eventPlayer,DistanceBetween(PositionOf(),FirstOf(SortedArray(filterpos,DistanceBetween(PositionOf(),ArrayElement())))));
+    CreateHudText(eventPlayer,ServerLoad());
+
+    //Vertical Wall
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==false),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==false),BeamType.GrappleBeam,Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1])+ Vector(0,0,0.001),ZOf(second)), second + Vector(0,0,0.001));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==false),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1]+Vector(0.001,0,0), Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(second),ZOf(firstpos[CountOf(firstpos)-1])));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==false),BeamType.GrappleBeam,Vector(XOf(firstpos[CountOf(firstpos)-1]+ Vector(0,0,0.001)),YOf(second),ZOf(firstpos[CountOf(firstpos)-1])), second + Vector(0,0,0.001));
+    
+    //Horizontal Wall
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==true),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(firstpos[CountOf(firstpos)-1])));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==true),BeamType.GrappleBeam,Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(firstpos[CountOf(firstpos)-1])), second);
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==true),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)&&UI_wallDirection==true),BeamType.GrappleBeam,Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)), second);
+    
+    
+    
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.White, point,0.1);
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.Red, filterpos,0.1);
+
+    CreateInWorldText(FilteredArray(eventPlayer,openui),"Reset ALL", UIVector[0],1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString,Color.Green);
+
+    CreateInWorldText(FilteredArray(eventPlayer,openui && !showwalls),"Show Wall", UIVector[1],1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString,Color.Green);
+    CreateInWorldText(FilteredArray(eventPlayer,openui && showwalls),"Hide Wall", UIVector[1],1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString,Color.Green);
+
+    CreateInWorldText(FilteredArray(eventPlayer,openui && UI_wallDirection==false),"Horizontal Wall", UIVector[2],1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString,Color.Green);
+    CreateInWorldText(FilteredArray(eventPlayer,openui && UI_wallDirection==true),"Vertical Wall", UIVector[2],1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString,Color.Green);
+    CreateInWorldText(FilteredArray(eventPlayer,openui),"Wall Collision Disabled When Menu is Opened", UIVector[3],1,Clipping.ClipAgainstSurfaces,InworldTextRev.VisibleToPositionAndString,Color.Red);
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Jump))
+{
+    ApplyImpulse(eventPlayer,Up(),10);
+}
+
+// rule: "Reset"
+// Event.OngoingPlayer
+// if(IsButtonHeld(eventPlayer,Button.Crouch))
+// {
+//    Kill();
+// }
+
+//Vertical Wall
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Interact) && UI_wallDirection == false)
+{
+
+        //firstpos[CountOf(firstpos)] = EyePosition() + FacingDirectionOf() * 5;
+     if(CountOf(firstpos)==0)
+    {
+        firstpos[CountOf(firstpos)] = EyePosition() + FacingDirectionOf() * 5;
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        set = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+        firstpos[CountOf(firstpos)] = set;
+        //firstpos[CountOf(firstpos)] = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        firstpos[CountOf(firstpos)] = FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        firstpos[CountOf(firstpos)] = FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        firstpos[CountOf(firstpos)] = FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+    }
+
+    else
+    {
+        firstpos[CountOf(firstpos)] = EyePosition() + FacingDirectionOf() * 5;
+    }
+
+    while(IsButtonHeld(eventPlayer,Button.Interact))
+    {
+                if(CountOf(secondpos)==0)
+                {
+                    second = EyePosition() + FacingDirectionOf() * 5;
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+                }
+
+                else
+                {
+                    second = EyePosition() + FacingDirectionOf() * 5;
+                }
+        MinWait();
+    }
+    secondpos[CountOf(secondpos)] = second;
+
+    firstpoint2[CountOf(firstpoint2)] = Vector(XOf(secondpos[CountOf(secondpos)-1]),YOf(firstpos[CountOf(firstpos)-1]),ZOf(secondpos[CountOf(secondpos)-1]));
+    secondpoint2[CountOf(secondpoint2)] = Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(secondpos[CountOf(secondpos)-1]),ZOf(firstpos[CountOf(firstpos)-1]));
+
+    AllPos[CountOf(AllPos)] = (firstpos[CountOf(firstpos)-1] + second)/2;
+    AllDir[CountOf(AllDir)] = CrossProduct(Down(),DirectionTowards(firstpos[CountOf(firstpos)-1],second)) * Vector(1,0,1);
+
+    CreateEffect(FilteredArray(AllPlayers(),showwalls == true),Effect.Sphere,Color.Yellow, (firstpos[CountOf(firstpos)-1]+second)/2,0.1,EffectRev.VisibleTo);
+
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)),Color.Aqua,EffectRev.VisibleTo);
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)), second + Vector(0,0,0.001),Color.Aqua,EffectRev.VisibleTo);
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1]+Vector(0.001,0,0), Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(second),ZOf(firstpos[CountOf(firstpos)-1])),Color.Aqua,EffectRev.VisibleTo);
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(second),ZOf(firstpos[CountOf(firstpos)-1])), second + Vector(0,0,0.001),Color.Aqua,EffectRev.VisibleTo);
+    Wait(0.5);
+
+}
+
+
+
+//Horizontal Wall
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.Interact) && UI_wallDirection == true)
+{
+
+        //firstpos[CountOf(firstpos)] = EyePosition() + FacingDirectionOf() * 5;
+     if(CountOf(firstpos)==0)
+    {
+        firstpos[CountOf(firstpos)] = EyePosition() + FacingDirectionOf() * 5;
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        set = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+        firstpos[CountOf(firstpos)] = set;
+        //firstpos[CountOf(firstpos)] = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        firstpos[CountOf(firstpos)] = FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        firstpos[CountOf(firstpos)] = FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+    }
+    else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+    {
+        firstpos[CountOf(firstpos)] = FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+    }
+
+    else
+    {
+        firstpos[CountOf(firstpos)] = EyePosition() + FacingDirectionOf() * 5;
+    }
+
+    while(IsButtonHeld(eventPlayer,Button.Interact))
+    {
+                if(CountOf(secondpos)==0)
+                {
+                    second = Vector(XOf(EyePosition()),YOf(firstpos[CountOf(firstpos)-1]),ZOf(EyePosition())) + (FacingDirectionOf()*Vector(1,0,1)) * 5;
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(firstpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())));
+                    second = Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second));
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(secondpos,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+                    second = Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second));
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(firstpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+                    second = Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second));
+                }
+                else if(DistanceBetween(EyePosition() + FacingDirectionOf() * 5,FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))) < 0.5)
+                {
+                    second = FirstOf(SortedArray(secondpoint2,DistanceBetween(EyePosition() + FacingDirectionOf() * 5,ArrayElement())))
+                    second = Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second));
+                }
+
+                else
+                {
+                    second = Vector(XOf(EyePosition()),YOf(firstpos[CountOf(firstpos)-1]),ZOf(EyePosition())) + (FacingDirectionOf()*Vector(1,0,1)) * 5;
+                }
+        MinWait();
+    }
+    secondpos[CountOf(secondpos)] = second;
+
+    firstpoint2[CountOf(firstpoint2)] = Vector(XOf(secondpos[CountOf(secondpos)-1]),YOf(firstpos[CountOf(firstpos)-1]),ZOf(firstpos[CountOf(firstpos)-1]));
+    secondpoint2[CountOf(secondpoint2)] = Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(secondpos[CountOf(secondpos)-1]),ZOf(secondpos[CountOf(secondpos)-1]));
+
+    AllPos[CountOf(AllPos)] = (firstpos[CountOf(firstpos)-1] + second)/2;
+    AllDir[CountOf(AllDir)] = CrossProduct(Left(),DirectionTowards(firstpos[CountOf(firstpos)-1],second)) * Vector(0,1,0);
+
+    CreateEffect(FilteredArray(AllPlayers(),showwalls == true),Effect.Sphere,Color.Yellow, (firstpos[CountOf(firstpos)-1]+second)/2,0.1,EffectRev.VisibleTo);
+
+
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(firstpos[CountOf(firstpos)-1])),Color.Aqua,EffectRev.VisibleTo);
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(firstpos[CountOf(firstpos)-1])), second,Color.Aqua,EffectRev.VisibleTo);
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)),Color.Aqua,EffectRev.VisibleTo);
+    CreateBeamEffect(FilteredArray(AllPlayers(),showwalls == true),BeamType.GrappleBeam,Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)), second,Color.Aqua,EffectRev.VisibleTo);
+    Wait(0.5);
+
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(IsButtonHeld(eventPlayer,Button.SecondaryFire))
+{
+    openui = !openui;
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(openui)
+{
+    //ResetAll
+    UIVector[0] = EyePosition() + DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf())+25,VerticalAngleFromDirection(FacingDirectionOf())-10) * 5 ;
+    //Show/Hide Wall
+    UIVector[1] = EyePosition() + DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf()),VerticalAngleFromDirection(FacingDirectionOf())-10) * 5 ;
+    //Horizonal wall
+    UIVector[2] = EyePosition() + DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf())-25,VerticalAngleFromDirection(FacingDirectionOf())-10) * 5 ;
+    //Warning Text
+    UIVector[3] = EyePosition() + DirectionFromAngles(HorizontalAngleFromDirection(FacingDirectionOf()),VerticalAngleFromDirection(FacingDirectionOf())-20) * 5 ;
+
+}
+
+rule: "Reset"
+Event.OngoingPlayer
+if(openui && IsAlive())
+{
+    point = FirstOf(SortedArray(UIVector,DotProduct(FacingDirectionOf(),DirectionTowards(ArrayElement(),EyePosition()))));
+    if(IsButtonHeld(eventPlayer,Button.PrimaryFire))
+    {
+        //PlayEffect(AllPlayers(),PlayEffect.RingExplosion,Color.Green,point,2);
+        PlayEffect(AllPlayers(),PlayEffect.GoodPickupEffect,Color.Green,point,20);
+        PlayEffect(AllPlayers(),PlayEffect.BuffImpactSound,Color.Green,point,100);
+        switch(IndexOfArrayValue(UIVector,point))
+        {
+            case 0 : destoryall=true; break;
+            case 1 : showwalls = !showwalls; break;
+            case 2 : UI_wallDirection = !UI_wallDirection; break;
+        }
+        Wait(0.3);
+    }
+    MinWait();
+    LoopIfConditionIsTrue();
+}
+
+
+rule: "Reset"
+Event.OngoingPlayer
+if(destoryall)
+{
+  AllPos = EmptyArray();
+  AllPosSecond = EmptyArray();
+  AllDir = EmptyArray();
+  radius = EmptyArray();
+  center = EmptyArray();
+  filterpos = EmptyArray();
+  firstpos = EmptyArray();
+  secondpos = EmptyArray();
+  firstpoint2 = EmptyArray();
+  secondpoint2 = EmptyArray();
+  closestbodypos= EmptyArray();
+  fullbodypos= EmptyArray();
+
+    second=0;
+    point=0;
+    z=0;
+    destoryall = false;
+    DestroyAllEffects();
+    Wait(0.1);
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1], Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)),BeamType.GrappleBeam,Vector(XOf(second),YOf(firstpos[CountOf(firstpos)-1]),ZOf(second)), second + Vector(0,0,0.001));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)),BeamType.GrappleBeam,firstpos[CountOf(firstpos)-1]+Vector(0.001,0,0), Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(second),ZOf(firstpos[CountOf(firstpos)-1])));
+    CreateBeamEffect(FilteredArray(eventPlayer,IsButtonHeld(ArrayElement(),Button.Interact)),BeamType.GrappleBeam,Vector(XOf(firstpos[CountOf(firstpos)-1]),YOf(second),ZOf(firstpos[CountOf(firstpos)-1])), second + Vector(0,0,0.001));
+    CreateEffect(AllPlayers(),Effect.Sphere,Color.White, point,0.1);
+    Wait(0.1);
+}
+
+
+define eventPlayer: EventPlayer();
+define ftbl: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(firstpos[z]),YOf(secondpos[z]),ZOf(firstpos[z]))),DirectionTowards(firstpos[z],filterpos[z]));
+define fttr: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(firstpos[z],filterpos[z]));
+define stbl: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(firstpos[z]),YOf(secondpos[z]),ZOf(firstpos[z]))),DirectionTowards(secondpos[z],filterpos[z]));
+define sttr: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(secondpos[z],filterpos[z]));
+
+
+define ftbl2: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(firstpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(firstpos[z],filterpos[z]));
+define fttr2: DotProduct(DirectionTowards(firstpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(firstpos[z]))),DirectionTowards(firstpos[z],filterpos[z]));
+define stbl2: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(firstpos[z]),YOf(firstpos[z]),ZOf(secondpos[z]))),DirectionTowards(secondpos[z],filterpos[z]));
+define sttr2: DotProduct(DirectionTowards(secondpos[z],Vector(XOf(secondpos[z]),YOf(firstpos[z]),ZOf(firstpos[z]))),DirectionTowards(secondpos[z],filterpos[z]));
